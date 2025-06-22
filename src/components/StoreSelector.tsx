@@ -1,6 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { stores } from '@/data/mockData';
+import { useStores } from '@/hooks/useStores';
 
 interface StoreSelectorProps {
   value: string;
@@ -9,6 +9,18 @@ interface StoreSelectorProps {
 }
 
 export default function StoreSelector({ value, onValueChange, placeholder = "All stores" }: StoreSelectorProps) {
+  const { data: stores = [], isLoading } = useStores();
+
+  if (isLoading) {
+    return (
+      <Select value={value} onValueChange={onValueChange} disabled>
+        <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectValue placeholder="Loading stores..." />
+        </SelectTrigger>
+      </Select>
+    );
+  }
+
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className="w-full sm:w-[200px]">
