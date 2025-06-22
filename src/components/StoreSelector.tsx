@@ -1,16 +1,25 @@
 
+import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useStores } from '@/hooks/useStores';
+import type { Store } from '@/types';
+
+
 
 interface StoreSelectorProps {
   value: string;
   onValueChange: (value: string) => void;
+  stores: Store[];
   placeholder?: string;
+  isLoading?: boolean;
 }
 
-export default function StoreSelector({ value, onValueChange, placeholder = "All stores" }: StoreSelectorProps) {
-  const { data: stores = [], isLoading } = useStores();
-
+export default function StoreSelector({ 
+  value, 
+  onValueChange, 
+  stores = [], 
+  placeholder = "All stores",
+  isLoading = false
+}: StoreSelectorProps) {
   if (isLoading) {
     return (
       <Select value={value} onValueChange={onValueChange} disabled>
