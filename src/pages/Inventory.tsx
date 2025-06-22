@@ -6,30 +6,55 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StoreSelector from '@/components/StoreSelector';
-import { items, stores, categories } from '@/data/mockData';
+import ItemForm from '@/components/ItemForm';
+import { useItems, useDeleteItem } from '@/hooks/useItems';
+import { useStores } from '@/hooks/useStores';
+import { useCategories } from '@/hooks/useCategories';
 
 export default function Inventory() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const { data: items = [], isLoading: itemsLoading } = useItems();
+  const { data: stores = [] } = useStores();
+  const { data: categories = [] } = useCategories();
+  const deleteItem = useDeleteItem();
+
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      const matchesStore = selectedStore === 'all' || item.storeId === selectedStore;
-      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      const matchesStore = selectedStore === 'all' || item.store_id === selectedStore;
+      const matchesCategory = selectedCategory === 'all' || item.category_id === selectedCategory;
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStore && matchesCategory && matchesSearch;
     });
-  }, [selectedStore, selectedCategory, searchTerm]);
+  }, [items, selectedStore, selectedCategory, searchTerm]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
 
-  const getTotalValue = () => {
-    return filteredItems.reduce((sum, item) => sum + (item.quantityAvailable * item.costPrice), 0);
+  const getCategoryName = (categoryId: string) => {
+    return categories.find(category => category.id === categoryId)?.name || 'Unknown Category';
   };
+
+  const getTotalValue = () => {
+    return filteredItems.reduce((sum, item) => sum + (item.quantity_available * item.cost_price), 0);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    deleteItem.mutate(itemId);
+  };
+
+  if (itemsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading inventory...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -38,10 +63,14 @@ export default function Inventory() {
           <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
           <p className="text-gray-600">Manage your furniture inventory</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Item
-        </Button>
+        <ItemForm 
+          trigger={
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Item
+            </Button>
+          }
+        />
       </div>
 
       {/* Filters */}
@@ -68,8 +97,8 @@ export default function Inventory() {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -106,29 +135,55 @@ export default function Inventory() {
                 {filteredItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{getStoreName(item.storeId)}</TableCell>
+                    <TableCell>{getCategoryName(item.category_id)}</TableCell>
+                    <TableCell>{getStoreName(item.store_id)}</TableCell>
                     <TableCell className="text-right">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        item.quantityAvailable > 10 
+                        item.quantity_available > 10 
                           ? 'bg-green-100 text-green-800'
-                          : item.quantityAvailable > 5
+                          : item.quantity_available > 5
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {item.quantityAvailable}
+                        {item.quantity_available}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">${item.costPrice}</TableCell>
-                    <TableCell className="text-right">${item.sellingPrice}</TableCell>
+                    <TableCell className="text-right">${item.cost_price}</TableCell>
+                    <TableCell className="text-right">${item.selling_price}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <ItemForm 
+                          item={item}
+                          trigger={
+                            <Button variant="ghost" size="sm">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

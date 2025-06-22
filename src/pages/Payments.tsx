@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,9 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StoreSelector from '@/components/StoreSelector';
 import StatusBadge from '@/components/StatusBadge';
-import { payments, stores } from '@/data/mockData';
+import { usePayments, useCreatePayment, useDeletePayment } from '@/hooks/usePayments';
+import { useStores } from '@/hooks/useStores';
 
 export default function Payments() {
   const [selectedStore, setSelectedStore] = useState('all');
@@ -27,14 +29,19 @@ export default function Payments() {
     date: new Date().toISOString().split('T')[0],
   });
 
+  const { data: payments = [], isLoading: paymentsLoading } = usePayments();
+  const { data: stores = [] } = useStores();
+  const createPayment = useCreatePayment();
+  const deletePayment = useDeletePayment();
+
   const filteredPayments = useMemo(() => {
     return payments.filter(payment => {
-      const matchesStore = selectedStore === 'all' || payment.storeId === selectedStore;
+      const matchesStore = selectedStore === 'all' || payment.store_id === selectedStore;
       const matchesType = selectedType === 'all' || payment.type === selectedType;
       const matchesSearch = payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
       return matchesStore && matchesType && matchesSearch;
     });
-  }, [selectedStore, selectedType, searchTerm]);
+  }, [payments, selectedStore, selectedType, searchTerm]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
@@ -56,8 +63,15 @@ export default function Payments() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('New payment:', formData);
-    // Here you would typically save to your backend
+    
+    createPayment.mutate({
+      store_id: formData.storeId,
+      amount: parseFloat(formData.amount),
+      type: formData.type,
+      description: formData.description,
+      date: formData.date,
+    });
+    
     setShowForm(false);
     setFormData({
       storeId: '',
@@ -67,6 +81,18 @@ export default function Payments() {
       date: new Date().toISOString().split('T')[0],
     });
   };
+
+  const handleDeletePayment = (paymentId: string) => {
+    deletePayment.mutate(paymentId);
+  };
+
+  if (paymentsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading payments...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -128,7 +154,7 @@ export default function Payments() {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="store">Store</Label>
-                <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})}>
+                <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select store" />
                   </SelectTrigger>
@@ -164,6 +190,8 @@ export default function Payments() {
                   placeholder="Enter amount"
                   value={formData.amount}
                   onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                  required
+                  min="0"
                 />
               </div>
 
@@ -174,6 +202,7 @@ export default function Payments() {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  required
                 />
               </div>
 
@@ -188,8 +217,8 @@ export default function Payments() {
               </div>
 
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                  Record Transaction
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={createPayment.isPending}>
+                  {createPayment.isPending ? 'Recording Transaction...' : 'Record Transaction'}
                 </Button>
               </div>
             </form>
@@ -243,12 +272,13 @@ export default function Payments() {
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell className="font-medium">{getStoreName(payment.storeId)}</TableCell>
+                    <TableCell className="font-medium">{getStoreName(payment.store_id)}</TableCell>
                     <TableCell>
                       <StatusBadge status={payment.type} />
                     </TableCell>
@@ -257,6 +287,32 @@ export default function Payments() {
                     </TableCell>
                     <TableCell>{payment.description || 'No description'}</TableCell>
                     <TableCell>{payment.date}</TableCell>
+                    <TableCell className="text-right">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this transaction? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeletePayment(payment.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

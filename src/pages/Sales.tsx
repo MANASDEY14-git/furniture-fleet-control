@@ -1,15 +1,18 @@
 
 import { useState, useMemo } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StoreSelector from '@/components/StoreSelector';
 import StatusBadge from '@/components/StatusBadge';
-import { sales, stores, items } from '@/data/mockData';
+import { useSales, useCreateSale, useDeleteSale } from '@/hooks/useSales';
+import { useItems } from '@/hooks/useItems';
+import { useStores } from '@/hooks/useStores';
 
 export default function Sales() {
   const [selectedStore, setSelectedStore] = useState('all');
@@ -27,27 +30,48 @@ export default function Sales() {
     date: new Date().toISOString().split('T')[0],
   });
 
+  const { data: sales = [], isLoading: salesLoading } = useSales();
+  const { data: items = [] } = useItems();
+  const { data: stores = [] } = useStores();
+  const createSale = useCreateSale();
+  const deleteSale = useDeleteSale();
+
   const filteredSales = useMemo(() => {
     return sales.filter(sale => {
-      const matchesStore = selectedStore === 'all' || sale.storeId === selectedStore;
-      const matchesStatus = selectedStatus === 'all' || sale.deliveryStatus === selectedStatus;
-      const matchesSearch = sale.itemName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStore = selectedStore === 'all' || sale.store_id === selectedStore;
+      const matchesStatus = selectedStatus === 'all' || sale.delivery_status === selectedStatus;
+      const matchesSearch = sale.item_name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStore && matchesStatus && matchesSearch;
     });
-  }, [selectedStore, selectedStatus, searchTerm]);
+  }, [sales, selectedStore, selectedStatus, searchTerm]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
 
   const getTotalSales = () => {
-    return filteredSales.reduce((sum, sale) => sum + sale.totalPrice, 0);
+    return filteredSales.reduce((sum, sale) => sum + sale.total_price, 0);
+  };
+
+  const getItemName = (itemId: string) => {
+    return items.find(item => item.id === itemId)?.name || '';
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('New sale:', formData);
-    // Here you would typically save to your backend
+    
+    const itemName = getItemName(formData.itemId);
+    
+    createSale.mutate({
+      store_id: formData.storeId,
+      item_id: formData.itemId,
+      item_name: itemName,
+      quantity: parseInt(formData.quantity),
+      total_price: parseFloat(formData.totalPrice),
+      delivery_status: formData.deliveryStatus,
+      date: formData.date,
+    });
+    
     setShowForm(false);
     setFormData({
       storeId: '',
@@ -58,6 +82,18 @@ export default function Sales() {
       date: new Date().toISOString().split('T')[0],
     });
   };
+
+  const handleDeleteSale = (saleId: string) => {
+    deleteSale.mutate(saleId);
+  };
+
+  if (salesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading sales...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -85,7 +121,7 @@ export default function Sales() {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="store">Store</Label>
-                <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})}>
+                <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select store" />
                   </SelectTrigger>
@@ -101,14 +137,14 @@ export default function Sales() {
               
               <div className="space-y-2">
                 <Label htmlFor="item">Item</Label>
-                <Select value={formData.itemId} onValueChange={(value) => setFormData({...formData, itemId: value})}>
+                <Select value={formData.itemId} onValueChange={(value) => setFormData({...formData, itemId: value})} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select item" />
                   </SelectTrigger>
                   <SelectContent>
                     {items.map((item) => (
                       <SelectItem key={item.id} value={item.id}>
-                        {item.name}
+                        {item.name} (Available: {item.quantity_available})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -123,6 +159,8 @@ export default function Sales() {
                   placeholder="Enter quantity"
                   value={formData.quantity}
                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  required
+                  min="1"
                 />
               </div>
 
@@ -131,9 +169,12 @@ export default function Sales() {
                 <Input
                   id="totalPrice"
                   type="number"
+                  step="0.01"
                   placeholder="Enter total price"
                   value={formData.totalPrice}
                   onChange={(e) => setFormData({...formData, totalPrice: e.target.value})}
+                  required
+                  min="0"
                 />
               </div>
 
@@ -157,12 +198,13 @@ export default function Sales() {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  required
                 />
               </div>
 
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                  Add Sale
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={createSale.isPending}>
+                  {createSale.isPending ? 'Adding Sale...' : 'Add Sale'}
                 </Button>
               </div>
             </form>
@@ -222,19 +264,46 @@ export default function Sales() {
                   <TableHead className="text-right">Total Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSales.map((sale) => (
                   <TableRow key={sale.id}>
-                    <TableCell className="font-medium">{sale.itemName}</TableCell>
-                    <TableCell>{getStoreName(sale.storeId)}</TableCell>
+                    <TableCell className="font-medium">{sale.item_name}</TableCell>
+                    <TableCell>{getStoreName(sale.store_id)}</TableCell>
                     <TableCell className="text-right">{sale.quantity}</TableCell>
-                    <TableCell className="text-right">${sale.totalPrice.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">${sale.total_price.toLocaleString()}</TableCell>
                     <TableCell>
-                      <StatusBadge status={sale.deliveryStatus} />
+                      <StatusBadge status={sale.delivery_status} />
                     </TableCell>
                     <TableCell>{sale.date}</TableCell>
+                    <TableCell className="text-right">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Sale</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this sale record? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeleteSale(sale.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

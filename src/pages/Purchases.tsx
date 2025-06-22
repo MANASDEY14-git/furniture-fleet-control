@@ -1,14 +1,17 @@
 
 import { useState, useMemo } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StoreSelector from '@/components/StoreSelector';
-import { purchases, stores, items } from '@/data/mockData';
+import { usePurchases, useCreatePurchase, useDeletePurchase } from '@/hooks/usePurchases';
+import { useItems } from '@/hooks/useItems';
+import { useStores } from '@/hooks/useStores';
 
 export default function Purchases() {
   const [selectedStore, setSelectedStore] = useState('all');
@@ -24,26 +27,46 @@ export default function Purchases() {
     date: new Date().toISOString().split('T')[0],
   });
 
+  const { data: purchases = [], isLoading: purchasesLoading } = usePurchases();
+  const { data: items = [] } = useItems();
+  const { data: stores = [] } = useStores();
+  const createPurchase = useCreatePurchase();
+  const deletePurchase = useDeletePurchase();
+
   const filteredPurchases = useMemo(() => {
     return purchases.filter(purchase => {
-      const matchesStore = selectedStore === 'all' || purchase.storeId === selectedStore;
-      const matchesSearch = purchase.itemName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStore = selectedStore === 'all' || purchase.store_id === selectedStore;
+      const matchesSearch = purchase.item_name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStore && matchesSearch;
     });
-  }, [selectedStore, searchTerm]);
+  }, [purchases, selectedStore, searchTerm]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
 
   const getTotalCost = () => {
-    return filteredPurchases.reduce((sum, purchase) => sum + purchase.totalCost, 0);
+    return filteredPurchases.reduce((sum, purchase) => sum + purchase.total_cost, 0);
+  };
+
+  const getItemName = (itemId: string) => {
+    return items.find(item => item.id === itemId)?.name || '';
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('New purchase:', formData);
-    // Here you would typically save to your backend
+    
+    const itemName = getItemName(formData.itemId);
+    
+    createPurchase.mutate({
+      store_id: formData.storeId,
+      item_id: formData.itemId,
+      item_name: itemName,
+      quantity: parseInt(formData.quantity),
+      total_cost: parseFloat(formData.totalCost),
+      date: formData.date,
+    });
+    
     setShowForm(false);
     setFormData({
       storeId: '',
@@ -53,6 +76,18 @@ export default function Purchases() {
       date: new Date().toISOString().split('T')[0],
     });
   };
+
+  const handleDeletePurchase = (purchaseId: string) => {
+    deletePurchase.mutate(purchaseId);
+  };
+
+  if (purchasesLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading purchases...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -80,7 +115,7 @@ export default function Purchases() {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="store">Store</Label>
-                <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})}>
+                <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select store" />
                   </SelectTrigger>
@@ -96,7 +131,7 @@ export default function Purchases() {
               
               <div className="space-y-2">
                 <Label htmlFor="item">Item</Label>
-                <Select value={formData.itemId} onValueChange={(value) => setFormData({...formData, itemId: value})}>
+                <Select value={formData.itemId} onValueChange={(value) => setFormData({...formData, itemId: value})} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select item" />
                   </SelectTrigger>
@@ -118,6 +153,8 @@ export default function Purchases() {
                   placeholder="Enter quantity"
                   value={formData.quantity}
                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  required
+                  min="1"
                 />
               </div>
 
@@ -126,9 +163,12 @@ export default function Purchases() {
                 <Input
                   id="totalCost"
                   type="number"
+                  step="0.01"
                   placeholder="Enter total cost"
                   value={formData.totalCost}
                   onChange={(e) => setFormData({...formData, totalCost: e.target.value})}
+                  required
+                  min="0"
                 />
               </div>
 
@@ -139,12 +179,13 @@ export default function Purchases() {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  required
                 />
               </div>
 
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                  Record Purchase
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={createPurchase.isPending}>
+                  {createPurchase.isPending ? 'Recording Purchase...' : 'Record Purchase'}
                 </Button>
               </div>
             </form>
@@ -194,19 +235,46 @@ export default function Purchases() {
                   <TableHead className="text-right">Total Cost</TableHead>
                   <TableHead className="text-right">Cost per Unit</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPurchases.map((purchase) => (
                   <TableRow key={purchase.id}>
-                    <TableCell className="font-medium">{purchase.itemName}</TableCell>
-                    <TableCell>{getStoreName(purchase.storeId)}</TableCell>
+                    <TableCell className="font-medium">{purchase.item_name}</TableCell>
+                    <TableCell>{getStoreName(purchase.store_id)}</TableCell>
                     <TableCell className="text-right">{purchase.quantity}</TableCell>
-                    <TableCell className="text-right">${purchase.totalCost.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">${purchase.total_cost.toLocaleString()}</TableCell>
                     <TableCell className="text-right">
-                      ${(purchase.totalCost / purchase.quantity).toFixed(2)}
+                      ${(purchase.total_cost / purchase.quantity).toFixed(2)}
                     </TableCell>
                     <TableCell>{purchase.date}</TableCell>
+                    <TableCell className="text-right">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Purchase</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this purchase record? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeletePurchase(purchase.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
