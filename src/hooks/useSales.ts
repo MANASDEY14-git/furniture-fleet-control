@@ -1,9 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-export type DeliveryStatus = 'Pending' | 'Paid in Full' | 'Delivered';
+import { DeliveryStatus, CreateSaleData } from '@/types';
 
 export interface Sale {
   id: string;
@@ -15,16 +13,6 @@ export interface Sale {
   delivery_status: DeliveryStatus;
   date: string;
   created_at: string;
-}
-
-export interface CreateSaleData {
-  store_id: string;
-  item_id: string;
-  item_name: string;
-  quantity: number;
-  total_price: number;
-  delivery_status: DeliveryStatus;
-  date: string;
 }
 
 export const useSales = () => {

@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import StoreSelector from '@/components/StoreSelector';
 import StatusBadge from '@/components/StatusBadge';
 import { useSales, useCreateSale, useDeleteSale } from '@/hooks/useSales';
-import type { DeliveryStatus } from '@/types';
+import { DeliveryStatus } from '@/types';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 
@@ -36,7 +36,7 @@ export default function Sales() {
     itemId: '',
     quantity: '',
     totalPrice: '',
-    deliveryStatus: 'Pending',
+    deliveryStatus: DeliveryStatus.Pending,
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -88,7 +88,7 @@ export default function Sales() {
       itemId: '',
       quantity: '',
       totalPrice: '',
-      deliveryStatus: 'Pending',
+      deliveryStatus: DeliveryStatus.Pending,
       date: new Date().toISOString().split('T')[0],
     });
   };
@@ -198,9 +198,9 @@ export default function Sales() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Paid in Full">Paid in Full</SelectItem>
-                    <SelectItem value="Delivered">Delivered</SelectItem>
+                    <SelectItem value={DeliveryStatus.Pending}>Pending</SelectItem>
+                    <SelectItem value={DeliveryStatus.PaidInFull}>Paid in Full</SelectItem>
+                    <SelectItem value={DeliveryStatus.Delivered}>Delivered</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

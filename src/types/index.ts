@@ -1,7 +1,10 @@
+
 export interface Store {
   id: string;
   name: string;
   location: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Item {
@@ -12,6 +15,16 @@ export interface Item {
   quantity_available: number;
   cost_price: number;
   selling_price: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export enum DeliveryStatus {
+  Pending = 'Pending',
+  Shipped = 'Shipped',
+  Delivered = 'Delivered',
+  Cancelled = 'Cancelled',
+  PaidInFull = 'Paid in Full'
 }
 
 export interface Sale {
@@ -23,6 +36,7 @@ export interface Sale {
   total_price: number;
   delivery_status: DeliveryStatus;
   date: string;
+  created_at?: string;
 }
 
 export interface Purchase {
@@ -33,6 +47,26 @@ export interface Purchase {
   quantity: number;
   total_cost: number;
   date: string;
+  created_at?: string;
+}
+
+export interface CreatePurchaseData {
+  store_id: string;
+  item_id: string;
+  item_name: string;
+  quantity: number;
+  total_cost: number;
+  date: string;
+}
+
+export interface CreateSaleData {
+  store_id: string;
+  item_id: string;
+  item_name: string;
+  quantity: number;
+  total_price: number;
+  delivery_status: DeliveryStatus;
+  date: string;
 }
 
 export interface Payment {
@@ -42,6 +76,7 @@ export interface Payment {
   type: string;
   date: string;
   description?: string;
+  created_at?: string;
 }
 
 export interface DashboardMetrics {
@@ -49,6 +84,14 @@ export interface DashboardMetrics {
   totalStockValue: number;
   paymentsReceived: number;
   pendingDeliveries: number;
+}
+
+export interface EnhancedDashboardMetrics extends DashboardMetrics {
+  totalProfitToday: number;
+  profitMarginPercentage: number;
+  totalSales: number;
+  totalPurchases: number;
+  totalProfit: number;
 }
 
 export interface TopSellingItem {
@@ -81,9 +124,10 @@ export interface ItemFormValues {
   selling_price: number;
 }
 
-export enum DeliveryStatus {
-  Pending = 'Pending',
-  Shipped = 'Shipped',
-  Delivered = 'Delivered',
-  Cancelled = 'Cancelled',
+export interface SalesTrendData {
+  date: string;
+  sales: number;
+  profit: number;
 }
+
+export type DateFilter = 'today' | 'week' | 'month' | 'custom';

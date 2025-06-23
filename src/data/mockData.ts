@@ -1,5 +1,5 @@
 
-import { Store, Item, Sale, Purchase, Payment } from '@/types';
+import { Store, Item, Sale, Purchase, Payment, DeliveryStatus } from '@/types';
 
 export const stores: Store[] = [
   { id: '1', name: 'Downtown Furniture', location: 'Downtown' },
@@ -20,9 +20,9 @@ export const items: Item[] = [
 ];
 
 export const sales: Sale[] = [
-  { id: '1', store_id: '1', item_id: '1', item_name: 'Oak Dining Table', quantity: 1, total_price: 799, delivery_status: 'Delivered', date: '2024-06-22' },
-  { id: '2', store_id: '1', item_id: '2', item_name: 'Leather Sofa', quantity: 1, total_price: 1299, delivery_status: 'Pending', date: '2024-06-22' },
-  { id: '3', store_id: '2', item_id: '3', item_name: 'Queen Bed Frame', quantity: 2, total_price: 1198, delivery_status: 'Delivered', date: '2024-06-21' },
+  { id: '1', store_id: '1', item_id: '1', item_name: 'Oak Dining Table', quantity: 1, total_price: 799, delivery_status: DeliveryStatus.Delivered, date: '2024-06-22' },
+  { id: '2', store_id: '1', item_id: '2', item_name: 'Leather Sofa', quantity: 1, total_price: 1299, delivery_status: DeliveryStatus.Pending, date: '2024-06-22' },
+  { id: '3', store_id: '2', item_id: '3', item_name: 'Queen Bed Frame', quantity: 2, total_price: 1198, delivery_status: DeliveryStatus.Delivered, date: '2024-06-21' },
 ];
 
 export const purchases: Purchase[] = [
