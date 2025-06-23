@@ -11,29 +11,29 @@ export const stores: Store[] = [
 ];
 
 export const items: Item[] = [
-  { id: '1', name: 'Oak Dining Table', category: 'Dining', storeId: '1', quantityAvailable: 5, costPrice: 500, sellingPrice: 799 },
-  { id: '2', name: 'Leather Sofa', category: 'Living Room', storeId: '1', quantityAvailable: 3, costPrice: 800, sellingPrice: 1299 },
-  { id: '3', name: 'Queen Bed Frame', category: 'Bedroom', storeId: '2', quantityAvailable: 8, costPrice: 300, sellingPrice: 599 },
-  { id: '4', name: 'Office Chair', category: 'Office', storeId: '2', quantityAvailable: 12, costPrice: 150, sellingPrice: 299 },
-  { id: '5', name: 'Coffee Table', category: 'Living Room', storeId: '3', quantityAvailable: 6, costPrice: 200, sellingPrice: 399 },
-  { id: '6', name: 'Wardrobe', category: 'Bedroom', storeId: '3', quantityAvailable: 4, costPrice: 600, sellingPrice: 999 },
+  { id: '1', name: 'Oak Dining Table', category_id: 'cat1', store_id: '1', quantity_available: 5, cost_price: 500, selling_price: 799 },
+  { id: '2', name: 'Leather Sofa', category_id: 'cat2', store_id: '1', quantity_available: 3, cost_price: 800, selling_price: 1299 },
+  { id: '3', name: 'Queen Bed Frame', category_id: 'cat3', store_id: '2', quantity_available: 8, cost_price: 300, selling_price: 599 },
+  { id: '4', name: 'Office Chair', category_id: 'cat4', store_id: '2', quantity_available: 12, cost_price: 150, selling_price: 299 },
+  { id: '5', name: 'Coffee Table', category_id: 'cat2', store_id: '3', quantity_available: 6, cost_price: 200, selling_price: 399 },
+  { id: '6', name: 'Wardrobe', category_id: 'cat3', store_id: '3', quantity_available: 4, cost_price: 600, selling_price: 999 },
 ];
 
 export const sales: Sale[] = [
-  { id: '1', storeId: '1', itemId: '1', itemName: 'Oak Dining Table', quantity: 1, totalPrice: 799, deliveryStatus: 'Delivered', date: '2024-06-22' },
-  { id: '2', storeId: '1', itemId: '2', itemName: 'Leather Sofa', quantity: 1, totalPrice: 1299, deliveryStatus: 'Pending', date: '2024-06-22' },
-  { id: '3', storeId: '2', itemId: '3', itemName: 'Queen Bed Frame', quantity: 2, totalPrice: 1198, deliveryStatus: 'Delivered', date: '2024-06-21' },
+  { id: '1', store_id: '1', item_id: '1', item_name: 'Oak Dining Table', quantity: 1, total_price: 799, delivery_status: 'Delivered', date: '2024-06-22' },
+  { id: '2', store_id: '1', item_id: '2', item_name: 'Leather Sofa', quantity: 1, total_price: 1299, delivery_status: 'Pending', date: '2024-06-22' },
+  { id: '3', store_id: '2', item_id: '3', item_name: 'Queen Bed Frame', quantity: 2, total_price: 1198, delivery_status: 'Delivered', date: '2024-06-21' },
 ];
 
 export const purchases: Purchase[] = [
-  { id: '1', storeId: '1', itemId: '1', itemName: 'Oak Dining Table', quantity: 10, totalCost: 5000, date: '2024-06-20' },
-  { id: '2', storeId: '2', itemId: '3', itemName: 'Queen Bed Frame', quantity: 15, totalCost: 4500, date: '2024-06-19' },
+  { id: '1', store_id: '1', item_id: '1', item_name: 'Oak Dining Table', quantity: 10, total_cost: 5000, date: '2024-06-20' },
+  { id: '2', store_id: '2', item_id: '3', item_name: 'Queen Bed Frame', quantity: 15, total_cost: 4500, date: '2024-06-19' },
 ];
 
 export const payments: Payment[] = [
-  { id: '1', storeId: '1', amount: 2098, type: 'Receipt', date: '2024-06-22', description: 'Daily sales' },
-  { id: '2', storeId: '2', amount: 1198, type: 'Receipt', date: '2024-06-21', description: 'Bed frame sales' },
-  { id: '3', storeId: '1', amount: 5000, type: 'Payment', date: '2024-06-20', description: 'Inventory purchase' },
+  { id: '1', store_id: '1', amount: 2098, type: 'Receipt', date: '2024-06-22', description: 'Daily sales' },
+  { id: '2', store_id: '2', amount: 1198, type: 'Receipt', date: '2024-06-21', description: 'Bed frame sales' },
+  { id: '3', store_id: '1', amount: 5000, type: 'Payment', date: '2024-06-20', description: 'Inventory purchase' },
 ];
 
 export const categories = ['Living Room', 'Bedroom', 'Dining', 'Office', 'Kitchen', 'Outdoor'];

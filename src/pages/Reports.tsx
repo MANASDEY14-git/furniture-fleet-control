@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import StoreSelector from '@/components/StoreSelector';
-import { sales, purchases, payments, stores, items } from '@/data/mockData';
+import { sales, purchases, payments, items } from '@/data/mockData';
 import { useStores } from '@/hooks/useStores';
 
 export default function Reports() {
@@ -18,40 +18,40 @@ export default function Reports() {
 
   const reportData = useMemo(() => {
     const filteredSales = sales.filter(sale => {
-      const matchesStore = selectedStore === 'all' || sale.storeId === selectedStore;
+      const matchesStore = selectedStore === 'all' || sale.store_id === selectedStore;
       const matchesDate = sale.date >= dateFrom && sale.date <= dateTo;
       return matchesStore && matchesDate;
     });
 
     const filteredPurchases = purchases.filter(purchase => {
-      const matchesStore = selectedStore === 'all' || purchase.storeId === selectedStore;
+      const matchesStore = selectedStore === 'all' || purchase.store_id === selectedStore;
       const matchesDate = purchase.date >= dateFrom && purchase.date <= dateTo;
       return matchesStore && matchesDate;
     });
 
     const filteredPayments = payments.filter(payment => {
-      const matchesStore = selectedStore === 'all' || payment.storeId === selectedStore;
+      const matchesStore = selectedStore === 'all' || payment.store_id === selectedStore;
       const matchesDate = payment.date >= dateFrom && payment.date <= dateTo;
       return matchesStore && matchesDate;
     });
 
-    const totalSales = filteredSales.reduce((sum, sale) => sum + sale.totalPrice, 0);
-    const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + purchase.totalCost, 0);
+    const totalSales = filteredSales.reduce((sum, sale) => sum + sale.total_price, 0);
+    const totalPurchases = filteredPurchases.reduce((sum, purchase) => sum + purchase.total_cost, 0);
     const totalReceipts = filteredPayments.filter(p => p.type === 'Receipt').reduce((sum, p) => sum + p.amount, 0);
     const totalPayments = filteredPayments.filter(p => p.type === 'Payment').reduce((sum, p) => sum + p.amount, 0);
 
     // Store-wise breakdown
     const storeBreakdown = stores.map(store => {
-      const storeSales = filteredSales.filter(s => s.storeId === store.id);
-      const storePurchases = filteredPurchases.filter(p => p.storeId === store.id);
-      const storeItems = items.filter(i => i.storeId === store.id);
+      const storeSales = filteredSales.filter(s => s.store_id === store.id);
+      const storePurchases = filteredPurchases.filter(p => p.store_id === store.id);
+      const storeItems = items.filter(i => i.store_id === store.id);
       
       return {
         store: store.name,
-        sales: storeSales.reduce((sum, s) => sum + s.totalPrice, 0),
-        purchases: storePurchases.reduce((sum, p) => sum + p.totalCost, 0),
-        inventory: storeItems.reduce((sum, i) => sum + (i.quantityAvailable * i.costPrice), 0),
-        profit: storeSales.reduce((sum, s) => sum + s.totalPrice, 0) - storePurchases.reduce((sum, p) => sum + p.totalCost, 0),
+        sales: storeSales.reduce((sum, s) => sum + s.total_price, 0),
+        purchases: storePurchases.reduce((sum, p) => sum + p.total_cost, 0),
+        inventory: storeItems.reduce((sum, i) => sum + (i.quantity_available * i.cost_price), 0),
+        profit: storeSales.reduce((sum, s) => sum + s.total_price, 0) - storePurchases.reduce((sum, p) => sum + p.total_cost, 0),
       };
     });
 
@@ -65,7 +65,7 @@ export default function Reports() {
       salesCount: filteredSales.length,
       purchasesCount: filteredPurchases.length,
     };
-  }, [selectedStore, dateFrom, dateTo]);
+  }, [selectedStore, dateFrom, dateTo, stores]);
 
   const handleExport = (format: 'csv' | 'excel') => {
     console.log(`Exporting report as ${format}`);
