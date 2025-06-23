@@ -3,8 +3,6 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Store } from '@/types';
 
-
-
 interface StoreSelectorProps {
   value: string;
   onValueChange: (value: string) => void;

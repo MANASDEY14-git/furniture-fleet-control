@@ -2,31 +2,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-export interface Purchase {
-  id: string;
-  store_id: string;
-  item_id: string;
-  item_name: string;
-  quantity: number;
-  total_cost: number;
-  date: string;
-  created_at: string;
-}
-
-export interface CreatePurchaseData {
-  store_id: string;
-  item_id: string;
-  item_name: string;
-  quantity: number;
-  total_cost: number;
-  date: string;
-}
+import type { Purchase, CreatePurchaseData } from '@/types';
 
 export const usePurchases = () => {
   return useQuery({
     queryKey: ['purchases'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Purchase[]> => {
       const { data, error } = await supabase
         .from('purchases')
         .select('*')

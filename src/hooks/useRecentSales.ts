@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { Sale } from '@/hooks/useSales';
+import type { Sale } from '@/types';
 
 export const useRecentSales = (selectedStore: string, limit: number = 5) => {
   return useQuery({
