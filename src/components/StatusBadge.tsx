@@ -14,6 +14,8 @@ export default function StatusBadge({ status, variant = 'default' }: StatusBadge
         return 'default';
       case 'pending':
         return 'secondary';
+      case 'paid in full':
+        return 'default';
       case 'payment':
         return 'destructive';
       case 'receipt':
@@ -29,6 +31,8 @@ export default function StatusBadge({ status, variant = 'default' }: StatusBadge
         return 'bg-green-100 text-green-800 hover:bg-green-100';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+      case 'paid in full':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-100';
       case 'payment':
         return 'bg-red-100 text-red-800 hover:bg-red-100';
       case 'receipt':

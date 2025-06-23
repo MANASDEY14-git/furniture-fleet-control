@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import StoreSelector from '@/components/StoreSelector';
 import StatusBadge from '@/components/StatusBadge';
 import { useSales, useCreateSale, useDeleteSale } from '@/hooks/useSales';
+import type { DeliveryStatus } from '@/types';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 
@@ -21,12 +22,21 @@ export default function Sales() {
   const [showForm, setShowForm] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({
+  interface FormData {
+    storeId: string;
+    itemId: string;
+    quantity: string;
+    totalPrice: string;
+    deliveryStatus: DeliveryStatus;
+    date: string;
+  }
+
+  const [formData, setFormData] = useState<FormData>({
     storeId: '',
     itemId: '',
     quantity: '',
     totalPrice: '',
-    deliveryStatus: 'Pending' as 'Pending' | 'Delivered',
+    deliveryStatus: 'Pending',
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -180,12 +190,16 @@ export default function Sales() {
 
               <div className="space-y-2">
                 <Label htmlFor="deliveryStatus">Delivery Status</Label>
-                <Select value={formData.deliveryStatus} onValueChange={(value: 'Pending' | 'Delivered') => setFormData({...formData, deliveryStatus: value})}>
+                <Select 
+                  value={formData.deliveryStatus} 
+                  onValueChange={(value: DeliveryStatus) => setFormData({...formData, deliveryStatus: value})}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Paid in Full">Paid in Full</SelectItem>
                     <SelectItem value="Delivered">Delivered</SelectItem>
                   </SelectContent>
                 </Select>
@@ -228,6 +242,9 @@ export default function Sales() {
             <StoreSelector 
               value={selectedStore} 
               onValueChange={setSelectedStore}
+              stores={stores}
+              isLoading={false}
+              placeholder="All stores"
             />
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger>
@@ -236,12 +253,13 @@ export default function Sales() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Paid in Full">Paid in Full</SelectItem>
                 <SelectItem value="Delivered">Delivered</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex items-center justify-center bg-green-50 rounded-md px-4 py-2">
               <span className="text-sm font-medium text-green-700">
-                Total Sales: ${getTotalSales().toLocaleString()}
+                Total Sales: ₹{getTotalSales().toLocaleString('en-IN')}
               </span>
             </div>
           </div>
@@ -273,7 +291,7 @@ export default function Sales() {
                     <TableCell className="font-medium">{sale.item_name}</TableCell>
                     <TableCell>{getStoreName(sale.store_id)}</TableCell>
                     <TableCell className="text-right">{sale.quantity}</TableCell>
-                    <TableCell className="text-right">${sale.total_price.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">₹{sale.total_price.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
                       <StatusBadge status={sale.delivery_status} />
                     </TableCell>

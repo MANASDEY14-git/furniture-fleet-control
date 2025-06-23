@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export type DeliveryStatus = 'Pending' | 'Paid in Full' | 'Delivered';
+
 export interface Sale {
   id: string;
   store_id: string;
@@ -10,7 +12,7 @@ export interface Sale {
   item_name: string;
   quantity: number;
   total_price: number;
-  delivery_status: 'Pending' | 'Delivered';
+  delivery_status: DeliveryStatus;
   date: string;
   created_at: string;
 }
@@ -21,7 +23,7 @@ export interface CreateSaleData {
   item_name: string;
   quantity: number;
   total_price: number;
-  delivery_status: 'Pending' | 'Delivered';
+  delivery_status: DeliveryStatus;
   date: string;
 }
 
@@ -55,14 +57,29 @@ export const useCreateSale = () => {
 
       if (saleError) throw saleError;
 
+      // Get current item quantity
+      const { data: item, error: itemError } = await supabase
+        .from('items')
+        .select('quantity_available')
+        .eq('id', data.item_id)
+        .single();
+
+      if (itemError) {
+        await supabase.from('sales').delete().eq('id', sale.id);
+        throw itemError;
+      }
+
       // Update item quantity
-      const { error: updateError } = await supabase.rpc('decrease_item_quantity', {
-        item_id: data.item_id,
-        quantity_to_decrease: data.quantity
-      });
+      const { error: updateError } = await supabase
+        .from('items')
+        .update({ 
+          quantity_available: (item.quantity_available || 0) - data.quantity,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.item_id);
 
       if (updateError) {
-        // If updating inventory fails, we should rollback the sale
+        // If updating inventory fails, rollback the sale
         await supabase.from('sales').delete().eq('id', sale.id);
         throw updateError;
       }

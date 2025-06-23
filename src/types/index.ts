@@ -3,6 +3,8 @@ export interface Store {
   id: string;
   name: string;
   location: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Item {
@@ -15,6 +17,8 @@ export interface Item {
   sellingPrice: number;
 }
 
+export type DeliveryStatus = 'Pending' | 'Paid in Full' | 'Delivered';
+
 export interface Sale {
   id: string;
   storeId: string;
@@ -22,7 +26,7 @@ export interface Sale {
   itemName: string;
   quantity: number;
   totalPrice: number;
-  deliveryStatus: 'Pending' | 'Delivered';
+  deliveryStatus: DeliveryStatus;
   date: string;
 }
 
