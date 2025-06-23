@@ -26,20 +26,20 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <SettingsIcon className="w-8 h-8 text-blue-600" />
+        <SettingsIcon className="w-8 h-8 text-cyan-400" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Manage stores and categories</p>
+          <h1 className="text-3xl font-bold glow-text">System Configuration</h1>
+          <p className="text-blue-300">Manage stores and categories</p>
         </div>
       </div>
 
       {/* Stores Management */}
-      <Card>
+      <Card className="futuristic-card">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Stores</CardTitle>
+          <CardTitle className="text-cyan-300 glow-text">Store Registry</CardTitle>
           <StoreForm
             trigger={
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="cyber-button text-white font-semibold">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Store
               </Button>
@@ -49,49 +49,49 @@ export default function Settings() {
         <CardContent>
           {storesLoading ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">Loading stores...</p>
+              <p className="text-blue-300">Loading stores...</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="data-grid">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="border-blue-500/30">
+                    <TableHead className="text-blue-200">Name</TableHead>
+                    <TableHead className="text-blue-200">Location</TableHead>
+                    <TableHead className="text-right text-blue-200">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {stores.map((store) => (
-                    <TableRow key={store.id}>
-                      <TableCell className="font-medium">{store.name}</TableCell>
-                      <TableCell>{store.location}</TableCell>
+                    <TableRow key={store.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                      <TableCell className="font-medium text-blue-100">{store.name}</TableCell>
+                      <TableCell className="text-blue-200">{store.location}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <StoreForm
                             store={store}
                             trigger={
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
                                 <Pencil className="w-4 h-4" />
                               </Button>
                             }
                           />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                              <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="futuristic-card">
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Store</AlertDialogTitle>
-                                <AlertDialogDescription>
+                                <AlertDialogTitle className="text-cyan-300">Delete Store</AlertDialogTitle>
+                                <AlertDialogDescription className="text-blue-200">
                                   Are you sure you want to delete "{store.name}"? This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteStore(store.id)}>
+                                <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteStore(store.id)} className="bg-red-600 hover:bg-red-700 text-white">
                                   Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -107,19 +107,19 @@ export default function Settings() {
           )}
           {stores.length === 0 && !storesLoading && (
             <div className="text-center py-8">
-              <p className="text-gray-500">No stores found. Add your first store above.</p>
+              <p className="text-blue-300">No stores found. Add your first store above.</p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Categories Management */}
-      <Card>
+      <Card className="futuristic-card">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Categories</CardTitle>
+          <CardTitle className="text-cyan-300 glow-text">Category Database</CardTitle>
           <CategoryForm
             trigger={
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="cyber-button text-white font-semibold">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Category
               </Button>
@@ -129,47 +129,47 @@ export default function Settings() {
         <CardContent>
           {categoriesLoading ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">Loading categories...</p>
+              <p className="text-blue-300">Loading categories...</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="data-grid">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="border-blue-500/30">
+                    <TableHead className="text-blue-200">Name</TableHead>
+                    <TableHead className="text-right text-blue-200">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {categories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableRow key={category.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                      <TableCell className="font-medium text-blue-100">{category.name}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <CategoryForm
                             category={category}
                             trigger={
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
                                 <Pencil className="w-4 h-4" />
                               </Button>
                             }
                           />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                              <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="futuristic-card">
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                                <AlertDialogDescription>
+                                <AlertDialogTitle className="text-cyan-300">Delete Category</AlertDialogTitle>
+                                <AlertDialogDescription className="text-blue-200">
                                   Are you sure you want to delete "{category.name}"? This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteCategory(category.id)}>
+                                <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteCategory(category.id)} className="bg-red-600 hover:bg-red-700 text-white">
                                   Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -185,7 +185,7 @@ export default function Settings() {
           )}
           {categories.length === 0 && !categoriesLoading && (
             <div className="text-center py-8">
-              <p className="text-gray-500">No categories found. Add your first category above.</p>
+              <p className="text-blue-300">No categories found. Add your first category above.</p>
             </div>
           )}
         </CardContent>

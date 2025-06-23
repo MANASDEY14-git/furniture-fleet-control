@@ -100,7 +100,7 @@ export default function Sales() {
   if (salesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading sales...</div>
+        <div className="text-lg glow-text">Loading sales...</div>
       </div>
     );
   }
@@ -109,12 +109,12 @@ export default function Sales() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales</h1>
-          <p className="text-gray-600">Track and manage sales</p>
+          <h1 className="text-3xl font-bold glow-text">Sales Command Center</h1>
+          <p className="text-blue-300">Track and manage sales operations</p>
         </div>
         <Button 
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="cyber-button text-white font-semibold"
         >
           <Plus className="w-4 h-4 mr-2" />
           {showForm ? 'Cancel' : 'Add Sale'}
@@ -123,21 +123,21 @@ export default function Sales() {
 
       {/* Add Sale Form */}
       {showForm && (
-        <Card>
+        <Card className="futuristic-card">
           <CardHeader>
-            <CardTitle>Add New Sale</CardTitle>
+            <CardTitle className="text-cyan-300 glow-text">Add New Sale</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="store">Store</Label>
+                <Label htmlFor="store" className="text-blue-200">Store</Label>
                 <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue placeholder="Select store" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-slate-800 border-blue-500/30">
                     {stores.map((store) => (
-                      <SelectItem key={store.id} value={store.id}>
+                      <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
                         {store.name}
                       </SelectItem>
                     ))}
@@ -146,14 +146,14 @@ export default function Sales() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="item">Item</Label>
+                <Label htmlFor="item" className="text-blue-200">Item</Label>
                 <Select value={formData.itemId} onValueChange={(value) => setFormData({...formData, itemId: value})} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue placeholder="Select item" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-slate-800 border-blue-500/30">
                     {items.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
+                      <SelectItem key={item.id} value={item.id} className="text-blue-100 focus:bg-blue-800/30">
                         {item.name} (Available: {item.quantity_available})
                       </SelectItem>
                     ))}
@@ -162,7 +162,7 @@ export default function Sales() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
+                <Label htmlFor="quantity" className="text-blue-200">Quantity</Label>
                 <Input
                   id="quantity"
                   type="number"
@@ -171,11 +171,12 @@ export default function Sales() {
                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
                   required
                   min="1"
+                  className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="totalPrice">Total Price</Label>
+                <Label htmlFor="totalPrice" className="text-blue-200">Total Price</Label>
                 <Input
                   id="totalPrice"
                   type="number"
@@ -185,40 +186,42 @@ export default function Sales() {
                   onChange={(e) => setFormData({...formData, totalPrice: e.target.value})}
                   required
                   min="0"
+                  className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="deliveryStatus">Delivery Status</Label>
+                <Label htmlFor="deliveryStatus" className="text-blue-200">Delivery Status</Label>
                 <Select 
                   value={formData.deliveryStatus} 
                   onValueChange={(value: DeliveryStatus) => setFormData({...formData, deliveryStatus: value})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={DeliveryStatus.Pending}>Pending</SelectItem>
-                    <SelectItem value={DeliveryStatus.PaidInFull}>Paid in Full</SelectItem>
-                    <SelectItem value={DeliveryStatus.Delivered}>Delivered</SelectItem>
+                  <SelectContent className="bg-slate-800 border-blue-500/30">
+                    <SelectItem value={DeliveryStatus.Pending} className="text-blue-100 focus:bg-blue-800/30">Pending</SelectItem>
+                    <SelectItem value={DeliveryStatus.PaidInFull} className="text-blue-100 focus:bg-blue-800/30">Paid in Full</SelectItem>
+                    <SelectItem value={DeliveryStatus.Delivered} className="text-blue-100 focus:bg-blue-800/30">Delivered</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date" className="text-blue-200">Date</Label>
                 <Input
                   id="date"
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
                   required
+                  className="neon-border bg-slate-800/50 text-blue-100"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={createSale.isPending}>
-                  {createSale.isPending ? 'Adding Sale...' : 'Add Sale'}
+                <Button type="submit" className="w-full cyber-button text-white font-semibold" disabled={createSale.isPending}>
+                  {createSale.isPending ? 'Processing Sale...' : 'Execute Sale'}
                 </Button>
               </div>
             </form>
@@ -227,16 +230,16 @@ export default function Sales() {
       )}
 
       {/* Filters */}
-      <Card>
+      <Card className="futuristic-card">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
               <Input
                 placeholder="Search items..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
               />
             </div>
             <StoreSelector 
@@ -247,18 +250,18 @@ export default function Sales() {
               placeholder="All stores"
             />
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger>
+              <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Paid in Full">Paid in Full</SelectItem>
-                <SelectItem value="Delivered">Delivered</SelectItem>
+              <SelectContent className="bg-slate-800 border-blue-500/30">
+                <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Statuses</SelectItem>
+                <SelectItem value="Pending" className="text-blue-100 focus:bg-blue-800/30">Pending</SelectItem>
+                <SelectItem value="Paid in Full" className="text-blue-100 focus:bg-blue-800/30">Paid in Full</SelectItem>
+                <SelectItem value="Delivered" className="text-blue-100 focus:bg-blue-800/30">Delivered</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex items-center justify-center bg-green-50 rounded-md px-4 py-2">
-              <span className="text-sm font-medium text-green-700">
+            <div className="flex items-center justify-center neon-border bg-gradient-to-r from-green-400/10 to-cyan-400/10 rounded-md px-4 py-2">
+              <span className="text-sm font-medium text-cyan-300 glow-text">
                 Total Sales: ₹{getTotalSales().toLocaleString('en-IN')}
               </span>
             </div>
@@ -267,54 +270,54 @@ export default function Sales() {
       </Card>
 
       {/* Sales Table */}
-      <Card>
+      <Card className="futuristic-card">
         <CardHeader>
-          <CardTitle>Sales ({filteredSales.length})</CardTitle>
+          <CardTitle className="text-cyan-300 glow-text">Sales Database ({filteredSales.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="data-grid">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Store</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
-                  <TableHead className="text-right">Total Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-blue-500/30">
+                  <TableHead className="text-blue-200">Item</TableHead>
+                  <TableHead className="text-blue-200">Store</TableHead>
+                  <TableHead className="text-right text-blue-200">Quantity</TableHead>
+                  <TableHead className="text-right text-blue-200">Total Price</TableHead>
+                  <TableHead className="text-blue-200">Status</TableHead>
+                  <TableHead className="text-blue-200">Date</TableHead>
+                  <TableHead className="text-right text-blue-200">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSales.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell className="font-medium">{sale.item_name}</TableCell>
-                    <TableCell>{getStoreName(sale.store_id)}</TableCell>
-                    <TableCell className="text-right">{sale.quantity}</TableCell>
-                    <TableCell className="text-right">₹{sale.total_price.toLocaleString('en-IN')}</TableCell>
+                  <TableRow key={sale.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                    <TableCell className="font-medium text-blue-100">{sale.item_name}</TableCell>
+                    <TableCell className="text-blue-200">{getStoreName(sale.store_id)}</TableCell>
+                    <TableCell className="text-right text-cyan-300">{sale.quantity}</TableCell>
+                    <TableCell className="text-right text-cyan-300 font-semibold">₹{sale.total_price.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
                       <StatusBadge status={sale.delivery_status} />
                     </TableCell>
-                    <TableCell>{sale.date}</TableCell>
+                    <TableCell className="text-blue-200">{sale.date}</TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                          <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="futuristic-card">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Sale</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogTitle className="text-cyan-300">Delete Sale</AlertDialogTitle>
+                            <AlertDialogDescription className="text-blue-200">
                               Are you sure you want to delete this sale record? This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
                             <AlertDialogAction 
                               onClick={() => handleDeleteSale(sale.id)}
-                              className="bg-red-600 hover:bg-red-700"
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               Delete
                             </AlertDialogAction>
@@ -329,7 +332,7 @@ export default function Sales() {
           </div>
           {filteredSales.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-500">No sales found matching your criteria</p>
+              <p className="text-blue-300">No sales found matching your criteria</p>
             </div>
           )}
         </CardContent>

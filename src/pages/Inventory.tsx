@@ -51,7 +51,7 @@ export default function Inventory() {
   if (itemsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading inventory...</div>
+        <div className="text-lg glow-text">Loading inventory...</div>
       </div>
     );
   }
@@ -60,12 +60,12 @@ export default function Inventory() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
-          <p className="text-gray-600">Manage your furniture inventory</p>
+          <h1 className="text-3xl font-bold glow-text">Inventory Control</h1>
+          <p className="text-blue-300">Manage your furniture inventory</p>
         </div>
         <ItemForm 
           trigger={
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="cyber-button text-white font-semibold">
               <Plus className="w-4 h-4 mr-2" />
               Add Item
             </Button>
@@ -74,16 +74,16 @@ export default function Inventory() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="futuristic-card">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
               <Input
                 placeholder="Search items..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
               />
             </div>
             <StoreSelector 
@@ -93,20 +93,20 @@ export default function Inventory() {
               isLoading={storesLoading}
             />
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
+              <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+              <SelectContent className="bg-slate-800 border-blue-500/30">
+                <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Categories</SelectItem>
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
+                  <SelectItem key={category.id} value={category.id} className="text-blue-100 focus:bg-blue-800/30">
                     {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex items-center justify-center bg-blue-50 rounded-md px-4 py-2">
-              <span className="text-sm font-medium text-blue-700">
+            <div className="flex items-center justify-center neon-border bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-md px-4 py-2">
+              <span className="text-sm font-medium text-cyan-300 glow-text">
                 Total Value: ${getTotalValue().toLocaleString()}
               </span>
             </div>
@@ -115,71 +115,71 @@ export default function Inventory() {
       </Card>
 
       {/* Inventory Table */}
-      <Card>
+      <Card className="futuristic-card">
         <CardHeader>
-          <CardTitle>Items ({filteredItems.length})</CardTitle>
+          <CardTitle className="text-cyan-300 glow-text">Inventory Database ({filteredItems.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="data-grid">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Item Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Store</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
-                  <TableHead className="text-right">Cost Price</TableHead>
-                  <TableHead className="text-right">Selling Price</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-blue-500/30">
+                  <TableHead className="text-blue-200">Item Name</TableHead>
+                  <TableHead className="text-blue-200">Category</TableHead>
+                  <TableHead className="text-blue-200">Store</TableHead>
+                  <TableHead className="text-right text-blue-200">Quantity</TableHead>
+                  <TableHead className="text-right text-blue-200">Cost Price</TableHead>
+                  <TableHead className="text-right text-blue-200">Selling Price</TableHead>
+                  <TableHead className="text-right text-blue-200">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>{getCategoryName(item.category_id)}</TableCell>
-                    <TableCell>{getStoreName(item.store_id)}</TableCell>
+                  <TableRow key={item.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                    <TableCell className="font-medium text-blue-100">{item.name}</TableCell>
+                    <TableCell className="text-blue-200">{getCategoryName(item.category_id)}</TableCell>
+                    <TableCell className="text-blue-200">{getStoreName(item.store_id)}</TableCell>
                     <TableCell className="text-right">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         item.quantity_available > 10 
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-400/20 text-green-300 border border-green-400/30'
                           : item.quantity_available > 5
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/30'
+                          : 'bg-red-400/20 text-red-300 border border-red-400/30'
                       }`}>
                         {item.quantity_available}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">${item.cost_price}</TableCell>
-                    <TableCell className="text-right">${item.selling_price}</TableCell>
+                    <TableCell className="text-right text-cyan-300">${item.cost_price}</TableCell>
+                    <TableCell className="text-right text-cyan-300 font-semibold">${item.selling_price}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <ItemForm 
                           item={item}
                           trigger={
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
                               <Pencil className="w-4 h-4" />
                             </Button>
                           }
                         />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="futuristic-card">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                              <AlertDialogDescription>
+                              <AlertDialogTitle className="text-cyan-300">Delete Item</AlertDialogTitle>
+                              <AlertDialogDescription className="text-blue-200">
                                 Are you sure you want to delete "{item.name}"? This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
                               <AlertDialogAction 
                                 onClick={() => handleDeleteItem(item.id)}
-                                className="bg-red-600 hover:bg-red-700"
+                                className="bg-red-600 hover:bg-red-700 text-white"
                               >
                                 Delete
                               </AlertDialogAction>
@@ -195,7 +195,7 @@ export default function Inventory() {
           </div>
           {filteredItems.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-500">No items found matching your criteria</p>
+              <p className="text-blue-300">No items found matching your criteria</p>
             </div>
           )}
         </CardContent>
