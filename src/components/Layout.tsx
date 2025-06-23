@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -9,22 +9,31 @@ import {
   DollarSign, 
   BarChart3, 
   Menu, 
-  X 
+  X,
+  Settings 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+// Define the type for navigation items
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const navigation = [
+const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Sales', href: '/sales', icon: ShoppingCart },
   { name: 'Purchases', href: '/purchases', icon: CreditCard },
   { name: 'Payments', href: '/payments', icon: DollarSign },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Layout({ children }: LayoutProps) {
