@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Plus, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,7 @@ export default function Payments() {
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = usePayments();
-  const { data: stores = [] } = useStores();
+  const { data: stores = [], isLoading: storesLoading } = useStores();
   const createPayment = useCreatePayment();
   const deletePayment = useDeletePayment();
 
@@ -242,6 +241,8 @@ export default function Payments() {
             <StoreSelector 
               value={selectedStore} 
               onValueChange={setSelectedStore}
+              stores={stores}
+              isLoading={storesLoading}
             />
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger>

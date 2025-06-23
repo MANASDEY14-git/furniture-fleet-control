@@ -29,7 +29,7 @@ export default function Purchases() {
 
   const { data: purchases = [], isLoading: purchasesLoading } = usePurchases();
   const { data: items = [] } = useItems();
-  const { data: stores = [] } = useStores();
+  const { data: stores = [], isLoading: storesLoading } = useStores();
   const createPurchase = useCreatePurchase();
   const deletePurchase = useDeletePurchase();
 
@@ -209,6 +209,8 @@ export default function Purchases() {
             <StoreSelector 
               value={selectedStore} 
               onValueChange={setSelectedStore}
+              stores={stores}
+              isLoading={storesLoading}
             />
             <div className="flex items-center justify-center bg-red-50 rounded-md px-4 py-2">
               <span className="text-sm font-medium text-red-700">

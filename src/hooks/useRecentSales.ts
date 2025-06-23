@@ -17,7 +17,12 @@ export const useRecentSales = (selectedStore: string, limit: number = 5) => {
         .limit(limit);
       
       if (error) throw error;
-      return data || [];
+      
+      // Type assertion to ensure delivery_status matches DeliveryStatus type
+      return (data || []).map(sale => ({
+        ...sale,
+        delivery_status: sale.delivery_status as Sale['delivery_status']
+      }));
     },
     refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
   });

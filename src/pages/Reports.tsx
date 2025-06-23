@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,11 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import StoreSelector from '@/components/StoreSelector';
 import { sales, purchases, payments, stores, items } from '@/data/mockData';
+import { useStores } from '@/hooks/useStores';
 
 export default function Reports() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [dateFrom, setDateFrom] = useState('2024-06-01');
   const [dateTo, setDateTo] = useState('2024-06-30');
+
+  const { data: stores = [], isLoading: storesLoading } = useStores();
 
   const reportData = useMemo(() => {
     const filteredSales = sales.filter(sale => {
@@ -102,6 +104,8 @@ export default function Reports() {
               <StoreSelector 
                 value={selectedStore} 
                 onValueChange={setSelectedStore}
+                stores={stores}
+                isLoading={storesLoading}
               />
             </div>
             <div className="space-y-2">

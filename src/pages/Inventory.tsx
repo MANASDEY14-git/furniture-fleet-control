@@ -19,7 +19,7 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: items = [], isLoading: itemsLoading } = useItems();
-  const { data: stores = [] } = useStores();
+  const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: categories = [] } = useCategories();
   const deleteItem = useDeleteItem();
 
@@ -89,6 +89,8 @@ export default function Inventory() {
             <StoreSelector 
               value={selectedStore} 
               onValueChange={setSelectedStore}
+              stores={stores}
+              isLoading={storesLoading}
             />
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger>

@@ -52,11 +52,26 @@ export const useCreatePurchase = () => {
 
       if (purchaseError) throw purchaseError;
 
-      // Update item quantity
-      const { error: updateError } = await supabase.rpc('increase_item_quantity', {
-        item_id: data.item_id,
-        quantity_to_increase: data.quantity
-      });
+      // Update item quantity by adding the purchased quantity
+      const { data: currentItem, error: fetchError } = await supabase
+        .from('items')
+        .select('quantity_available')
+        .eq('id', data.item_id)
+        .single();
+
+      if (fetchError) {
+        // If fetching current item fails, rollback the purchase
+        await supabase.from('purchases').delete().eq('id', purchase.id);
+        throw fetchError;
+      }
+
+      const { error: updateError } = await supabase
+        .from('items')
+        .update({ 
+          quantity_available: (currentItem.quantity_available || 0) + data.quantity,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.item_id);
 
       if (updateError) {
         // If updating inventory fails, rollback the purchase
