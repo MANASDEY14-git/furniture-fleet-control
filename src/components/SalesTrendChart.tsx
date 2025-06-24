@@ -2,6 +2,7 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 interface SalesTrendData {
   date: string;
@@ -10,10 +11,12 @@ interface SalesTrendData {
 }
 
 interface SalesTrendChartProps {
-  data: SalesTrendData[];
+  data?: SalesTrendData[];
+  dateFilter?: DateFilter;
+  customDateRange?: { from: Date; to: Date } | null;
 }
 
-export default function SalesTrendChart({ data }: SalesTrendChartProps) {
+export default function SalesTrendChart({ data = [] }: SalesTrendChartProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -22,9 +25,9 @@ export default function SalesTrendChart({ data }: SalesTrendChartProps) {
   const formatCurrency = (value: number) => `$${value.toLocaleString()}`;
 
   return (
-    <Card>
+    <Card className="futuristic-card">
       <CardHeader>
-        <CardTitle>Sales & Profit Trend</CardTitle>
+        <CardTitle className="text-cyan-300 glow-text">Sales & Profit Trend</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

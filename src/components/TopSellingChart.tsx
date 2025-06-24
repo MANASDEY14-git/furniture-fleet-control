@@ -5,16 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { TopSellingItem } from '@/types';
 
 interface TopSellingChartProps {
-  data: TopSellingItem[];
+  data?: TopSellingItem[];
 }
 
-export default function TopSellingChart({ data }: TopSellingChartProps) {
+export default function TopSellingChart({ data = [] }: TopSellingChartProps) {
   const formatCurrency = (value: number) => `$${value.toLocaleString()}`;
 
   return (
-    <Card>
+    <Card className="futuristic-card">
       <CardHeader>
-        <CardTitle>Top Selling Items</CardTitle>
+        <CardTitle className="text-cyan-300 glow-text">Top Selling Items</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

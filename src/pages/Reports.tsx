@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { BarChart3, TrendingUp, DollarSign, Package, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import MetricCard from '@/components/MetricCard';
 import SalesTrendChart from '@/components/SalesTrendChart';
 import TopSellingChart from '@/components/TopSellingChart';
@@ -14,7 +13,7 @@ import { useSales } from '@/hooks/useSales';
 import { usePurchases } from '@/hooks/usePurchases';
 import { usePayments } from '@/hooks/usePayments';
 import { useItems } from '@/hooks/useItems';
-import type { DateFilter } from '@/types';
+import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 export default function Reports() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
@@ -130,8 +129,8 @@ export default function Reports() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SalesTrendChart dateFilter={dateFilter} customDateRange={customDateRange} />
-        <TopSellingChart />
+        <SalesTrendChart data={metrics?.salesTrend || []} />
+        <TopSellingChart data={metrics?.topSellingItems || []} />
       </div>
 
       {/* Export Section */}

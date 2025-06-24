@@ -1,16 +1,16 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { DashboardMetrics, TopSellingItem, LowStockItem } from '@/types';
+import type { EnhancedDashboardMetrics, TopSellingItem, LowStockItem } from '@/types';
 
 export type DateFilter = 'today' | 'week' | 'month' | 'custom';
 
 interface DateRange {
-  startDate: string;
-  endDate: string;
+  from: Date;
+  to: Date;
 }
 
-const getDateRange = (filter: DateFilter, customRange?: DateRange): DateRange => {
+const getDateRange = (filter: DateFilter, customRange?: DateRange): { startDate: string; endDate: string } => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   
@@ -31,27 +31,28 @@ const getDateRange = (filter: DateFilter, customRange?: DateRange): DateRange =>
         endDate: todayStr 
       };
     case 'custom':
-      return customRange || { startDate: todayStr, endDate: todayStr };
+      if (!customRange) return { startDate: todayStr, endDate: todayStr };
+      return { 
+        startDate: customRange.from.toISOString().split('T')[0], 
+        endDate: customRange.to.toISOString().split('T')[0] 
+      };
     default:
       return { startDate: todayStr, endDate: todayStr };
   }
 };
 
 export const useEnhancedDashboardMetrics = (
-  selectedStore: string, 
   dateFilter: DateFilter = 'today',
-  customDateRange?: DateRange
+  customDateRange?: DateRange | null
 ) => {
   return useQuery({
-    queryKey: ['enhanced-dashboard-metrics', selectedStore, dateFilter, customDateRange],
-    queryFn: async (): Promise<DashboardMetrics & {
-      profitMargin: number;
+    queryKey: ['enhanced-dashboard-metrics', dateFilter, customDateRange],
+    queryFn: async (): Promise<EnhancedDashboardMetrics & {
       topSellingItems: TopSellingItem[];
       lowStockItems: LowStockItem[];
       salesTrend: Array<{ date: string; sales: number; profit: number }>;
     }> => {
       const { startDate, endDate } = getDateRange(dateFilter, customDateRange);
-      const storeFilter = selectedStore === 'all' ? {} : { store_id: selectedStore };
       
       // Get sales data for the period
       const { data: salesData, error: salesError } = await supabase
@@ -60,7 +61,6 @@ export const useEnhancedDashboardMetrics = (
           *,
           items!inner(cost_price, selling_price, name, quantity_available)
         `)
-        .match(storeFilter)
         .gte('date', startDate)
         .lte('date', endDate);
       
@@ -72,13 +72,40 @@ export const useEnhancedDashboardMetrics = (
         return sum + (costPerItem * sale.quantity);
       }, 0) || 0;
       
-      const profitMargin = totalSales > 0 ? ((totalSales - totalCost) / totalSales) * 100 : 0;
+      const totalProfit = totalSales - totalCost;
+      const profitMarginPercentage = totalSales > 0 ? ((totalProfit / totalSales) * 100) : 0;
+      
+      // Get all sales for total calculations
+      const { data: allSalesData, error: allSalesError } = await supabase
+        .from('sales')
+        .select(`
+          *,
+          items!inner(cost_price, selling_price, name, quantity_available)
+        `);
+      
+      if (allSalesError) throw allSalesError;
+      
+      const allTotalSales = allSalesData?.reduce((sum, sale) => sum + Number(sale.total_price), 0) || 0;
+      const allTotalCost = allSalesData?.reduce((sum, sale) => {
+        const costPerItem = Number(sale.items?.cost_price || 0);
+        return sum + (costPerItem * sale.quantity);
+      }, 0) || 0;
+      
+      // Get purchases data
+      const { data: purchasesData, error: purchasesError } = await supabase
+        .from('purchases')
+        .select('total_cost')
+        .gte('date', startDate)
+        .lte('date', endDate);
+      
+      if (purchasesError) throw purchasesError;
+      
+      const totalPurchases = purchasesData?.reduce((sum, purchase) => sum + Number(purchase.total_cost), 0) || 0;
       
       // Get inventory value
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
-        .select('quantity_available, cost_price, name, selling_price')
-        .match(selectedStore === 'all' ? {} : { store_id: selectedStore });
+        .select('quantity_available, cost_price, name, selling_price');
       
       if (itemsError) throw itemsError;
       
@@ -89,7 +116,6 @@ export const useEnhancedDashboardMetrics = (
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
         .select('amount')
-        .match(storeFilter)
         .eq('type', 'Receipt')
         .gte('date', startDate)
         .lte('date', endDate);
@@ -102,7 +128,6 @@ export const useEnhancedDashboardMetrics = (
       const { data: pendingSalesData, error: pendingSalesError } = await supabase
         .from('sales')
         .select('id')
-        .match(storeFilter)
         .eq('delivery_status', 'Pending');
       
       if (pendingSalesError) throw pendingSalesError;
@@ -110,7 +135,7 @@ export const useEnhancedDashboardMetrics = (
       const pendingDeliveries = pendingSalesData?.length || 0;
       
       // Calculate top selling items
-      const itemSales = salesData?.reduce((acc, sale) => {
+      const itemSales = allSalesData?.reduce((acc, sale) => {
         const key = sale.item_name;
         if (!acc[key]) {
           acc[key] = { name: key, quantity: 0, revenue: 0 };
@@ -140,7 +165,7 @@ export const useEnhancedDashboardMetrics = (
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
-        const daySales = salesData?.filter(sale => sale.date === dateStr) || [];
+        const daySales = allSalesData?.filter(sale => sale.date === dateStr) || [];
         const dayRevenue = daySales.reduce((sum, sale) => sum + Number(sale.total_price), 0);
         const dayCosts = daySales.reduce((sum, sale) => {
           const costPerItem = Number(sale.items?.cost_price || 0);
@@ -159,7 +184,11 @@ export const useEnhancedDashboardMetrics = (
         totalStockValue,
         paymentsReceived,
         pendingDeliveries,
-        profitMargin,
+        totalProfitToday: totalProfit,
+        profitMarginPercentage,
+        totalSales: allTotalSales,
+        totalPurchases,
+        totalProfit: allTotalSales - allTotalCost,
         topSellingItems,
         lowStockItems,
         salesTrend,
