@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/utils/currencyUtils';
 import type { Sale, Store } from '@/types';
 
 interface RecentSalesCardProps {
@@ -15,29 +16,29 @@ export default function RecentSalesCard({ recentSales, stores, isLoading }: Rece
   };
 
   return (
-    <Card>
+    <Card className="futuristic-card">
       <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
+        <CardTitle className="text-cyan-300 glow-text">Recent Sales</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {isLoading ? (
-            <p className="text-center text-gray-500 py-4">Loading...</p>
+            <p className="text-center text-blue-300 py-4">Loading...</p>
           ) : recentSales.length > 0 ? (
             recentSales.map((sale) => (
-              <div key={sale.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+              <div key={sale.id} className="flex items-center justify-between py-3 px-4 rounded-lg bg-slate-800/30 border border-blue-500/20 hover:border-cyan-400/40 transition-colors">
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{sale.item_name}</p>
-                  <p className="text-sm text-gray-500">{getStoreName(sale.store_id)} • {sale.date}</p>
+                  <p className="font-medium text-blue-100">{sale.item_name}</p>
+                  <p className="text-sm text-blue-300">{getStoreName(sale.store_id)} • {sale.date}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-900">${Number(sale.total_price).toLocaleString()}</p>
-                  <p className="text-sm text-gray-500">Qty: {sale.quantity}</p>
+                  <p className="font-medium text-cyan-300">{formatCurrency(Number(sale.total_price))}</p>
+                  <p className="text-sm text-blue-300">Qty: {sale.quantity}</p>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-center text-gray-500 py-4">No recent sales</p>
+            <p className="text-center text-blue-300 py-4">No recent sales</p>
           )}
         </div>
       </CardContent>

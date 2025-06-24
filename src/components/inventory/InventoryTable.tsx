@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import ItemForm from '@/components/ItemForm';
+import { formatCurrency } from '@/utils/currencyUtils';
 import type { Item } from '@/hooks/useItems';
 import type { Store } from '@/types';
 import type { Category } from '@/hooks/useCategories';
@@ -116,8 +118,8 @@ export default function InventoryTable({
                   <TableCell className={`${isLowStock ? 'text-orange-300 font-semibold' : 'text-blue-200'}`}>
                     {item.quantity_available}
                   </TableCell>
-                  <TableCell className="text-blue-200">${item.cost_price.toLocaleString()}</TableCell>
-                  <TableCell className="text-blue-200">${item.selling_price.toLocaleString()}</TableCell>
+                  <TableCell className="text-blue-200">{formatCurrency(item.cost_price)}</TableCell>
+                  <TableCell className="text-blue-200">{formatCurrency(item.selling_price)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <ItemForm

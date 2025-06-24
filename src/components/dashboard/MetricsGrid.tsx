@@ -2,6 +2,7 @@
 import React from 'react';
 import { DollarSign, Package, ShoppingCart, Truck, Percent } from 'lucide-react';
 import MetricCard from '@/components/MetricCard';
+import { formatCurrency, formatCurrencyShort } from '@/utils/currencyUtils';
 import type { EnhancedDashboardMetrics, TopSellingItem, LowStockItem } from '@/types';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
@@ -29,19 +30,19 @@ export default function MetricsGrid({ metrics, dateFilter, isLoading }: MetricsG
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <MetricCard
         title="Total Sales"
-        value={isLoading ? "Loading..." : `$${(metrics?.totalSalesToday || 0).toLocaleString()}`}
+        value={isLoading ? "Loading..." : formatCurrencyShort(metrics?.totalSalesToday || 0)}
         icon={<DollarSign className="w-5 h-5" />}
         description={getDateFilterDescription()}
       />
       <MetricCard
         title="Inventory Value"
-        value={isLoading ? "Loading..." : `$${(metrics?.totalStockValue || 0).toLocaleString()}`}
+        value={isLoading ? "Loading..." : formatCurrencyShort(metrics?.totalStockValue || 0)}
         icon={<Package className="w-5 h-5" />}
         description="Current stock value"
       />
       <MetricCard
         title="Payments Received"
-        value={isLoading ? "Loading..." : `$${(metrics?.paymentsReceived || 0).toLocaleString()}`}
+        value={isLoading ? "Loading..." : formatCurrencyShort(metrics?.paymentsReceived || 0)}
         icon={<ShoppingCart className="w-5 h-5" />}
         description="Period payments"
       />
