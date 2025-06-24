@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Checkbox } from '@/components/ui/checkbox';
 import ItemForm from '@/components/ItemForm';
 import type { Item } from '@/hooks/useItems';
-import type { Store, Category } from '@/types';
+import type { Store } from '@/types';
+import type { Category } from '@/hooks/useCategories';
 
 interface InventoryTableProps {
   items: Item[];
