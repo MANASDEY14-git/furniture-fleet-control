@@ -16,21 +16,16 @@ import { supabase } from '@/integrations/supabase/client';
 export default function Dashboard() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const { data: stores = [], isLoading: storesLoading } = useStores();
   
-  const customDateRange = dateFilter === 'custom' 
-    ? { startDate: customStartDate, endDate: customEndDate }
-    : undefined;
-    
   const { 
     data: metrics, 
     isLoading: metricsLoading, 
     refetch: refetchMetrics 
-  } = useEnhancedDashboardMetrics(selectedStore, dateFilter, customDateRange);
+  } = useEnhancedDashboardMetrics(dateFilter, customDateRange);
   
   const { data: recentSales = [], isLoading: salesLoading, refetch: refetchSales } = useRecentSales(selectedStore);
 
@@ -122,9 +117,8 @@ export default function Dashboard() {
     return 'Evening';
   };
 
-  const handleCustomDateChange = (startDate: string, endDate: string) => {
-    setCustomStartDate(startDate);
-    setCustomEndDate(endDate);
+  const handleCustomDateRangeChange = (range: { from: Date; to: Date }) => {
+    setCustomDateRange(range);
   };
 
   const isLoading = metricsLoading || salesLoading || storesLoading;
@@ -148,11 +142,10 @@ export default function Dashboard() {
             placeholder="Select store"
           />
           <DateFilterSelector
-            value={dateFilter}
-            onValueChange={setDateFilter}
-            customStartDate={customStartDate}
-            customEndDate={customEndDate}
-            onCustomDateChange={handleCustomDateChange}
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            customDateRange={customDateRange}
+            onCustomDateRangeChange={handleCustomDateRangeChange}
           />
         </div>
       </div>
@@ -207,7 +200,7 @@ export default function Dashboard() {
         />
         <MetricCard
           title="Profit Margin"
-          value={isLoading ? "Loading..." : `${(metrics?.profitMargin || 0).toFixed(1)}%`}
+          value={isLoading ? "Loading..." : `${(metrics?.profitMarginPercentage || 0).toFixed(1)}%`}
           icon={<Percent className="w-5 h-5" />}
           description="Period profit margin"
         />
