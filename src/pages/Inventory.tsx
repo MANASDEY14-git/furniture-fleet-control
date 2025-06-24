@@ -1,201 +1,225 @@
 
-import { useState, useMemo } from 'react';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Pencil, Trash2, Package, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import StoreSelector from '@/components/StoreSelector';
-import ItemForm from '@/components/ItemForm';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useItems, useDeleteItem } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
+import ItemForm from '@/components/ItemForm';
+import ExportButton from '@/components/ExportButton';
+import LowStockAlertsPanel from '@/components/LowStockAlertsPanel';
+import BulkOperationsPanel from '@/components/BulkOperationsPanel';
 
 export default function Inventory() {
-  const [selectedStore, setSelectedStore] = useState('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const { data: items = [], isLoading: itemsLoading } = useItems();
-  const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: items = [], isLoading } = useItems();
+  const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
   const deleteItem = useDeleteItem();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const filteredItems = useMemo(() => {
-    return items.filter(item => {
-      const matchesStore = selectedStore === 'all' || item.store_id === selectedStore;
-      const matchesCategory = selectedCategory === 'all' || item.category_id === selectedCategory;
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesStore && matchesCategory && matchesSearch;
-    });
-  }, [items, selectedStore, selectedCategory, searchTerm]);
-
-  const getStoreName = (storeId: string) => {
-    return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
+  const handleDeleteItem = (id: string) => {
+    deleteItem.mutate(id);
   };
 
-  const getCategoryName = (categoryId: string) => {
-    return categories.find(category => category.id === categoryId)?.name || 'Unknown Category';
+  const handleItemSelection = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems([...selectedItems, itemId]);
+    } else {
+      setSelectedItems(selectedItems.filter(id => id !== itemId));
+    }
   };
 
-  const getTotalValue = () => {
-    return filteredItems.reduce((sum, item) => sum + (item.quantity_available * item.cost_price), 0);
-  };
+  const filteredItems = items.filter(item =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    stores.find(store => store.id === item.store_id)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    categories.find(cat => cat.id === item.category_id)?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleDeleteItem = (itemId: string) => {
-    deleteItem.mutate(itemId);
-  };
-
-  if (itemsLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg glow-text">Loading inventory...</div>
-      </div>
-    );
-  }
+  const lowStockItems = items.filter(item => item.quantity_available < 10);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <Package className="w-8 h-8 text-cyan-400" />
         <div>
           <h1 className="text-3xl font-bold glow-text">Inventory Control</h1>
-          <p className="text-blue-300">Manage your furniture inventory</p>
+          <p className="text-blue-300">Manage your product inventory</p>
         </div>
-        <ItemForm 
-          trigger={
-            <Button className="cyber-button text-white font-semibold">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Item
-            </Button>
-          }
-        />
       </div>
 
-      {/* Filters */}
-      <Card className="futuristic-card">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
-              <Input
-                placeholder="Search items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-              />
-            </div>
-            <StoreSelector 
-              value={selectedStore} 
-              onValueChange={setSelectedStore}
-              stores={stores}
-              isLoading={storesLoading}
-            />
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                <SelectValue placeholder="All categories" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-blue-500/30">
-                <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id} className="text-blue-100 focus:bg-blue-800/30">
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center justify-center neon-border bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-md px-4 py-2">
-              <span className="text-sm font-medium text-cyan-300 glow-text">
-                Total Value: ${getTotalValue().toLocaleString()}
-              </span>
-            </div>
+      {/* Alerts Panel */}
+      {lowStockItems.length > 0 && (
+        <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-5 h-5 text-orange-400" />
+            <h3 className="text-orange-300 font-semibold">Low Stock Alert</h3>
           </div>
-        </CardContent>
-      </Card>
+          <p className="text-orange-200 text-sm">
+            {lowStockItems.length} item(s) are running low on stock (less than 10 units)
+          </p>
+        </div>
+      )}
 
-      {/* Inventory Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Low Stock Alerts */}
+        <div className="lg:col-span-1">
+          <LowStockAlertsPanel />
+        </div>
+
+        {/* Bulk Operations */}
+        <div className="lg:col-span-2">
+          <BulkOperationsPanel 
+            selectedItems={selectedItems}
+            onSelectionChange={setSelectedItems}
+          />
+        </div>
+      </div>
+
+      {/* Main Inventory Table */}
       <Card className="futuristic-card">
-        <CardHeader>
-          <CardTitle className="text-cyan-300 glow-text">Inventory Database ({filteredItems.length})</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-cyan-300 glow-text">Product Database</CardTitle>
+          <div className="flex gap-2">
+            <ExportButton 
+              data={filteredItems} 
+              filename="inventory" 
+              type="items"
+            />
+            <ItemForm
+              trigger={
+                <Button className="cyber-button text-white font-semibold">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Item
+                </Button>
+              }
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table className="data-grid">
-              <TableHeader>
-                <TableRow className="border-blue-500/30">
-                  <TableHead className="text-blue-200">Item Name</TableHead>
-                  <TableHead className="text-blue-200">Category</TableHead>
-                  <TableHead className="text-blue-200">Store</TableHead>
-                  <TableHead className="text-right text-blue-200">Quantity</TableHead>
-                  <TableHead className="text-right text-blue-200">Cost Price</TableHead>
-                  <TableHead className="text-right text-blue-200">Selling Price</TableHead>
-                  <TableHead className="text-right text-blue-200">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map((item) => (
-                  <TableRow key={item.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                    <TableCell className="font-medium text-blue-100">{item.name}</TableCell>
-                    <TableCell className="text-blue-200">{getCategoryName(item.category_id)}</TableCell>
-                    <TableCell className="text-blue-200">{getStoreName(item.store_id)}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        item.quantity_available > 10 
-                          ? 'bg-green-400/20 text-green-300 border border-green-400/30'
-                          : item.quantity_available > 5
-                          ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/30'
-                          : 'bg-red-400/20 text-red-300 border border-red-400/30'
-                      }`}>
-                        {item.quantity_available}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right text-cyan-300">${item.cost_price}</TableCell>
-                    <TableCell className="text-right text-cyan-300 font-semibold">${item.selling_price}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <ItemForm 
-                          item={item}
-                          trigger={
-                            <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="futuristic-card">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="text-cyan-300">Delete Item</AlertDialogTitle>
-                              <AlertDialogDescription className="text-blue-200">
-                                Are you sure you want to delete "{item.name}"? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDeleteItem(item.id)}
-                                className="bg-red-600 hover:bg-red-700 text-white"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="flex gap-4 mb-6">
+            <Input
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="neon-border bg-slate-800/50 text-blue-100 max-w-md"
+            />
           </div>
-          {filteredItems.length === 0 && (
+
+          {isLoading ? (
             <div className="text-center py-8">
-              <p className="text-blue-300">No items found matching your criteria</p>
+              <p className="text-blue-300">Loading inventory...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table className="data-grid">
+                <TableHeader>
+                  <TableRow className="border-blue-500/30">
+                    <TableHead className="text-blue-200 w-12">
+                      <Checkbox
+                        checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedItems(filteredItems.map(item => item.id));
+                          } else {
+                            setSelectedItems([]);
+                          }
+                        }}
+                      />
+                    </TableHead>
+                    <TableHead className="text-blue-200">Name</TableHead>
+                    <TableHead className="text-blue-200">Store</TableHead>
+                    <TableHead className="text-blue-200">Category</TableHead>
+                    <TableHead className="text-blue-200">Quantity</TableHead>
+                    <TableHead className="text-blue-200">Cost Price</TableHead>
+                    <TableHead className="text-blue-200">Selling Price</TableHead>
+                    <TableHead className="text-right text-blue-200">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredItems.map((item) => {
+                    const store = stores.find(s => s.id === item.store_id);
+                    const category = categories.find(c => c.id === item.category_id);
+                    const isLowStock = item.quantity_available < 10;
+                    
+                    return (
+                      <TableRow 
+                        key={item.id} 
+                        className={`border-blue-500/20 hover:bg-blue-800/20 transition-colors ${
+                          isLowStock ? 'bg-orange-900/10' : ''
+                        }`}
+                      >
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedItems.includes(item.id)}
+                            onCheckedChange={(checked) => handleItemSelection(item.id, checked as boolean)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-blue-100">
+                          <div className="flex items-center gap-2">
+                            {item.name}
+                            {isLowStock && (
+                              <AlertTriangle className="w-4 h-4 text-orange-400" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-blue-200">{store?.name || 'Unknown'}</TableCell>
+                        <TableCell className="text-blue-200">{category?.name || 'Unknown'}</TableCell>
+                        <TableCell className={`${isLowStock ? 'text-orange-300 font-semibold' : 'text-blue-200'}`}>
+                          {item.quantity_available}
+                        </TableCell>
+                        <TableCell className="text-blue-200">${item.cost_price.toLocaleString()}</TableCell>
+                        <TableCell className="text-blue-200">${item.selling_price.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <ItemForm
+                              item={item}
+                              trigger={
+                                <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              }
+                            />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="futuristic-card">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-cyan-300">Delete Item</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-blue-200">
+                                    Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteItem(item.id)} className="bg-red-600 hover:bg-red-700 text-white">
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          
+          {filteredItems.length === 0 && !isLoading && (
+            <div className="text-center py-8">
+              <p className="text-blue-300">No items found. Add your first item above.</p>
             </div>
           )}
         </CardContent>

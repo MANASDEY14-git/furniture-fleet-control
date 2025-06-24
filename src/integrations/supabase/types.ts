@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_trails: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -80,6 +113,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      low_stock_alerts: {
+        Row: {
+          created_at: string
+          current_quantity: number
+          id: string
+          is_resolved: boolean
+          item_id: string
+          item_name: string
+          resolved_at: string | null
+          store_id: string | null
+          threshold_quantity: number
+        }
+        Insert: {
+          created_at?: string
+          current_quantity: number
+          id?: string
+          is_resolved?: boolean
+          item_id: string
+          item_name: string
+          resolved_at?: string | null
+          store_id?: string | null
+          threshold_quantity?: number
+        }
+        Update: {
+          created_at?: string
+          current_quantity?: number
+          id?: string
+          is_resolved?: boolean
+          item_id?: string
+          item_name?: string
+          resolved_at?: string | null
+          store_id?: string | null
+          threshold_quantity?: number
+        }
+        Relationships: []
       }
       payments: {
         Row: {
