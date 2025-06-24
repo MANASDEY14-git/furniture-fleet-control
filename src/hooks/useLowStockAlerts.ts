@@ -28,6 +28,8 @@ export const useLowStockAlerts = () => {
       if (error) throw error;
       return data as LowStockAlert[];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -37,6 +39,23 @@ export const useCreateLowStockAlert = () => {
 
   return useMutation({
     mutationFn: async (data: Omit<LowStockAlert, 'id' | 'created_at' | 'resolved_at'>) => {
+      // Check if alert already exists for this item
+      const { data: existingAlert, error: checkError } = await supabase
+        .from('low_stock_alerts')
+        .select('id')
+        .eq('item_id', data.item_id)
+        .eq('is_resolved', false)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw checkError;
+      }
+
+      // If alert already exists, don't create a new one
+      if (existingAlert) {
+        return existingAlert;
+      }
+
       const { data: alert, error } = await supabase
         .from('low_stock_alerts')
         .insert([data])
@@ -46,7 +65,15 @@ export const useCreateLowStockAlert = () => {
       if (error) throw error;
       return alert;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Optimistic update
+      queryClient.setQueryData(['low-stock-alerts'], (old: LowStockAlert[] | undefined) => {
+        if (!old) return [data];
+        const exists = old.some(alert => alert.item_id === variables.item_id && !alert.is_resolved);
+        if (exists) return old; // Don't add if already exists
+        return [data, ...old];
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['low-stock-alerts'] });
       toast({
         title: "Alert Created",
@@ -79,18 +106,33 @@ export const useResolveLowStockAlert = () => {
 
       if (error) throw error;
     },
+    onMutate: async (id: string) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['low-stock-alerts'] });
+      
+      const previousAlerts = queryClient.getQueryData(['low-stock-alerts']);
+      
+      queryClient.setQueryData(['low-stock-alerts'], (old: LowStockAlert[] | undefined) => {
+        if (!old) return [];
+        return old.filter(alert => alert.id !== id);
+      });
+
+      return { previousAlerts };
+    },
+    onError: (error, id, context) => {
+      // Rollback on error
+      queryClient.setQueryData(['low-stock-alerts'], context?.previousAlerts);
+      toast({
+        title: "Error",
+        description: `Failed to resolve alert: ${error.message}`,
+        variant: "destructive",
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['low-stock-alerts'] });
       toast({
         title: "Alert Resolved",
         description: "Low stock alert has been resolved",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to resolve alert: ${error.message}`,
-        variant: "destructive",
       });
     },
   });

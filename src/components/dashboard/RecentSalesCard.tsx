@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { Sale, Store } from '@/types';
 
@@ -23,7 +24,20 @@ export default function RecentSalesCard({ recentSales, stores, isLoading }: Rece
       <CardContent>
         <div className="space-y-4">
           {isLoading ? (
-            <p className="text-center text-blue-300 py-4">Loading...</p>
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between py-3 px-4 rounded-lg bg-slate-800/30 border border-blue-500/20">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                  <div className="text-right space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : recentSales.length > 0 ? (
             recentSales.map((sale) => (
               <div key={sale.id} className="flex items-center justify-between py-3 px-4 rounded-lg bg-slate-800/30 border border-blue-500/20 hover:border-cyan-400/40 transition-colors">

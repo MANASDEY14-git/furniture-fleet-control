@@ -1,11 +1,13 @@
 
-import React from 'react';
-import { Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Pencil, Trash2, AlertTriangle, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import ItemForm from '@/components/ItemForm';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { Item } from '@/hooks/useItems';
@@ -35,29 +37,149 @@ export default function InventoryTable({
   onDeleteItem,
   isLoading
 }: InventoryTableProps) {
-  const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stores.find(store => store.id === item.store_id)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    categories.find(cat => cat.id === item.category_id)?.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [filterByStore, setFilterByStore] = useState<string>('all');
+  const [filterByCategory, setFilterByCategory] = useState<string>('all');
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+
+  const filteredAndSortedItems = useMemo(() => {
+    let filtered = items.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        stores.find(store => store.id === item.store_id)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        categories.find(cat => cat.id === item.category_id)?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStore = filterByStore === 'all' || item.store_id === filterByStore;
+      const matchesCategory = filterByCategory === 'all' || item.category_id === filterByCategory;
+      const matchesLowStock = !showLowStockOnly || item.quantity_available < 10;
+
+      return matchesSearch && matchesStore && matchesCategory && matchesLowStock;
+    });
+
+    // Sort items
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'quantity':
+          comparison = a.quantity_available - b.quantity_available;
+          break;
+        case 'price':
+          comparison = a.selling_price - b.selling_price;
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [items, searchTerm, stores, categories, sortBy, sortOrder, filterByStore, filterByCategory, showLowStockOnly]);
 
   if (isLoading) {
     return (
-      <div className="text-center py-8">
-        <p className="text-blue-300">Loading inventory...</p>
+      <div className="space-y-4">
+        <div className="flex gap-4 mb-6">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="space-y-3">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4 p-4 rounded-lg bg-slate-800/30">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-20" />
+              <div className="flex gap-2">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex gap-4 mb-6">
-        <Input
-          placeholder="Search items..."
-          value={searchTerm}
-          onChange={(e) => onSearchTermChange(e.target.value)}
-          className="neon-border bg-slate-800/50 text-blue-100 max-w-md"
-        />
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
+            <Input
+              placeholder="Search items, stores, categories..."
+              value={searchTerm}
+              onChange={(e) => onSearchTermChange(e.target.value)}
+              className="pl-10 neon-border bg-slate-800/50 text-blue-100"
+            />
+          </div>
+          
+          <Select value={sortBy} onValueChange={(value: 'name' | 'quantity' | 'price') => setSortBy(value)}>
+            <SelectTrigger className="w-32 neon-border bg-slate-800/50 text-blue-100">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-blue-500/30">
+              <SelectItem value="name" className="text-blue-100">Name</SelectItem>
+              <SelectItem value="quantity" className="text-blue-100">Quantity</SelectItem>
+              <SelectItem value="price" className="text-blue-100">Price</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="text-cyan-400 border-cyan-400/50 hover:bg-cyan-900/20"
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </Button>
+        </div>
+
+        <div className="flex gap-4">
+          <Select value={filterByStore} onValueChange={setFilterByStore}>
+            <SelectTrigger className="w-48 neon-border bg-slate-800/50 text-blue-100">
+              <SelectValue placeholder="All stores" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-blue-500/30">
+              <SelectItem value="all" className="text-blue-100">All Stores</SelectItem>
+              {stores.map((store) => (
+                <SelectItem key={store.id} value={store.id} className="text-blue-100">
+                  {store.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterByCategory} onValueChange={setFilterByCategory}>
+            <SelectTrigger className="w-48 neon-border bg-slate-800/50 text-blue-100">
+              <SelectValue placeholder="All categories" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-blue-500/30">
+              <SelectItem value="all" className="text-blue-100">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id} className="text-blue-100">
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="lowStock"
+              checked={showLowStockOnly}
+              onCheckedChange={(checked) => setShowLowStockOnly(checked as boolean)}
+            />
+            <label htmlFor="lowStock" className="text-sm text-blue-200 cursor-pointer">
+              Low stock only
+            </label>
+          </div>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -66,10 +188,10 @@ export default function InventoryTable({
             <TableRow className="border-blue-500/30">
               <TableHead className="text-blue-200 w-12">
                 <Checkbox
-                  checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
+                  checked={selectedItems.length === filteredAndSortedItems.length && filteredAndSortedItems.length > 0}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      const allItemIds = filteredItems.map(item => item.id);
+                      const allItemIds = filteredAndSortedItems.map(item => item.id);
                       allItemIds.forEach(id => onItemSelection(id, true));
                     } else {
                       selectedItems.forEach(id => onItemSelection(id, false));
@@ -87,7 +209,7 @@ export default function InventoryTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.map((item) => {
+            {filteredAndSortedItems.map((item) => {
               const store = stores.find(s => s.id === item.store_id);
               const category = categories.find(c => c.id === item.category_id);
               const isLowStock = item.quantity_available < 10;
@@ -160,11 +282,16 @@ export default function InventoryTable({
         </Table>
       </div>
 
-      {filteredItems.length === 0 && !isLoading && (
+      {filteredAndSortedItems.length === 0 && !isLoading && (
         <div className="text-center py-8">
-          <p className="text-blue-300">No items found. Add your first item above.</p>
+          <p className="text-blue-300">No items found matching your criteria</p>
         </div>
       )}
+
+      <div className="mt-4 text-sm text-blue-300">
+        Showing {filteredAndSortedItems.length} of {items.length} items
+        {showLowStockOnly && ` (low stock only)`}
+      </div>
     </>
   );
 }

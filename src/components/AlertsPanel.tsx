@@ -19,13 +19,19 @@ export default function AlertsPanel({ lowStockItems, pendingDeliveries }: Alerts
   const createAlert = useCreateLowStockAlert();
   const resolveAlert = useResolveLowStockAlert();
 
-  // Check for new low stock items and create alerts
+  // Create alerts for new low stock items (fixed to prevent duplicates)
   React.useEffect(() => {
-    const newLowStockItems = items.filter(item => 
-      item.quantity_available < 10 && 
-      !alerts.some(alert => alert.item_id === item.id && !alert.is_resolved)
-    );
+    if (items.length === 0 || alerts.length === 0) return;
 
+    const newLowStockItems = items.filter(item => {
+      const isLowStock = item.quantity_available < 10;
+      const hasUnresolvedAlert = alerts.some(alert => 
+        alert.item_id === item.id && !alert.is_resolved
+      );
+      return isLowStock && !hasUnresolvedAlert;
+    });
+
+    // Only create alerts for items that don't already have unresolved alerts
     newLowStockItems.forEach(item => {
       createAlert.mutate({
         item_id: item.id,
