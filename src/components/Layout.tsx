@@ -10,7 +10,10 @@ import {
   BarChart3, 
   Menu, 
   X,
-  Settings 
+  Settings,
+  Users,
+  BookOpen,
+  Warehouse
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,9 +32,12 @@ interface LayoutProps {
 const navigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Inventory', href: '/inventory', icon: Package },
+  { name: 'Inventory by Supplier', href: '/inventory-supplier', icon: Warehouse },
   { name: 'Sales', href: '/sales', icon: ShoppingCart },
   { name: 'Purchases', href: '/purchases', icon: CreditCard },
   { name: 'Payments', href: '/payments', icon: DollarSign },
+  { name: 'Supplier Ledger', href: '/supplier-ledger', icon: BookOpen },
+  { name: 'Supplier Profile', href: '/supplier-profile', icon: Users },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
