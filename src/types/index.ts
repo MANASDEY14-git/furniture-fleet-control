@@ -12,6 +12,7 @@ export interface Item {
   name: string;
   category_id: string;
   store_id: string;
+  supplier_id?: string;
   quantity_available: number;
   cost_price: number;
   selling_price: number;
@@ -32,6 +33,7 @@ export interface Sale {
   store_id: string;
   item_id: string;
   item_name: string;
+  supplier_id?: string;
   quantity: number;
   total_price: number;
   delivery_status: DeliveryStatus;
@@ -44,6 +46,8 @@ export interface Purchase {
   store_id: string;
   item_id: string;
   item_name: string;
+  supplier_id?: string;
+  invoice_number?: string;
   quantity: number;
   total_cost: number;
   date: string;
@@ -54,6 +58,8 @@ export interface CreatePurchaseData {
   store_id: string;
   item_id: string;
   item_name: string;
+  supplier_id?: string;
+  invoice_number?: string;
   quantity: number;
   total_cost: number;
   date: string;
@@ -63,6 +69,7 @@ export interface CreateSaleData {
   store_id: string;
   item_id: string;
   item_name: string;
+  supplier_id?: string;
   quantity: number;
   total_price: number;
   delivery_status: DeliveryStatus;
@@ -72,6 +79,7 @@ export interface CreateSaleData {
 export interface Payment {
   id: string;
   store_id: string;
+  supplier_id?: string;
   amount: number;
   type: string;
   date: string;

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +9,7 @@ export interface Sale {
   store_id: string;
   item_id: string;
   item_name: string;
+  supplier_id?: string;
   quantity: number;
   total_price: number;
   delivery_status: DeliveryStatus;

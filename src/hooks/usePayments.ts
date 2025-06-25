@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface Payment {
   id: string;
   store_id: string;
+  supplier_id?: string;
   amount: number;
   type: 'Payment' | 'Receipt';
   date: string;
@@ -15,6 +16,7 @@ export interface Payment {
 
 export interface CreatePaymentData {
   store_id: string;
+  supplier_id?: string;
   amount: number;
   type: 'Payment' | 'Receipt';
   date: string;
