@@ -73,6 +73,7 @@ export type Database = {
           quantity_available: number
           selling_price: number
           store_id: string | null
+          supplier_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -84,6 +85,7 @@ export type Database = {
           quantity_available?: number
           selling_price: number
           store_id?: string | null
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -95,6 +97,7 @@ export type Database = {
           quantity_available?: number
           selling_price?: number
           store_id?: string | null
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -110,6 +113,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -158,6 +168,7 @@ export type Database = {
           description: string | null
           id: string
           store_id: string | null
+          supplier_id: string | null
           type: string
         }
         Insert: {
@@ -167,6 +178,7 @@ export type Database = {
           description?: string | null
           id?: string
           store_id?: string | null
+          supplier_id?: string | null
           type: string
         }
         Update: {
@@ -176,6 +188,7 @@ export type Database = {
           description?: string | null
           id?: string
           store_id?: string | null
+          supplier_id?: string | null
           type?: string
         }
         Relationships: [
@@ -186,6 +199,13 @@ export type Database = {
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       purchases: {
@@ -193,30 +213,39 @@ export type Database = {
           created_at: string | null
           date: string
           id: string
+          invoice_date: string | null
+          invoice_number: string | null
           item_id: string | null
           item_name: string
           quantity: number
           store_id: string | null
+          supplier_id: string | null
           total_cost: number
         }
         Insert: {
           created_at?: string | null
           date: string
           id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
           item_id?: string | null
           item_name: string
           quantity: number
           store_id?: string | null
+          supplier_id?: string | null
           total_cost: number
         }
         Update: {
           created_at?: string | null
           date?: string
           id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
           item_id?: string | null
           item_name?: string
           quantity?: number
           store_id?: string | null
+          supplier_id?: string | null
           total_cost?: number
         }
         Relationships: [
@@ -234,6 +263,13 @@ export type Database = {
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "purchases_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales: {
@@ -246,6 +282,7 @@ export type Database = {
           item_name: string
           quantity: number
           store_id: string | null
+          supplier_id: string | null
           total_price: number
         }
         Insert: {
@@ -257,6 +294,7 @@ export type Database = {
           item_name: string
           quantity: number
           store_id?: string | null
+          supplier_id?: string | null
           total_price: number
         }
         Update: {
@@ -268,6 +306,7 @@ export type Database = {
           item_name?: string
           quantity?: number
           store_id?: string | null
+          supplier_id?: string | null
           total_price?: number
         }
         Relationships: [
@@ -283,6 +322,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -308,6 +354,102 @@ export type Database = {
           location?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      supplier_ledger: {
+        Row: {
+          created_at: string
+          credit_amount: number | null
+          debit_amount: number | null
+          description: string | null
+          id: string
+          invoice_number: string | null
+          payment_reference: string | null
+          store_id: string
+          supplier_id: string
+          transaction_date: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          id?: string
+          invoice_number?: string | null
+          payment_reference?: string | null
+          store_id: string
+          supplier_id: string
+          transaction_date?: string
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_amount?: number | null
+          debit_amount?: number | null
+          description?: string | null
+          id?: string
+          invoice_number?: string | null
+          payment_reference?: string | null
+          store_id?: string
+          supplier_id?: string
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_ledger_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_ledger_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          gstin: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

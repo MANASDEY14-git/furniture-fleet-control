@@ -7,9 +7,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
+import InventorySupplier from "./pages/InventorySupplier";
 import Sales from "./pages/Sales";
 import Purchases from "./pages/Purchases";
 import Payments from "./pages/Payments";
+import SupplierLedger from "./pages/SupplierLedger";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -26,9 +28,11 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/inventory" element={<Inventory />} />
+            <Route path="/inventory-supplier" element={<InventorySupplier />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/payments" element={<Payments />} />
+            <Route path="/supplier-ledger" element={<SupplierLedger />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />

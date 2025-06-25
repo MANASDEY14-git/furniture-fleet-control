@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Plus, Search, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StoreSelector from '@/components/StoreSelector';
+import SupplierSelector from '@/components/SupplierSelector';
 import StatusBadge from '@/components/StatusBadge';
 import { usePayments, useCreatePayment, useDeletePayment } from '@/hooks/usePayments';
 import { useStores } from '@/hooks/useStores';
+import { useSuppliers } from '@/hooks/useSuppliers';
 
 export default function Payments() {
   const [selectedStore, setSelectedStore] = useState('all');
@@ -22,6 +25,7 @@ export default function Payments() {
   // Form state
   const [formData, setFormData] = useState({
     storeId: '',
+    supplierId: '',
     amount: '',
     type: 'Receipt' as 'Payment' | 'Receipt',
     description: '',
@@ -30,6 +34,7 @@ export default function Payments() {
 
   const { data: payments = [], isLoading: paymentsLoading } = usePayments();
   const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: suppliers = [] } = useSuppliers();
   const createPayment = useCreatePayment();
   const deletePayment = useDeletePayment();
 
@@ -44,6 +49,10 @@ export default function Payments() {
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
+  };
+
+  const getSupplierName = (supplierId: string) => {
+    return suppliers.find(supplier => supplier.id === supplierId)?.name || 'Unknown Supplier';
   };
 
   const getTotals = () => {
@@ -65,6 +74,7 @@ export default function Payments() {
     
     createPayment.mutate({
       store_id: formData.storeId,
+      supplier_id: formData.supplierId || undefined,
       amount: parseFloat(formData.amount),
       type: formData.type,
       description: formData.description,
@@ -74,6 +84,7 @@ export default function Payments() {
     setShowForm(false);
     setFormData({
       storeId: '',
+      supplierId: '',
       amount: '',
       type: 'Receipt',
       description: '',
@@ -88,7 +99,7 @@ export default function Payments() {
   if (paymentsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading payments...</div>
+        <div className="text-lg glow-text">Loading payments...</div>
       </div>
     );
   }
@@ -97,12 +108,12 @@ export default function Payments() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-          <p className="text-gray-600">Track financial transactions</p>
+          <h1 className="text-3xl font-bold glow-text">Payment Center</h1>
+          <p className="text-blue-300">Track financial transactions with supplier ledger integration</p>
         </div>
         <Button 
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="cyber-button text-white font-semibold"
         >
           <Plus className="w-4 h-4 mr-2" />
           {showForm ? 'Cancel' : 'Add Transaction'}
@@ -111,32 +122,32 @@ export default function Payments() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-1">Total Receipts</p>
-              <p className="text-2xl font-bold text-green-600">
-                ${totals.receipts.toLocaleString()}
+              <p className="text-sm text-blue-200 mb-1">Total Receipts</p>
+              <p className="text-2xl font-bold text-green-400">
+                ₹{totals.receipts.toLocaleString('en-IN')}
               </p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-1">Total Payments</p>
-              <p className="text-2xl font-bold text-red-600">
-                ${totals.payments.toLocaleString()}
+              <p className="text-sm text-blue-200 mb-1">Total Payments</p>
+              <p className="text-2xl font-bold text-red-400">
+                ₹{totals.payments.toLocaleString('en-IN')}
               </p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-1">Net Flow</p>
-              <p className={`text-2xl font-bold ${totals.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                ${totals.net.toLocaleString()}
+              <p className="text-sm text-blue-200 mb-1">Net Flow</p>
+              <p className={`text-2xl font-bold ${totals.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                ₹{Math.abs(totals.net).toLocaleString('en-IN')} {totals.net >= 0 ? '' : '-'}
               </p>
             </div>
           </CardContent>
@@ -145,21 +156,21 @@ export default function Payments() {
 
       {/* Add Payment Form */}
       {showForm && (
-        <Card>
+        <Card className="futuristic-card">
           <CardHeader>
-            <CardTitle>Record New Transaction</CardTitle>
+            <CardTitle className="text-cyan-300 glow-text">Record New Transaction</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="store">Store</Label>
+                <Label htmlFor="store" className="text-blue-200">Store *</Label>
                 <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})} required>
-                  <SelectTrigger>
+                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue placeholder="Select store" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-slate-800 border-blue-500/30">
                     {stores.map((store) => (
-                      <SelectItem key={store.id} value={store.id}>
+                      <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
                         {store.name}
                       </SelectItem>
                     ))}
@@ -168,20 +179,33 @@ export default function Payments() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="type">Transaction Type</Label>
+                <Label htmlFor="type" className="text-blue-200">Transaction Type *</Label>
                 <Select value={formData.type} onValueChange={(value: 'Payment' | 'Receipt') => setFormData({...formData, type: value})}>
-                  <SelectTrigger>
+                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Receipt">Receipt (Money In)</SelectItem>
-                    <SelectItem value="Payment">Payment (Money Out)</SelectItem>
+                  <SelectContent className="bg-slate-800 border-blue-500/30">
+                    <SelectItem value="Receipt" className="text-blue-100 focus:bg-blue-800/30">Receipt (Money In)</SelectItem>
+                    <SelectItem value="Payment" className="text-blue-100 focus:bg-blue-800/30">Payment (Money Out)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              {formData.type === 'Payment' && (
+                <div className="space-y-2">
+                  <Label htmlFor="supplier" className="text-blue-200">
+                    Supplier <span className="text-xs">(for supplier payments)</span>
+                  </Label>
+                  <SupplierSelector 
+                    value={formData.supplierId} 
+                    onValueChange={(value) => setFormData({...formData, supplierId: value})}
+                    placeholder="Select supplier (optional)"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
+                <Label htmlFor="amount" className="text-blue-200">Amount *</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -191,32 +215,35 @@ export default function Payments() {
                   onChange={(e) => setFormData({...formData, amount: e.target.value})}
                   required
                   min="0"
+                  className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date" className="text-blue-200">Date *</Label>
                 <Input
                   id="date"
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
                   required
+                  className="neon-border bg-slate-800/50 text-blue-100"
                 />
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-blue-200">Description</Label>
                 <Textarea
                   id="description"
                   placeholder="Enter transaction description"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={createPayment.isPending}>
+                <Button type="submit" className="w-full cyber-button text-white font-semibold" disabled={createPayment.isPending}>
                   {createPayment.isPending ? 'Recording Transaction...' : 'Record Transaction'}
                 </Button>
               </div>
@@ -226,16 +253,16 @@ export default function Payments() {
       )}
 
       {/* Filters */}
-      <Card>
+      <Card className="futuristic-card">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
               <Input
                 placeholder="Search descriptions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
               />
             </div>
             <StoreSelector 
@@ -243,15 +270,16 @@ export default function Payments() {
               onValueChange={setSelectedStore}
               stores={stores}
               isLoading={storesLoading}
+              placeholder="All stores"
             />
             <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger>
+              <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Receipt">Receipts</SelectItem>
-                <SelectItem value="Payment">Payments</SelectItem>
+              <SelectContent className="bg-slate-800 border-blue-500/30">
+                <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Types</SelectItem>
+                <SelectItem value="Receipt" className="text-blue-100 focus:bg-blue-800/30">Receipts</SelectItem>
+                <SelectItem value="Payment" className="text-blue-100 focus:bg-blue-800/30">Payments</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -259,54 +287,58 @@ export default function Payments() {
       </Card>
 
       {/* Payments Table */}
-      <Card>
+      <Card className="futuristic-card">
         <CardHeader>
-          <CardTitle>Transaction History ({filteredPayments.length})</CardTitle>
+          <CardTitle className="text-cyan-300 glow-text">Transaction History ({filteredPayments.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="data-grid">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Store</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-blue-500/30">
+                  <TableHead className="text-blue-200">Date</TableHead>
+                  <TableHead className="text-blue-200">Store</TableHead>
+                  <TableHead className="text-blue-200">Type</TableHead>
+                  <TableHead className="text-blue-200">Supplier</TableHead>
+                  <TableHead className="text-right text-blue-200">Amount</TableHead>
+                  <TableHead className="text-blue-200">Description</TableHead>
+                  <TableHead className="text-right text-blue-200">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">{getStoreName(payment.store_id)}</TableCell>
+                  <TableRow key={payment.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                    <TableCell className="text-blue-100">{payment.date}</TableCell>
+                    <TableCell className="text-blue-200">{getStoreName(payment.store_id)}</TableCell>
                     <TableCell>
                       <StatusBadge status={payment.type} />
                     </TableCell>
-                    <TableCell className={`text-right font-medium ${payment.type === 'Receipt' ? 'text-green-600' : 'text-red-600'}`}>
-                      {payment.type === 'Receipt' ? '+' : '-'}${payment.amount.toLocaleString()}
+                    <TableCell className="text-blue-200">
+                      {payment.supplier_id ? getSupplierName(payment.supplier_id) : '-'}
                     </TableCell>
-                    <TableCell>{payment.description || 'No description'}</TableCell>
-                    <TableCell>{payment.date}</TableCell>
+                    <TableCell className={`text-right font-medium ${payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400'}`}>
+                      {payment.type === 'Receipt' ? '+' : '-'}₹{payment.amount.toLocaleString('en-IN')}
+                    </TableCell>
+                    <TableCell className="text-blue-200">{payment.description || 'No description'}</TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                          <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="futuristic-card">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogTitle className="text-cyan-300">Delete Transaction</AlertDialogTitle>
+                            <AlertDialogDescription className="text-blue-200">
                               Are you sure you want to delete this transaction? This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
                             <AlertDialogAction 
                               onClick={() => handleDeletePayment(payment.id)}
-                              className="bg-red-600 hover:bg-red-700"
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               Delete
                             </AlertDialogAction>
@@ -321,7 +353,7 @@ export default function Payments() {
           </div>
           {filteredPayments.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-500">No transactions found matching your criteria</p>
+              <p className="text-blue-300">No transactions found matching your criteria</p>
             </div>
           )}
         </CardContent>
