@@ -32,7 +32,7 @@ export default function InventorySupplier() {
   }, [items, selectedSupplier, selectedStore, searchTerm]);
 
   const getSupplierName = (supplierId: string) => {
-    return suppliers.find(s => s.id === supplierId)?.name || 'Unknown Supplier';
+    return suppliers.find(s => s.id === supplierId)?.name || 'No Supplier';
   };
 
   const getStoreName = (storeId: string) => {
@@ -56,8 +56,8 @@ export default function InventorySupplier() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold glow-text">Inventory by Supplier</h1>
-          <p className="text-blue-300">View inventory filtered by outlet and supplier</p>
+          <h1 className="text-3xl font-bold glow-text">Inventory by Outlet + Supplier</h1>
+          <p className="text-blue-300">Filter: Outlet + Supplier - Show items by selected supplier at selected outlet</p>
         </div>
         <SupplierForm
           trigger={
@@ -103,9 +103,14 @@ export default function InventorySupplier() {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Outlet + Supplier as requested */}
       <Card className="futuristic-card">
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle className="text-cyan-300 glow-text">
+            Filter: Outlet + Supplier
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
@@ -121,22 +126,30 @@ export default function InventorySupplier() {
               onValueChange={setSelectedStore}
               stores={stores}
               isLoading={false}
-              placeholder="All stores"
+              placeholder="Select Outlet"
             />
             <SupplierSelector 
               value={selectedSupplier} 
               onValueChange={setSelectedSupplier}
-              placeholder="All suppliers"
+              placeholder="Select Supplier"
             />
           </div>
+          {selectedStore && selectedSupplier && (
+            <div className="mt-4 p-3 bg-blue-800/20 rounded-md border border-blue-500/30">
+              <p className="text-blue-200">
+                Showing items from <span className="text-cyan-300 font-semibold">{getSupplierName(selectedSupplier)}</span> at{' '}
+                <span className="text-cyan-300 font-semibold">{getStoreName(selectedStore)}</span>
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Inventory Table */}
+      {/* Inventory Table - Show items belonging to selected supplier at selected outlet */}
       <Card className="futuristic-card">
         <CardHeader>
           <CardTitle className="text-cyan-300 glow-text">
-            Inventory Items ({filteredItems.length})
+            Items by Supplier at Outlet ({filteredItems.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -145,7 +158,7 @@ export default function InventorySupplier() {
               <TableHeader>
                 <TableRow className="border-blue-500/30">
                   <TableHead className="text-blue-200">Item Name</TableHead>
-                  <TableHead className="text-blue-200">Store</TableHead>
+                  <TableHead className="text-blue-200">Store (Outlet)</TableHead>
                   <TableHead className="text-blue-200">Supplier</TableHead>
                   <TableHead className="text-right text-blue-200">Quantity</TableHead>
                   <TableHead className="text-right text-blue-200">Cost Price</TableHead>
@@ -179,7 +192,12 @@ export default function InventorySupplier() {
           </div>
           {filteredItems.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-blue-300">No items found matching your criteria</p>
+              <p className="text-blue-300">
+                {selectedStore && selectedSupplier 
+                  ? "No items found for the selected supplier at this outlet" 
+                  : "Please select both an outlet and supplier to view items"
+                }
+              </p>
             </div>
           )}
         </CardContent>

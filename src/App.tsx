@@ -12,6 +12,7 @@ import Sales from "./pages/Sales";
 import Purchases from "./pages/Purchases";
 import Payments from "./pages/Payments";
 import SupplierLedger from "./pages/SupplierLedger";
+import SupplierProfile from "./pages/SupplierProfile";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/supplier-ledger" element={<SupplierLedger />} />
+            <Route path="/supplier-profile" element={<SupplierProfile />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
