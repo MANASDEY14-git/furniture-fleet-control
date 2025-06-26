@@ -38,7 +38,6 @@ export interface Sale {
   total_price: number;
   delivery_status: DeliveryStatus;
   date: string;
-  customer_name?: string;
   created_at?: string;
 }
 
@@ -51,7 +50,6 @@ export interface Purchase {
   invoice_number?: string;
   quantity: number;
   total_cost: number;
-  unit_cost: number;
   date: string;
   created_at?: string;
 }
@@ -76,7 +74,6 @@ export interface CreateSaleData {
   total_price: number;
   delivery_status: DeliveryStatus;
   date: string;
-  customer_name?: string;
 }
 
 export interface Payment {

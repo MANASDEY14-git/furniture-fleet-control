@@ -28,8 +28,7 @@ export default function Sales() {
     return sales.filter(sale => {
       const matchesStore = selectedStore === 'all' || sale.store_id === selectedStore;
       const matchesSupplier = selectedSupplier === 'all' || sale.supplier_id === selectedSupplier;
-      const matchesSearch = sale.item_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (sale.customer_name && sale.customer_name.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesSearch = sale.item_name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStore && matchesSupplier && matchesSearch;
     });
   }, [sales, selectedStore, selectedSupplier, searchTerm]);
@@ -152,7 +151,6 @@ export default function Sales() {
                   <TableHead className="text-blue-200">Store</TableHead>
                   <TableHead className="text-blue-200">Supplier</TableHead>
                   <TableHead className="text-blue-200">Item</TableHead>
-                  <TableHead className="text-blue-200">Customer</TableHead>
                   <TableHead className="text-right text-blue-200">Quantity</TableHead>
                   <TableHead className="text-right text-blue-200">Rate</TableHead>
                   <TableHead className="text-right text-blue-200">Total</TableHead>
@@ -167,7 +165,6 @@ export default function Sales() {
                     <TableCell className="text-blue-200">{getStoreName(sale.store_id)}</TableCell>
                     <TableCell className="text-blue-200">{getSupplierName(sale.supplier_id || '')}</TableCell>
                     <TableCell className="font-medium text-blue-100">{sale.item_name}</TableCell>
-                    <TableCell className="text-blue-200">{sale.customer_name || 'Walk-in'}</TableCell>
                     <TableCell className="text-right text-cyan-300">{sale.quantity}</TableCell>
                     <TableCell className="text-right text-blue-200">₹{(sale.total_price / sale.quantity).toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right text-cyan-300 font-semibold">₹{sale.total_price.toLocaleString('en-IN')}</TableCell>

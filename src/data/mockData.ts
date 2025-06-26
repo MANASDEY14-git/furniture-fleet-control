@@ -1,4 +1,3 @@
-
 import { Store, Item, Sale, Purchase, Payment, DeliveryStatus } from '@/types';
 
 export const stores: Store[] = [
