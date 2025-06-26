@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StoreSelector from '@/components/StoreSelector';
 import SupplierSelector from '@/components/SupplierSelector';
-import MultiItemPurchaseForm from '@/components/MultiItemPurchaseForm';
+import EnhancedPurchaseForm from '@/components/EnhancedPurchaseForm';
 import { usePurchases, useDeletePurchase } from '@/hooks/usePurchases';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -46,6 +46,21 @@ export default function Purchases() {
     return filteredPurchases.reduce((sum, purchase) => sum + purchase.total_cost, 0);
   };
 
+  const getPurchaseAge = (purchaseDate: string) => {
+    const today = new Date();
+    const pDate = new Date(purchaseDate);
+    const diffTime = Math.abs(today.getTime() - pDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const getPurchaseAgeColor = (days: number) => {
+    if (days <= 7) return 'bg-green-500';
+    if (days <= 30) return 'bg-blue-500';
+    if (days <= 90) return 'bg-yellow-500';
+    return 'bg-orange-500';
+  };
+
   const handleDeletePurchase = (purchaseId: string) => {
     deletePurchase.mutate(purchaseId);
   };
@@ -63,9 +78,9 @@ export default function Purchases() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold glow-text">Purchase Management</h1>
-          <p className="text-blue-300">Record and track inventory purchases with supplier ledger integration</p>
+          <p className="text-blue-300">Record purchases for new items (auto-add to inventory) and existing items with stock aging</p>
         </div>
-        <MultiItemPurchaseForm
+        <EnhancedPurchaseForm
           trigger={
             <Button className="cyber-button text-white font-semibold">
               <Plus className="w-4 h-4 mr-2" />
@@ -149,6 +164,7 @@ export default function Purchases() {
               <TableHeader>
                 <TableRow className="border-blue-500/30">
                   <TableHead className="text-blue-200">Date</TableHead>
+                  <TableHead className="text-blue-200">Age</TableHead>
                   <TableHead className="text-blue-200">Store</TableHead>
                   <TableHead className="text-blue-200">Supplier</TableHead>
                   <TableHead className="text-blue-200">Item</TableHead>
@@ -160,44 +176,52 @@ export default function Purchases() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPurchases.map((purchase) => (
-                  <TableRow key={purchase.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                    <TableCell className="text-blue-100">{purchase.date}</TableCell>
-                    <TableCell className="text-blue-200">{getStoreName(purchase.store_id)}</TableCell>
-                    <TableCell className="text-blue-200">{getSupplierName(purchase.supplier_id || '')}</TableCell>
-                    <TableCell className="font-medium text-blue-100">{purchase.item_name}</TableCell>
-                    <TableCell className="text-blue-200">{purchase.invoice_number || '-'}</TableCell>
-                    <TableCell className="text-right text-cyan-300">{purchase.quantity}</TableCell>
-                    <TableCell className="text-right text-blue-200">₹{(purchase.total_cost / purchase.quantity).toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-right text-cyan-300 font-semibold">₹{purchase.total_cost.toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="futuristic-card">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-cyan-300">Delete Purchase</AlertDialogTitle>
-                            <AlertDialogDescription className="text-blue-200">
-                              Are you sure you want to delete this purchase record? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeletePurchase(purchase.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredPurchases.map((purchase) => {
+                  const purchaseAge = getPurchaseAge(purchase.date);
+                  return (
+                    <TableRow key={purchase.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                      <TableCell className="text-blue-100">{purchase.date}</TableCell>
+                      <TableCell>
+                        <Badge className={`${getPurchaseAgeColor(purchaseAge)} text-white text-xs`}>
+                          {purchaseAge}d
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-blue-200">{getStoreName(purchase.store_id)}</TableCell>
+                      <TableCell className="text-blue-200">{getSupplierName(purchase.supplier_id || '')}</TableCell>
+                      <TableCell className="font-medium text-blue-100">{purchase.item_name}</TableCell>
+                      <TableCell className="text-blue-200">{purchase.invoice_number || '-'}</TableCell>
+                      <TableCell className="text-right text-cyan-300">{purchase.quantity}</TableCell>
+                      <TableCell className="text-right text-blue-200">₹{(purchase.total_cost / purchase.quantity).toLocaleString('en-IN')}</TableCell>
+                      <TableCell className="text-right text-cyan-300 font-semibold">₹{purchase.total_cost.toLocaleString('en-IN')}</TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="futuristic-card">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-cyan-300">Delete Purchase</AlertDialogTitle>
+                              <AlertDialogDescription className="text-blue-200">
+                                Are you sure you want to delete this purchase record? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeletePurchase(purchase.id)}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

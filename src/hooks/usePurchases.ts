@@ -24,40 +24,74 @@ export const useCreatePurchase = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: CreatePurchaseData) => {
+    mutationFn: async (data: CreatePurchaseData & { createNewItem?: boolean; itemData?: any }) => {
+      // If creating a new item, add it to inventory first
+      if (data.createNewItem && data.itemData) {
+        const { data: newItem, error: itemError } = await supabase
+          .from('items')
+          .insert([{
+            name: data.itemData.name,
+            category_id: data.itemData.category_id,
+            store_id: data.store_id,
+            supplier_id: data.supplier_id,
+            quantity_available: data.quantity,
+            cost_price: data.total_cost / data.quantity,
+            selling_price: data.itemData.selling_price,
+            stock_received_date: data.date
+          }])
+          .select()
+          .single();
+
+        if (itemError) throw itemError;
+        
+        // Update purchase data with new item ID
+        data.item_id = newItem.id;
+        data.item_name = newItem.name;
+      }
+
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
-        .insert([data])
+        .insert([{
+          store_id: data.store_id,
+          item_id: data.item_id,
+          item_name: data.item_name,
+          supplier_id: data.supplier_id,
+          invoice_number: data.invoice_number,
+          quantity: data.quantity,
+          total_cost: data.total_cost,
+          date: data.date
+        }])
         .select()
         .single();
 
       if (purchaseError) throw purchaseError;
 
-      // Update item quantity by adding the purchased quantity
-      const { data: currentItem, error: fetchError } = await supabase
-        .from('items')
-        .select('quantity_available')
-        .eq('id', data.item_id)
-        .single();
+      // If not creating new item, update existing item quantity
+      if (!data.createNewItem) {
+        const { data: currentItem, error: fetchError } = await supabase
+          .from('items')
+          .select('quantity_available')
+          .eq('id', data.item_id)
+          .single();
 
-      if (fetchError) {
-        // If fetching current item fails, rollback the purchase
-        await supabase.from('purchases').delete().eq('id', purchase.id);
-        throw fetchError;
-      }
+        if (fetchError) {
+          await supabase.from('purchases').delete().eq('id', purchase.id);
+          throw fetchError;
+        }
 
-      const { error: updateError } = await supabase
-        .from('items')
-        .update({ 
-          quantity_available: (currentItem.quantity_available || 0) + data.quantity,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', data.item_id);
+        const { error: updateError } = await supabase
+          .from('items')
+          .update({ 
+            quantity_available: (currentItem.quantity_available || 0) + data.quantity,
+            updated_at: new Date().toISOString(),
+            last_restocked_date: data.date
+          })
+          .eq('id', data.item_id);
 
-      if (updateError) {
-        // If updating inventory fails, rollback the purchase
-        await supabase.from('purchases').delete().eq('id', purchase.id);
-        throw updateError;
+        if (updateError) {
+          await supabase.from('purchases').delete().eq('id', purchase.id);
+          throw updateError;
+        }
       }
 
       return purchase;
