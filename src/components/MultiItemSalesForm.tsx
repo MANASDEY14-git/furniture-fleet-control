@@ -34,7 +34,6 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
     storeId: '',
     supplierId: '',
     deliveryStatus: DeliveryStatus.Pending,
-    customerName: '',
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -118,8 +117,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
         quantity: item.quantity,
         total_price: item.totalPrice,
         delivery_status: formData.deliveryStatus,
-        date: formData.date,
-        customer_name: formData.customerName || undefined
+        date: formData.date
       });
     }
 
@@ -128,7 +126,6 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
       storeId: '',
       supplierId: '',
       deliveryStatus: DeliveryStatus.Pending,
-      customerName: '',
       date: new Date().toISOString().split('T')[0],
     });
     setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
@@ -140,7 +137,6 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
       storeId: '',
       supplierId: '',
       deliveryStatus: DeliveryStatus.Pending,
-      customerName: '',
       date: new Date().toISOString().split('T')[0],
     });
     setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
@@ -184,17 +180,6 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
                   <SupplierSelector 
                     value={formData.supplierId} 
                     onValueChange={(value) => setFormData({...formData, supplierId: value})}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="customerName" className="text-blue-200">Customer Name</Label>
-                  <Input
-                    id="customerName"
-                    placeholder="Enter customer name (optional)"
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({...formData, customerName: e.target.value})}
-                    className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
                   />
                 </div>
 
