@@ -168,7 +168,7 @@ export default function Purchases() {
                     <TableCell className="font-medium text-blue-100">{purchase.item_name}</TableCell>
                     <TableCell className="text-blue-200">{purchase.invoice_number || '-'}</TableCell>
                     <TableCell className="text-right text-cyan-300">{purchase.quantity}</TableCell>
-                    <TableCell className="text-right text-blue-200">₹{purchase.unit_cost.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right text-blue-200">₹{(purchase.total_cost / purchase.quantity).toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right text-cyan-300 font-semibold">₹{purchase.total_cost.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>

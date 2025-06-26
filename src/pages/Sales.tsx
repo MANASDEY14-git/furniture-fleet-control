@@ -43,7 +43,7 @@ export default function Sales() {
   };
 
   const getTotalRevenue = () => {
-    return filteredSales.reduce((sum, sale) => sum + sale.total_amount, 0);
+    return filteredSales.reduce((sum, sale) => sum + sale.total_price, 0);
   };
 
   const handleDeleteSale = (saleId: string) => {
@@ -92,7 +92,7 @@ export default function Sales() {
             <div className="text-center">
               <p className="text-sm text-blue-200 mb-1">Total Quantity</p>
               <p className="text-2xl font-bold text-cyan-300">
-                {filteredSales.reduce((sum, sale) => sum + sale.quantity_sold, 0)}
+                {filteredSales.reduce((sum, sale) => sum + sale.quantity, 0)}
               </p>
             </div>
           </CardContent>
@@ -168,9 +168,9 @@ export default function Sales() {
                     <TableCell className="text-blue-200">{getSupplierName(sale.supplier_id || '')}</TableCell>
                     <TableCell className="font-medium text-blue-100">{sale.item_name}</TableCell>
                     <TableCell className="text-blue-200">{sale.customer_name || 'Walk-in'}</TableCell>
-                    <TableCell className="text-right text-cyan-300">{sale.quantity_sold}</TableCell>
-                    <TableCell className="text-right text-blue-200">₹{sale.unit_price.toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-right text-cyan-300 font-semibold">₹{sale.total_amount.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right text-cyan-300">{sale.quantity}</TableCell>
+                    <TableCell className="text-right text-blue-200">₹{(sale.total_price / sale.quantity).toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right text-cyan-300 font-semibold">₹{sale.total_price.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
                       <StatusBadge status={sale.delivery_status} />
                     </TableCell>
