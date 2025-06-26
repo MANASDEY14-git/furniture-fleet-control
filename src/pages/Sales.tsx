@@ -1,58 +1,65 @@
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import StoreSelector from '@/components/StoreSelector';
 import SupplierSelector from '@/components/SupplierSelector';
-import MultiItemSalesForm from '@/components/MultiItemSalesForm';
+import SalesOrderForm from '@/components/SalesOrderForm';
 import StatusBadge from '@/components/StatusBadge';
-import { useSales, useDeleteSale } from '@/hooks/useSales';
+import { useSalesOrders, useUpdateSalesOrderStatus } from '@/hooks/useSalesOrders';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { DeliveryStatus } from '@/types';
 
 export default function Sales() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewingOrder, setViewingOrder] = useState<any>(null);
 
-  const { data: sales = [], isLoading: salesLoading } = useSales();
+  const { data: salesOrders = [], isLoading: ordersLoading } = useSalesOrders();
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: suppliers = [] } = useSuppliers();
-  const deleteSale = useDeleteSale();
+  const updateOrderStatus = useUpdateSalesOrderStatus();
 
-  const filteredSales = useMemo(() => {
-    return sales.filter(sale => {
-      const matchesStore = selectedStore === 'all' || sale.store_id === selectedStore;
-      const matchesSupplier = selectedSupplier === 'all' || sale.supplier_id === selectedSupplier;
-      const matchesSearch = sale.item_name.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredOrders = useMemo(() => {
+    return salesOrders.filter(order => {
+      const matchesStore = selectedStore === 'all' || order.store_id === selectedStore;
+      const matchesSupplier = selectedSupplier === 'all' || order.supplier_id === selectedSupplier;
+      const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStore && matchesSupplier && matchesSearch;
     });
-  }, [sales, selectedStore, selectedSupplier, searchTerm]);
+  }, [salesOrders, selectedStore, selectedSupplier, searchTerm]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
 
   const getSupplierName = (supplierId: string) => {
-    return suppliers.find(supplier => supplier.id === supplierId)?.name || 'Unknown Supplier';
+    return suppliers.find(supplier => supplier.id === supplierId)?.name || 'Walk-in Customer';
   };
 
   const getTotalRevenue = () => {
-    return filteredSales.reduce((sum, sale) => sum + sale.total_price, 0);
+    return filteredOrders.reduce((sum, order) => sum + order.total_amount, 0);
   };
 
-  const handleDeleteSale = (saleId: string) => {
-    deleteSale.mutate(saleId);
+  const getTotalItems = () => {
+    return filteredOrders.reduce((sum, order) => sum + (order.sales_order_items?.length || 0), 0);
   };
 
-  if (salesLoading) {
+  const handleStatusUpdate = (orderId: string, newStatus: DeliveryStatus) => {
+    updateOrderStatus.mutate({ id: orderId, delivery_status: newStatus });
+  };
+
+  if (ordersLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg glow-text">Loading sales...</div>
+        <div className="text-lg glow-text">Loading sales orders...</div>
       </div>
     );
   }
@@ -62,13 +69,13 @@ export default function Sales() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold glow-text">Sales Management</h1>
-          <p className="text-blue-300">Track sales by supplier and outlet with delivery status</p>
+          <p className="text-blue-300">Track sales orders by supplier and outlet with delivery status</p>
         </div>
-        <MultiItemSalesForm
+        <SalesOrderForm
           trigger={
             <Button className="cyber-button text-white font-semibold">
               <Plus className="w-4 h-4 mr-2" />
-              Record Sale
+              Create Order
             </Button>
           }
         />
@@ -79,9 +86,9 @@ export default function Sales() {
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-blue-200 mb-1">Total Sales</p>
+              <p className="text-sm text-blue-200 mb-1">Total Orders</p>
               <p className="text-2xl font-bold text-cyan-300">
-                {filteredSales.length}
+                {filteredOrders.length}
               </p>
             </div>
           </CardContent>
@@ -89,9 +96,9 @@ export default function Sales() {
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-sm text-blue-200 mb-1">Total Quantity</p>
+              <p className="text-sm text-blue-200 mb-1">Total Items</p>
               <p className="text-2xl font-bold text-cyan-300">
-                {filteredSales.reduce((sum, sale) => sum + sale.quantity, 0)}
+                {getTotalItems()}
               </p>
             </div>
           </CardContent>
@@ -115,7 +122,7 @@ export default function Sales() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
               <Input
-                placeholder="Search sales..."
+                placeholder="Search order number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
@@ -137,10 +144,10 @@ export default function Sales() {
         </CardContent>
       </Card>
 
-      {/* Sales Table */}
+      {/* Orders Table */}
       <Card className="futuristic-card">
         <CardHeader>
-          <CardTitle className="text-cyan-300 glow-text">Sales History ({filteredSales.length})</CardTitle>
+          <CardTitle className="text-cyan-300 glow-text">Sales Orders ({filteredOrders.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -148,63 +155,108 @@ export default function Sales() {
               <TableHeader>
                 <TableRow className="border-blue-500/30">
                   <TableHead className="text-blue-200">Date</TableHead>
+                  <TableHead className="text-blue-200">Order #</TableHead>
                   <TableHead className="text-blue-200">Store</TableHead>
-                  <TableHead className="text-blue-200">Supplier</TableHead>
-                  <TableHead className="text-blue-200">Item</TableHead>
-                  <TableHead className="text-right text-blue-200">Quantity</TableHead>
-                  <TableHead className="text-right text-blue-200">Rate</TableHead>
-                  <TableHead className="text-right text-blue-200">Total</TableHead>
+                  <TableHead className="text-blue-200">Customer</TableHead>
+                  <TableHead className="text-right text-blue-200">Total Amount</TableHead>
                   <TableHead className="text-blue-200">Status</TableHead>
                   <TableHead className="text-right text-blue-200">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSales.map((sale) => (
-                  <TableRow key={sale.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                    <TableCell className="text-blue-100">{sale.date}</TableCell>
-                    <TableCell className="text-blue-200">{getStoreName(sale.store_id)}</TableCell>
-                    <TableCell className="text-blue-200">{getSupplierName(sale.supplier_id || '')}</TableCell>
-                    <TableCell className="font-medium text-blue-100">{sale.item_name}</TableCell>
-                    <TableCell className="text-right text-cyan-300">{sale.quantity}</TableCell>
-                    <TableCell className="text-right text-blue-200">₹{(sale.total_price / sale.quantity).toLocaleString('en-IN')}</TableCell>
-                    <TableCell className="text-right text-cyan-300 font-semibold">₹{sale.total_price.toLocaleString('en-IN')}</TableCell>
+                {filteredOrders.map((order) => (
+                  <TableRow key={order.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                    <TableCell className="text-blue-100">{order.date}</TableCell>
+                    <TableCell className="font-medium text-cyan-300">{order.order_number}</TableCell>
+                    <TableCell className="text-blue-200">{getStoreName(order.store_id)}</TableCell>
+                    <TableCell className="text-blue-200">{getSupplierName(order.supplier_id || '')}</TableCell>
+                    <TableCell className="text-right text-cyan-300 font-semibold">₹{order.total_amount.toLocaleString('en-IN')}</TableCell>
                     <TableCell>
-                      <StatusBadge status={sale.delivery_status} />
+                      <Select 
+                        value={order.delivery_status} 
+                        onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.id, value)}
+                      >
+                        <SelectTrigger className="w-36 neon-border bg-slate-800/50 text-blue-100">
+                          <SelectValue>
+                            <StatusBadge status={order.delivery_status} />
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-blue-500/30">
+                          <SelectItem value={DeliveryStatus.Pending} className="text-blue-100 focus:bg-blue-800/30">Pending</SelectItem>
+                          <SelectItem value={DeliveryStatus.PaidInFull} className="text-blue-100 focus:bg-blue-800/30">Paid in Full</SelectItem>
+                          <SelectItem value={DeliveryStatus.Delivered} className="text-blue-100 focus:bg-blue-800/30">Delivered</SelectItem>
+                          <SelectItem value={DeliveryStatus.Shipped} className="text-blue-100 focus:bg-blue-800/30">Shipped</SelectItem>
+                          <SelectItem value={DeliveryStatus.Cancelled} className="text-blue-100 focus:bg-blue-800/30">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell className="text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                            <Trash2 className="w-4 h-4" />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20"
+                            onClick={() => setViewingOrder(order)}
+                          >
+                            <Eye className="w-4 h-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="futuristic-card">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-cyan-300">Delete Sale</AlertDialogTitle>
-                            <AlertDialogDescription className="text-blue-200">
-                              Are you sure you want to delete this sale record? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeleteSale(sale.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                        </DialogTrigger>
+                        <DialogContent className="futuristic-card max-w-4xl">
+                          <DialogHeader>
+                            <DialogTitle className="text-cyan-300">Order Details - {order.order_number}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-blue-200"><strong>Store:</strong> {getStoreName(order.store_id)}</p>
+                                <p className="text-blue-200"><strong>Customer:</strong> {getSupplierName(order.supplier_id || '')}</p>
+                              </div>
+                              <div>
+                                <p className="text-blue-200"><strong>Date:</strong> {order.date}</p>
+                                <p className="text-blue-200"><strong>Status:</strong> <StatusBadge status={order.delivery_status} /></p>
+                              </div>
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-blue-200 mb-2">Items</h3>
+                              <Table className="data-grid">
+                                <TableHeader>
+                                  <TableRow className="border-blue-500/30">
+                                    <TableHead className="text-blue-200">Item</TableHead>
+                                    <TableHead className="text-blue-200">Quantity</TableHead>
+                                    <TableHead className="text-blue-200">Unit Price</TableHead>
+                                    <TableHead className="text-blue-200">Total</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {order.sales_order_items?.map((item: any) => (
+                                    <TableRow key={item.id} className="border-blue-500/20">
+                                      <TableCell className="text-blue-100">{item.item_name}</TableCell>
+                                      <TableCell className="text-blue-100">{item.quantity}</TableCell>
+                                      <TableCell className="text-blue-100">₹{item.unit_price}</TableCell>
+                                      <TableCell className="text-cyan-300 font-semibold">₹{item.total_price}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                              <div className="mt-4 text-right">
+                                <p className="text-lg font-bold text-cyan-300">
+                                  Total: ₹{order.total_amount.toLocaleString('en-IN')}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-          {filteredSales.length === 0 && (
+          {filteredOrders.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-blue-300">No sales found matching your criteria</p>
+              <p className="text-blue-300">No sales orders found matching your criteria</p>
             </div>
           )}
         </CardContent>

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,7 +12,6 @@ export interface Item {
   cost_price: number;
   selling_price: number;
   stock_receive_date?: string;
-  last_restocked_date?: string;
   created_at: string;
   updated_at: string;
 }

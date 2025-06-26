@@ -29,19 +29,6 @@ export enum DeliveryStatus {
   PaidInFull = 'Paid in Full'
 }
 
-export interface Sale {
-  id: string;
-  store_id: string;
-  item_id: string;
-  item_name: string;
-  supplier_id?: string;
-  quantity: number;
-  total_price: number;
-  delivery_status: DeliveryStatus;
-  date: string;
-  created_at?: string;
-}
-
 export interface Purchase {
   id: string;
   store_id: string;
@@ -64,6 +51,56 @@ export interface CreatePurchaseData {
   quantity: number;
   total_cost: number;
   date: string;
+}
+
+export interface SalesOrder {
+  id: string;
+  order_number: string;
+  store_id: string;
+  supplier_id?: string;
+  delivery_status: DeliveryStatus;
+  date: string;
+  total_amount: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SalesOrderItem {
+  id: string;
+  order_id: string;
+  item_id: string;
+  item_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+}
+
+export interface CreateSalesOrderData {
+  order_number: string;
+  store_id: string;
+  supplier_id?: string;
+  delivery_status: DeliveryStatus;
+  date: string;
+  items: {
+    item_id: string;
+    item_name: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+  }[];
+}
+
+export interface Sale {
+  id: string;
+  store_id: string;
+  item_id: string;
+  item_name: string;
+  supplier_id?: string;
+  quantity: number;
+  total_price: number;
+  delivery_status: DeliveryStatus;
+  date: string;
+  created_at?: string;
 }
 
 export interface CreateSaleData {
