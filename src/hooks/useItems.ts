@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +25,7 @@ export interface CreateItemData {
   quantity_available: number;
   cost_price: number;
   selling_price: number;
+  stock_receive_date?: string;
 }
 
 export interface UpdateItemData extends Partial<CreateItemData> {
@@ -85,7 +87,10 @@ export const useUpdateItem = () => {
     mutationFn: async ({ id, ...data }: UpdateItemData) => {
       const { data: item, error } = await supabase
         .from('items')
-        .update(data)
+        .update({
+          ...data,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
         .select()
         .single();

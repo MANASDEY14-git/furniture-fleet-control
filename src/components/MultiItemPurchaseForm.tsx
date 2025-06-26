@@ -7,19 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import SupplierSelector from '@/components/SupplierSelector';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
-import { useCreatePurchase } from '@/hooks/usePurchases';
+import { useCreatePurchaseOrder } from '@/hooks/usePurchaseOrders';
 
 interface PurchaseItem {
   id: string;
   itemId: string;
   itemName: string;
   quantity: number;
-  unitCost: number;
-  totalCost: number;
+  unitPrice: number;
+  totalPrice: number;
 }
 
 interface MultiItemPurchaseFormProps {
@@ -29,19 +29,19 @@ interface MultiItemPurchaseFormProps {
 export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseFormProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
+    orderNumber: '',
     storeId: '',
     supplierId: '',
-    invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
   });
 
   const [items, setItems] = useState<PurchaseItem[]>([
-    { id: '1', itemId: '', itemName: '', quantity: 0, unitCost: 0, totalCost: 0 }
+    { id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0 }
   ]);
 
   const { data: availableItems = [] } = useItems();
   const { data: stores = [] } = useStores();
-  const createPurchase = useCreatePurchase();
+  const createPurchaseOrder = useCreatePurchaseOrder();
 
   const filteredItems = availableItems.filter(item => {
     const matchesSupplier = !formData.supplierId || item.supplier_id === formData.supplierId;
@@ -55,8 +55,8 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
       itemId: '',
       itemName: '',
       quantity: 0,
-      unitCost: 0,
-      totalCost: 0
+      unitPrice: 0,
+      totalPrice: 0
     }]);
   };
 
@@ -74,11 +74,11 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
         if (field === 'itemId') {
           const selectedItem = filteredItems.find(i => i.id === value);
           updatedItem.itemName = selectedItem?.name || '';
-          updatedItem.unitCost = selectedItem?.cost_price || 0;
+          updatedItem.unitPrice = selectedItem?.cost_price || 0;
         }
         
-        if (field === 'quantity' || field === 'unitCost') {
-          updatedItem.totalCost = updatedItem.quantity * updatedItem.unitCost;
+        if (field === 'quantity' || field === 'unitPrice') {
+          updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
         }
         
         return updatedItem;
@@ -88,14 +88,14 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
   };
 
   const getTotalAmount = () => {
-    return items.reduce((sum, item) => sum + item.totalCost, 0);
+    return items.reduce((sum, item) => sum + item.totalPrice, 0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const validItems = items.filter(item => 
-      item.itemId && item.quantity > 0 && item.unitCost > 0
+      item.itemId && item.quantity > 0 && item.unitPrice > 0
     );
     
     if (validItems.length === 0) {
@@ -103,39 +103,37 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
       return;
     }
 
-    // Create each purchase item separately
-    for (const item of validItems) {
-      await createPurchase.mutateAsync({
-        store_id: formData.storeId,
-        supplier_id: formData.supplierId,
-        item_id: item.itemId,
-        item_name: item.itemName,
-        invoice_number: formData.invoiceNumber,
-        quantity: item.quantity,
-        total_cost: item.totalCost,
-        date: formData.date
-      });
+    if (!formData.orderNumber.trim()) {
+      alert('Please enter an order number');
+      return;
     }
 
-    // Reset form
-    setFormData({
-      storeId: '',
-      supplierId: '',
-      invoiceNumber: '',
-      date: new Date().toISOString().split('T')[0],
+    await createPurchaseOrder.mutateAsync({
+      order_number: formData.orderNumber,
+      store_id: formData.storeId,
+      supplier_id: formData.supplierId,
+      date: formData.date,
+      items: validItems.map(item => ({
+        item_id: item.itemId,
+        item_name: item.itemName,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total_price: item.totalPrice
+      }))
     });
-    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitCost: 0, totalCost: 0 }]);
+
+    resetForm();
     setOpen(false);
   };
 
   const resetForm = () => {
     setFormData({
+      orderNumber: '',
       storeId: '',
       supplierId: '',
-      invoiceNumber: '',
       date: new Date().toISOString().split('T')[0],
     });
-    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitCost: 0, totalCost: 0 }]);
+    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0 }]);
   };
 
   return (
@@ -147,14 +145,25 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
         {trigger}
       </DialogTrigger>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto futuristic-card">
+        <DialogHeader>
+          <DialogTitle className="text-cyan-300 glow-text">Create Purchase Order</DialogTitle>
+        </DialogHeader>
         <Card className="border-none shadow-none">
-          <CardHeader>
-            <CardTitle className="text-cyan-300 glow-text">Multi-Item Purchase Entry</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Header Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="orderNumber" className="text-blue-200">Order Number *</Label>
+                  <Input
+                    id="orderNumber"
+                    value={formData.orderNumber}
+                    onChange={(e) => setFormData({...formData, orderNumber: e.target.value})}
+                    required
+                    className="neon-border bg-slate-800/50 text-blue-100"
+                    placeholder="Enter order number"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="store" className="text-blue-200">Store *</Label>
                   <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})} required>
@@ -180,18 +189,6 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="invoiceNumber" className="text-blue-200">Invoice Number *</Label>
-                  <Input
-                    id="invoiceNumber"
-                    placeholder="Enter invoice number"
-                    value={formData.invoiceNumber}
-                    onChange={(e) => setFormData({...formData, invoiceNumber: e.target.value})}
-                    required
-                    className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="date" className="text-blue-200">Date *</Label>
                   <Input
                     id="date"
@@ -204,7 +201,6 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
                 </div>
               </div>
 
-              {/* Items Table */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-blue-200">Items</h3>
@@ -224,7 +220,7 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
                       <TableRow className="border-blue-500/30">
                         <TableHead className="text-blue-200">Item</TableHead>
                         <TableHead className="text-blue-200">Quantity</TableHead>
-                        <TableHead className="text-blue-200">Unit Cost</TableHead>
+                        <TableHead className="text-blue-200">Unit Price</TableHead>
                         <TableHead className="text-blue-200">Total</TableHead>
                         <TableHead className="text-blue-200">Action</TableHead>
                       </TableRow>
@@ -262,14 +258,14 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
                             <Input
                               type="number"
                               step="0.01"
-                              value={item.unitCost || ''}
-                              onChange={(e) => updateItem(item.id, 'unitCost', parseFloat(e.target.value) || 0)}
+                              value={item.unitPrice || ''}
+                              onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                               className="neon-border bg-slate-800/50 text-blue-100 w-28"
                               min="0"
                             />
                           </TableCell>
                           <TableCell className="text-cyan-300 font-semibold">
-                            ₹{item.totalCost.toFixed(2)}
+                            ₹{item.totalPrice.toFixed(2)}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -289,7 +285,6 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
                   </Table>
                 </div>
 
-                {/* Total */}
                 <div className="flex justify-end">
                   <div className="neon-border bg-gradient-to-r from-green-400/10 to-cyan-400/10 rounded-md px-6 py-3">
                     <span className="text-lg font-bold text-cyan-300 glow-text">
@@ -302,9 +297,9 @@ export default function MultiItemPurchaseForm({ trigger }: MultiItemPurchaseForm
               <Button 
                 type="submit" 
                 className="w-full cyber-button text-white font-semibold" 
-                disabled={createPurchase.isPending || !formData.storeId || !formData.supplierId || !formData.invoiceNumber}
+                disabled={createPurchaseOrder.isPending || !formData.storeId || !formData.supplierId || !formData.orderNumber}
               >
-                {createPurchase.isPending ? 'Recording Purchase...' : 'Record Purchase'}
+                {createPurchaseOrder.isPending ? 'Creating Order...' : 'Create Purchase Order'}
               </Button>
             </form>
           </CardContent>

@@ -9,10 +9,10 @@ export const useSalesOrders = () => {
     queryKey: ['sales-orders'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('sales_orders')
+        .from('sales_orders' as any)
         .select(`
           *,
-          sales_order_items (
+          sales_order_items!sales_order_items_order_id_fkey (
             id,
             item_id,
             item_name,
@@ -37,7 +37,7 @@ export const useCreateSalesOrder = () => {
     mutationFn: async (data: CreateSalesOrderData) => {
       // Create the sales order
       const { data: order, error: orderError } = await supabase
-        .from('sales_orders')
+        .from('sales_orders' as any)
         .insert([{
           order_number: data.order_number,
           store_id: data.store_id,
@@ -62,12 +62,12 @@ export const useCreateSalesOrder = () => {
       }));
 
       const { error: itemsError } = await supabase
-        .from('sales_order_items')
+        .from('sales_order_items' as any)
         .insert(orderItems);
 
       if (itemsError) {
         // Rollback order if items fail
-        await supabase.from('sales_orders').delete().eq('id', order.id);
+        await supabase.from('sales_orders' as any).delete().eq('id', order.id);
         throw itemsError;
       }
 
@@ -117,7 +117,7 @@ export const useUpdateSalesOrderStatus = () => {
   return useMutation({
     mutationFn: async ({ id, delivery_status }: { id: string; delivery_status: DeliveryStatus }) => {
       const { data, error } = await supabase
-        .from('sales_orders')
+        .from('sales_orders' as any)
         .update({ delivery_status, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
