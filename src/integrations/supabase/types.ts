@@ -72,6 +72,7 @@ export type Database = {
           name: string
           quantity_available: number
           selling_price: number
+          stock_receive_date: string | null
           store_id: string | null
           supplier_id: string | null
           updated_at: string | null
@@ -84,6 +85,7 @@ export type Database = {
           name: string
           quantity_available?: number
           selling_price: number
+          stock_receive_date?: string | null
           store_id?: string | null
           supplier_id?: string | null
           updated_at?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           name?: string
           quantity_available?: number
           selling_price?: number
+          stock_receive_date?: string | null
           store_id?: string | null
           supplier_id?: string | null
           updated_at?: string | null

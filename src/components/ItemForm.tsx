@@ -3,87 +3,78 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useCreateItem, useUpdateItem, Item } from '@/hooks/useItems';
-import { useStores } from '@/hooks/useStores';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useItems';
 import { useCategories } from '@/hooks/useCategories';
+import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import SupplierSelector from '@/components/SupplierSelector';
 
 interface ItemFormProps {
   item?: Item;
   trigger: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-export default function ItemForm({ item, trigger }: ItemFormProps) {
+export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(item?.name || '');
-  const [categoryId, setCategoryId] = useState(item?.category_id || '');
-  const [storeId, setStoreId] = useState(item?.store_id || '');
-  const [supplierId, setSupplierId] = useState(item?.supplier_id || '');
-  const [quantity, setQuantity] = useState(item?.quantity_available?.toString() || '');
-  const [costPrice, setCostPrice] = useState(item?.cost_price?.toString() || '');
-  const [sellingPrice, setSellingPrice] = useState(item?.selling_price?.toString() || '');
-  const [stockReceivedDate, setStockReceivedDate] = useState(
-    item?.stock_received_date || new Date().toISOString().split('T')[0]
-  );
+  const [formData, setFormData] = useState({
+    name: item?.name || '',
+    category_id: item?.category_id || '',
+    store_id: item?.store_id || '',
+    supplier_id: item?.supplier_id || '',
+    quantity_available: item?.quantity_available || 0,
+    cost_price: item?.cost_price || 0,
+    selling_price: item?.selling_price || 0,
+    stock_receive_date: item?.stock_receive_date || new Date().toISOString().split('T')[0],
+  });
 
-  const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
+  const { data: stores = [] } = useStores();
   const { data: suppliers = [] } = useSuppliers();
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
 
-  const isEditing = !!item;
-
   const calculateStockAge = () => {
-    if (!stockReceivedDate) return null;
+    if (!formData.stock_receive_date) return 0;
+    const receiveDate = new Date(formData.stock_receive_date);
     const today = new Date();
-    const receivedDate = new Date(stockReceivedDate);
-    const diffTime = Math.abs(today.getTime() - receivedDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    const diffTime = Math.abs(today.getTime() - receiveDate.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const getStockAgeColor = (days: number) => {
-    if (days <= 30) return 'bg-green-500';
-    if (days <= 90) return 'bg-yellow-500';
-    if (days <= 180) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const itemData = {
-      name,
-      category_id: categoryId,
-      store_id: storeId,
-      supplier_id: supplierId || undefined,
-      quantity_available: parseInt(quantity),
-      cost_price: parseFloat(costPrice),
-      selling_price: parseFloat(sellingPrice),
-      stock_received_date: stockReceivedDate,
-    };
-
-    if (isEditing) {
-      updateItem.mutate({ id: item.id, ...itemData });
-    } else {
-      createItem.mutate(itemData);
-    }
-    
-    setOpen(false);
-    if (!isEditing) {
-      setName('');
-      setCategoryId('');
-      setStoreId('');
-      setSupplierId('');
-      setQuantity('');
-      setCostPrice('');
-      setSellingPrice('');
-      setStockReceivedDate(new Date().toISOString().split('T')[0]);
+    try {
+      if (item) {
+        await updateItem.mutateAsync({
+          id: item.id,
+          ...formData
+        });
+      } else {
+        await createItem.mutateAsync(formData);
+      }
+      
+      setOpen(false);
+      onSuccess?.();
+      
+      // Reset form for new items
+      if (!item) {
+        setFormData({
+          name: '',
+          category_id: '',
+          store_id: '',
+          supplier_id: '',
+          quantity_available: 0,
+          cost_price: 0,
+          selling_price: 0,
+          stock_receive_date: new Date().toISOString().split('T')[0],
+        });
+      }
+    } catch (error) {
+      console.error('Error saving item:', error);
     }
   };
 
@@ -97,153 +88,142 @@ export default function ItemForm({ item, trigger }: ItemFormProps) {
       <DialogContent className="max-w-2xl futuristic-card">
         <DialogHeader>
           <DialogTitle className="text-cyan-300 glow-text">
-            {isEditing ? 'Edit Old Stock Item' : 'Add Old Stock Item'}
+            {item ? 'Edit Item' : 'Add New Item'}
           </DialogTitle>
         </DialogHeader>
         
-        <Card className="border-none shadow-none">
-          <CardHeader>
-            <CardTitle className="text-blue-200 text-sm">
-              Use this form for existing inventory items with known supplier relationships
-            </CardTitle>
-            {stockAge && (
-              <div className="flex items-center gap-2">
-                <Badge className={`${getStockAgeColor(stockAge)} text-white`}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-blue-200">Item Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                required
+                className="neon-border bg-slate-800/50 text-blue-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category" className="text-blue-200">Category *</Label>
+              <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})} required>
+                <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-blue-500/30">
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id} className="text-blue-100 focus:bg-blue-800/30">
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="store" className="text-blue-200">Store *</Label>
+              <Select value={formData.store_id} onValueChange={(value) => setFormData({...formData, store_id: value})} required>
+                <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                  <SelectValue placeholder="Select store" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-blue-500/30">
+                  {stores.map((store) => (
+                    <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
+                      {store.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supplier" className="text-blue-200">Supplier</Label>
+              <SupplierSelector 
+                value={formData.supplier_id} 
+                onValueChange={(value) => setFormData({...formData, supplier_id: value})}
+                placeholder="Select supplier"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quantity" className="text-blue-200">Quantity Available *</Label>
+              <Input
+                id="quantity"
+                type="number"
+                value={formData.quantity_available}
+                onChange={(e) => setFormData({...formData, quantity_available: parseInt(e.target.value) || 0})}
+                required
+                min="0"
+                className="neon-border bg-slate-800/50 text-blue-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="costPrice" className="text-blue-200">Cost Price *</Label>
+              <Input
+                id="costPrice"
+                type="number"
+                step="0.01"
+                value={formData.cost_price}
+                onChange={(e) => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})}
+                required
+                min="0"
+                className="neon-border bg-slate-800/50 text-blue-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sellingPrice" className="text-blue-200">Selling Price *</Label>
+              <Input
+                id="sellingPrice"
+                type="number"
+                step="0.01"
+                value={formData.selling_price}
+                onChange={(e) => setFormData({...formData, selling_price: parseFloat(e.target.value) || 0})}
+                required
+                min="0"
+                className="neon-border bg-slate-800/50 text-blue-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="stockDate" className="text-blue-200">Stock Received Date</Label>
+              <Input
+                id="stockDate"
+                type="date"
+                value={formData.stock_receive_date}
+                onChange={(e) => setFormData({...formData, stock_receive_date: e.target.value})}
+                className="neon-border bg-slate-800/50 text-blue-100"
+              />
+              {formData.stock_receive_date && (
+                <p className="text-sm text-cyan-300">
                   Stock Age: {stockAge} days
-                </Badge>
-              </div>
-            )}
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-blue-200">Item Name *</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter item name"
-                    required
-                    className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="category" className="text-blue-200">Category *</Label>
-                  <Select value={categoryId} onValueChange={setCategoryId} required>
-                    <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-blue-500/30">
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id} className="text-blue-100 focus:bg-blue-800/30">
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  {stockAge > 90 && <span className="text-orange-400 ml-2">(Aging Stock)</span>}
+                  {stockAge > 180 && <span className="text-red-400 ml-2">(Old Stock)</span>}
+                </p>
+              )}
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="store" className="text-blue-200">Store *</Label>
-                  <Select value={storeId} onValueChange={setStoreId} required>
-                    <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                      <SelectValue placeholder="Select store" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-blue-500/30">
-                      {stores.map((store) => (
-                        <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
-                          {store.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="supplier" className="text-blue-200">Supplier</Label>
-                  <Select value={supplierId} onValueChange={setSupplierId}>
-                    <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                      <SelectValue placeholder="Select supplier (optional)" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-blue-500/30">
-                      {suppliers.map((supplier) => (
-                        <SelectItem key={supplier.id} value={supplier.id} className="text-blue-100 focus:bg-blue-800/30">
-                          {supplier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="stockReceivedDate" className="text-blue-200">Stock Received Date *</Label>
-                  <Input
-                    id="stockReceivedDate"
-                    type="date"
-                    value={stockReceivedDate}
-                    onChange={(e) => setStockReceivedDate(e.target.value)}
-                    required
-                    className="neon-border bg-slate-800/50 text-blue-100"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="quantity" className="text-blue-200">Current Quantity *</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    placeholder="Enter quantity"
-                    required
-                    min="0"
-                    className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="costPrice" className="text-blue-200">Cost Price *</Label>
-                  <Input
-                    id="costPrice"
-                    type="number"
-                    step="0.01"
-                    value={costPrice}
-                    onChange={(e) => setCostPrice(e.target.value)}
-                    placeholder="Enter cost price"
-                    required
-                    min="0"
-                    className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="sellingPrice" className="text-blue-200">Selling Price *</Label>
-                  <Input
-                    id="sellingPrice"
-                    type="number"
-                    step="0.01"
-                    value={sellingPrice}
-                    onChange={(e) => setSellingPrice(e.target.value)}
-                    placeholder="Enter selling price"
-                    required
-                    min="0"
-                    className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-                  />
-                </div>
-              </div>
-
-              <Button 
-                type="submit" 
-                className="w-full cyber-button text-white font-semibold" 
-                disabled={createItem.isPending || updateItem.isPending}
-              >
-                {isEditing ? 'Update Item' : 'Add Old Stock Item'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+          <div className="flex gap-2 pt-4">
+            <Button 
+              type="submit" 
+              className="flex-1 cyber-button text-white font-semibold"
+              disabled={createItem.isPending || updateItem.isPending}
+            >
+              {createItem.isPending || updateItem.isPending ? 'Saving...' : (item ? 'Update Item' : 'Add Item')}
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+              className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

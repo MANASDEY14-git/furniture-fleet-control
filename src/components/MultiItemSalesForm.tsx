@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import SupplierSelector from '@/components/SupplierSelector';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
@@ -30,6 +31,7 @@ interface MultiItemSalesFormProps {
 
 export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps) {
   const [open, setOpen] = useState(false);
+  const [isWalkInCustomer, setIsWalkInCustomer] = useState(false);
   const [formData, setFormData] = useState({
     storeId: '',
     supplierId: '',
@@ -46,7 +48,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
   const createSale = useCreateSale();
 
   const filteredItems = availableItems.filter(item => {
-    const matchesSupplier = !formData.supplierId || item.supplier_id === formData.supplierId;
+    const matchesSupplier = isWalkInCustomer || !formData.supplierId || item.supplier_id === formData.supplierId;
     const matchesStore = !formData.storeId || item.store_id === formData.storeId;
     return matchesSupplier && matchesStore;
   });
@@ -107,11 +109,14 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
       return;
     }
 
+    // For walk-in customers, use null for supplier_id
+    const supplierId = isWalkInCustomer ? null : formData.supplierId;
+
     // Create each sale item separately
     for (const item of validItems) {
       await createSale.mutateAsync({
         store_id: formData.storeId,
-        supplier_id: formData.supplierId,
+        supplier_id: supplierId,
         item_id: item.itemId,
         item_name: item.itemName,
         quantity: item.quantity,
@@ -129,6 +134,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
       date: new Date().toISOString().split('T')[0],
     });
     setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
+    setIsWalkInCustomer(false);
     setOpen(false);
   };
 
@@ -140,6 +146,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
       date: new Date().toISOString().split('T')[0],
     });
     setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
+    setIsWalkInCustomer(false);
   };
 
   return (
@@ -176,11 +183,31 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="supplier" className="text-blue-200">Supplier *</Label>
-                  <SupplierSelector 
-                    value={formData.supplierId} 
-                    onValueChange={(value) => setFormData({...formData, supplierId: value})}
-                  />
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Checkbox
+                      id="walkInCustomer"
+                      checked={isWalkInCustomer}
+                      onCheckedChange={(checked) => {
+                        setIsWalkInCustomer(checked as boolean);
+                        if (checked) {
+                          setFormData({...formData, supplierId: ''});
+                        }
+                      }}
+                    />
+                    <Label htmlFor="walkInCustomer" className="text-blue-200">Walk-in Customer</Label>
+                  </div>
+                  {!isWalkInCustomer && (
+                    <>
+                      <Label htmlFor="supplier" className="text-blue-200">Supplier *</Label>
+                      <SupplierSelector 
+                        value={formData.supplierId} 
+                        onValueChange={(value) => setFormData({...formData, supplierId: value})}
+                      />
+                    </>
+                  )}
+                  {isWalkInCustomer && (
+                    <div className="text-cyan-300 text-sm">Walk-in customer selected</div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -196,6 +223,8 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
                       <SelectItem value={DeliveryStatus.Pending} className="text-blue-100 focus:bg-blue-800/30">Pending</SelectItem>
                       <SelectItem value={DeliveryStatus.PaidInFull} className="text-blue-100 focus:bg-blue-800/30">Paid in Full</SelectItem>
                       <SelectItem value={DeliveryStatus.Delivered} className="text-blue-100 focus:bg-blue-800/30">Delivered</SelectItem>
+                      <SelectItem value={DeliveryStatus.Shipped} className="text-blue-100 focus:bg-blue-800/30">Shipped</SelectItem>
+                      <SelectItem value={DeliveryStatus.Cancelled} className="text-blue-100 focus:bg-blue-800/30">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -318,7 +347,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
               <Button 
                 type="submit" 
                 className="w-full cyber-button text-white font-semibold" 
-                disabled={createSale.isPending || !formData.storeId || !formData.supplierId}
+                disabled={createSale.isPending || !formData.storeId || (!isWalkInCustomer && !formData.supplierId)}
               >
                 {createSale.isPending ? 'Processing Sale...' : 'Execute Sale'}
               </Button>

@@ -12,7 +12,7 @@ export interface Item {
   quantity_available: number;
   cost_price: number;
   selling_price: number;
-  stock_received_date?: string;
+  stock_receive_date?: string;
   last_restocked_date?: string;
   created_at: string;
   updated_at: string;
