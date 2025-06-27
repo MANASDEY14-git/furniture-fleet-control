@@ -69,6 +69,7 @@ export type Database = {
           cost_price: number
           created_at: string | null
           id: string
+          last_restocked_date: string | null
           name: string
           quantity_available: number
           selling_price: number
@@ -82,6 +83,7 @@ export type Database = {
           cost_price: number
           created_at?: string | null
           id?: string
+          last_restocked_date?: string | null
           name: string
           quantity_available?: number
           selling_price: number
@@ -95,6 +97,7 @@ export type Database = {
           cost_price?: number
           created_at?: string | null
           id?: string
+          last_restocked_date?: string | null
           name?: string
           quantity_available?: number
           selling_price?: number

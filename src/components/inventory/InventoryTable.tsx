@@ -26,6 +26,20 @@ interface InventoryTableProps {
   isLoading: boolean;
 }
 
+const calculateStockAge = (stockReceiveDate?: string) => {
+  if (!stockReceiveDate) return 0;
+  const receiveDate = new Date(stockReceiveDate);
+  const today = new Date();
+  const diffTime = Math.abs(today.getTime() - receiveDate.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+const getStockAgeStatus = (days: number) => {
+  if (days > 180) return { status: 'Old Stock', color: 'text-red-400' };
+  if (days > 90) return { status: 'Aging Stock', color: 'text-orange-400' };
+  return { status: 'Fresh Stock', color: 'text-green-400' };
+};
+
 export default function InventoryTable({
   items,
   stores,
@@ -37,7 +51,7 @@ export default function InventoryTable({
   onDeleteItem,
   isLoading
 }: InventoryTableProps) {
-  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price' | 'age'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [filterByStore, setFilterByStore] = useState<string>('all');
   const [filterByCategory, setFilterByCategory] = useState<string>('all');
@@ -69,6 +83,11 @@ export default function InventoryTable({
         case 'price':
           comparison = a.selling_price - b.selling_price;
           break;
+        case 'age':
+          const ageA = calculateStockAge(a.stock_receive_date);
+          const ageB = calculateStockAge(b.stock_receive_date);
+          comparison = ageA - ageB;
+          break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -92,6 +111,7 @@ export default function InventoryTable({
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-20" />
               <div className="flex gap-2">
@@ -119,7 +139,7 @@ export default function InventoryTable({
             />
           </div>
           
-          <Select value={sortBy} onValueChange={(value: 'name' | 'quantity' | 'price') => setSortBy(value)}>
+          <Select value={sortBy} onValueChange={(value: 'name' | 'quantity' | 'price' | 'age') => setSortBy(value)}>
             <SelectTrigger className="w-32 neon-border bg-slate-800/50 text-blue-100">
               <SelectValue />
             </SelectTrigger>
@@ -127,6 +147,7 @@ export default function InventoryTable({
               <SelectItem value="name" className="text-blue-100">Name</SelectItem>
               <SelectItem value="quantity" className="text-blue-100">Quantity</SelectItem>
               <SelectItem value="price" className="text-blue-100">Price</SelectItem>
+              <SelectItem value="age" className="text-blue-100">Age</SelectItem>
             </SelectContent>
           </Select>
 
@@ -205,6 +226,7 @@ export default function InventoryTable({
               <TableHead className="text-blue-200">Quantity</TableHead>
               <TableHead className="text-blue-200">Cost Price</TableHead>
               <TableHead className="text-blue-200">Selling Price</TableHead>
+              <TableHead className="text-blue-200">Stock Age</TableHead>
               <TableHead className="text-right text-blue-200">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -213,6 +235,8 @@ export default function InventoryTable({
               const store = stores.find(s => s.id === item.store_id);
               const category = categories.find(c => c.id === item.category_id);
               const isLowStock = item.quantity_available < 10;
+              const stockAge = calculateStockAge(item.stock_receive_date);
+              const stockAgeStatus = getStockAgeStatus(stockAge);
               
               return (
                 <TableRow 
@@ -242,6 +266,12 @@ export default function InventoryTable({
                   </TableCell>
                   <TableCell className="text-blue-200">{formatCurrency(item.cost_price)}</TableCell>
                   <TableCell className="text-blue-200">{formatCurrency(item.selling_price)}</TableCell>
+                  <TableCell className={stockAgeStatus.color}>
+                    <div className="flex flex-col">
+                      <span className="text-sm">{stockAge} days</span>
+                      <span className="text-xs">{stockAgeStatus.status}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <ItemForm

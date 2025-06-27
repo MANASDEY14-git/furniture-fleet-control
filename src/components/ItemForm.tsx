@@ -28,6 +28,7 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
     cost_price: item?.cost_price || 0,
     selling_price: item?.selling_price || 0,
     stock_receive_date: item?.stock_receive_date || new Date().toISOString().split('T')[0],
+    last_restocked_date: item?.last_restocked_date || new Date().toISOString().split('T')[0],
   });
 
   const { data: categories = [] } = useCategories();
@@ -71,6 +72,7 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
           cost_price: 0,
           selling_price: 0,
           stock_receive_date: new Date().toISOString().split('T')[0],
+          last_restocked_date: new Date().toISOString().split('T')[0],
         });
       }
     } catch (error) {

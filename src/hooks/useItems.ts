@@ -13,6 +13,7 @@ export interface Item {
   cost_price: number;
   selling_price: number;
   stock_receive_date?: string;
+  last_restocked_date?: string;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +27,7 @@ export interface CreateItemData {
   cost_price: number;
   selling_price: number;
   stock_receive_date?: string;
+  last_restocked_date?: string;
 }
 
 export interface UpdateItemData extends Partial<CreateItemData> {
