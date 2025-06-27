@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -124,4 +126,85 @@
   .data-grid {
     @apply bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-lg;
   }
+}
+
+/* Calendar Styles */
+.delivery-calendar {
+  font-family: 'Inter', sans-serif;
+}
+
+.delivery-calendar .rbc-header {
+  background: rgba(30, 41, 59, 0.5);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  font-weight: 600;
+  padding: 8px;
+}
+
+.delivery-calendar .rbc-month-view {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+}
+
+.delivery-calendar .rbc-date-cell {
+  color: #cbd5e1;
+  padding: 8px;
+}
+
+.delivery-calendar .rbc-date-cell.rbc-off-range {
+  color: #64748b;
+}
+
+.delivery-calendar .rbc-today {
+  background: rgba(14, 165, 233, 0.1);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.delivery-calendar .rbc-event {
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  margin: 1px;
+  padding: 2px 4px;
+}
+
+.delivery-calendar .rbc-show-more {
+  color: #06b6d4;
+  font-weight: 600;
+}
+
+.delivery-calendar .rbc-toolbar {
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.delivery-calendar .rbc-toolbar button {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin: 0 2px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.delivery-calendar .rbc-toolbar button:hover {
+  background: rgba(59, 130, 246, 0.3);
+  color: #dbeafe;
+}
+
+.delivery-calendar .rbc-toolbar button.rbc-active {
+  background: rgba(6, 182, 212, 0.3);
+  border-color: rgba(6, 182, 212, 0.5);
+  color: #67e8f9;
+}
+
+.delivery-calendar .rbc-toolbar-label {
+  color: #e2e8f0;
+  font-weight: 700;
+  font-size: 1.1em;
 }

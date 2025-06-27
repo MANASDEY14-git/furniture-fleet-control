@@ -173,6 +173,9 @@ export type Database = {
           date: string
           description: string | null
           id: string
+          reference_id: string | null
+          reference_type: string | null
+          sale_id: string | null
           store_id: string | null
           supplier_id: string | null
           type: string
@@ -183,6 +186,9 @@ export type Database = {
           date: string
           description?: string | null
           id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          sale_id?: string | null
           store_id?: string | null
           supplier_id?: string | null
           type: string
@@ -193,11 +199,28 @@ export type Database = {
           date?: string
           description?: string | null
           id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          sale_id?: string | null
           store_id?: string | null
           supplier_id?: string | null
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sale_payment_status"
+            referencedColumns: ["sale_id"]
+          },
+          {
+            foreignKeyName: "payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_store_id_fkey"
             columns: ["store_id"]
@@ -382,6 +405,13 @@ export type Database = {
             foreignKeyName: "sales_order_items_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
+            referencedRelation: "sale_payment_status"
+            referencedColumns: ["sale_id"]
+          },
+          {
+            foreignKeyName: "sales_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
             referencedRelation: "sales_orders"
             referencedColumns: ["id"]
           },
@@ -389,8 +419,14 @@ export type Database = {
       }
       sales_orders: {
         Row: {
+          advance_paid: number | null
+          balance_due: number | null
           created_at: string
+          customer_address: string | null
+          customer_name: string | null
+          customer_phone: string | null
           date: string
+          delivery_date: string | null
           delivery_status: string
           id: string
           order_number: string
@@ -400,8 +436,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advance_paid?: number | null
+          balance_due?: number | null
           created_at?: string
+          customer_address?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           date: string
+          delivery_date?: string | null
           delivery_status?: string
           id?: string
           order_number: string
@@ -411,8 +453,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advance_paid?: number | null
+          balance_due?: number | null
           created_at?: string
+          customer_address?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           date?: string
+          delivery_date?: string | null
           delivery_status?: string
           id?: string
           order_number?: string
@@ -560,7 +608,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      payment_summary: {
+        Row: {
+          net_balance: number | null
+          store_id: string | null
+          total_payments: number | null
+          total_receipts: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_payment_status: {
+        Row: {
+          balance_due: number | null
+          customer_address: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          delivery_date: string | null
+          delivery_status: string | null
+          order_number: string | null
+          sale_date: string | null
+          sale_id: string | null
+          store_id: string | null
+          supplier_id: string | null
+          total_paid: number | null
+          total_price: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
