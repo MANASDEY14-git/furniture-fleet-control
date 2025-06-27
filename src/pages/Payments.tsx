@@ -123,11 +123,17 @@ export default function Payments() {
   };
 
   const onSubmit = (data: PaymentFormData) => {
-    createPayment.mutate({
-      ...data,
+    // Ensure store_id is always provided as required by CreatePaymentData interface
+    const paymentData = {
+      store_id: data.store_id,
+      supplier_id: data.supplier_id === '' ? undefined : data.supplier_id,
       amount: Number(data.amount),
-      supplier_id: data.supplier_id === '' ? undefined : data.supplier_id
-    }, {
+      type: data.type,
+      date: data.date,
+      description: data.description || undefined
+    };
+
+    createPayment.mutate(paymentData, {
       onSuccess: () => {
         reset();
         setIsDialogOpen(false);
@@ -139,6 +145,25 @@ export default function Payments() {
     if (confirm('Are you sure you want to delete this transaction?')) {
       deletePayment.mutate(id);
     }
+  };
+
+  // Handle supplier payment creation
+  const handleSupplierPayment = (supplierId: string, amount: number, description: string) => {
+    if (!selectedStore || selectedStore === 'all') {
+      alert('Please select a store first');
+      return;
+    }
+
+    const paymentData = {
+      store_id: selectedStore,
+      supplier_id: supplierId,
+      amount: amount,
+      type: 'Payment' as const,
+      date: new Date().toISOString().split('T')[0],
+      description: description
+    };
+
+    createPayment.mutate(paymentData);
   };
 
   return (
