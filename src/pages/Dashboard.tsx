@@ -32,15 +32,20 @@ export default function Dashboard() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
+      // Also refetch metrics every minute for real-time updates
+      refetchMetrics();
     }, 60000);
     
     return () => clearInterval(timer);
-  }, []);
+  }, [refetchMetrics]);
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions with better channel management
   useEffect(() => {
+    const channels: any[] = [];
+
+    // Sales real-time updates
     const salesChannel = supabase
-      .channel('sales-changes')
+      .channel('dashboard-sales-changes')
       .on(
         'postgres_changes',
         {
@@ -49,14 +54,17 @@ export default function Dashboard() {
           table: 'sales'
         },
         () => {
+          console.log('Sales data changed, refreshing...');
           refetchMetrics();
           refetchSales();
         }
       )
       .subscribe();
+    channels.push(salesChannel);
 
+    // Payments real-time updates
     const paymentsChannel = supabase
-      .channel('payments-changes')
+      .channel('dashboard-payments-changes')
       .on(
         'postgres_changes',
         {
@@ -65,13 +73,16 @@ export default function Dashboard() {
           table: 'payments'
         },
         () => {
+          console.log('Payments data changed, refreshing...');
           refetchMetrics();
         }
       )
       .subscribe();
+    channels.push(paymentsChannel);
 
+    // Items real-time updates
     const itemsChannel = supabase
-      .channel('items-changes')
+      .channel('dashboard-items-changes')
       .on(
         'postgres_changes',
         {
@@ -80,15 +91,35 @@ export default function Dashboard() {
           table: 'items'
         },
         () => {
+          console.log('Items data changed, refreshing...');
           refetchMetrics();
         }
       )
       .subscribe();
+    channels.push(itemsChannel);
+
+    // Purchases real-time updates
+    const purchasesChannel = supabase
+      .channel('dashboard-purchases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchases'
+        },
+        () => {
+          console.log('Purchases data changed, refreshing...');
+          refetchMetrics();
+        }
+      )
+      .subscribe();
+    channels.push(purchasesChannel);
 
     return () => {
-      supabase.removeChannel(salesChannel);
-      supabase.removeChannel(paymentsChannel);
-      supabase.removeChannel(itemsChannel);
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
     };
   }, [refetchMetrics, refetchSales]);
 

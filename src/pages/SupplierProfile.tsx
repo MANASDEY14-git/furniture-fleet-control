@@ -9,6 +9,8 @@ import { useSupplierLedger } from '@/hooks/useSupplierLedger';
 import { usePurchases } from '@/hooks/usePurchases';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency } from '@/utils/currencyUtils';
+import { exportToCSV, exportToJSON } from '@/utils/exportUtils';
 
 export default function SupplierProfile() {
   const [selectedSupplier, setSelectedSupplier] = useState('');
@@ -29,9 +31,45 @@ export default function SupplierProfile() {
   };
 
   const exportStatement = (format: 'pdf' | 'csv') => {
-    // TODO: Implement PDF/CSV export functionality
-    console.log(`Exporting ${format} statement for supplier:`, selectedSupplierData?.name);
+    if (!selectedSupplierData) return;
+    
+    const exportData = ledgerEntries.map(entry => ({
+      'Date': new Date(entry.transaction_date).toLocaleDateString('en-GB'),
+      'Type': entry.transaction_type,
+      'Description': entry.description || 'N/A',
+      'Invoice Number': entry.invoice_number || 'N/A',
+      'Debit Amount': entry.debit_amount || 0,
+      'Credit Amount': entry.credit_amount || 0
+    }));
+
+    const filename = `supplier-statement-${selectedSupplierData.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}`;
+    
+    if (format === 'csv') {
+      exportToCSV(exportData, filename);
+    } else {
+      exportToJSON(exportData, filename);
+    }
+    
+    console.log(`Exporting ${format} statement for supplier:`, selectedSupplierData.name);
   };
+
+  // Group purchases by invoice for better display
+  const groupedPurchases = supplierPurchases.reduce((acc, purchase) => {
+    const key = purchase.invoice_number || `${purchase.date}-${purchase.id}`;
+    if (!acc[key]) {
+      acc[key] = {
+        invoice_number: purchase.invoice_number,
+        date: purchase.date,
+        items: [],
+        total_amount: 0
+      };
+    }
+    acc[key].items.push(purchase);
+    acc[key].total_amount += purchase.total_cost;
+    return acc;
+  }, {} as Record<string, any>);
+
+  const invoiceEntries = Object.values(groupedPurchases);
 
   if (ledgerLoading || purchasesLoading) {
     return (
@@ -72,19 +110,19 @@ export default function SupplierProfile() {
               </CardTitle>
               <div className="flex gap-2">
                 <Button 
-                  onClick={() => exportStatement('pdf')}
+                  onClick={() => exportStatement('csv')}
                   className="cyber-button text-white font-semibold"
                 >
                   <FileText className="w-4 h-4 mr-2" />
-                  Export PDF
+                  Export CSV
                 </Button>
                 <Button 
-                  onClick={() => exportStatement('csv')}
+                  onClick={() => exportStatement('pdf')}
                   variant="outline"
                   className="border-blue-500/30 text-blue-200 hover:bg-blue-800/20"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Export CSV
+                  Export JSON
                 </Button>
               </div>
             </CardHeader>
@@ -121,9 +159,9 @@ export default function SupplierProfile() {
             <Card className="futuristic-card">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <p className="text-sm text-blue-200 mb-1">Total Purchases</p>
+                  <p className="text-sm text-blue-200 mb-1">Total Invoices</p>
                   <p className="text-2xl font-bold text-cyan-300">
-                    {supplierPurchases.length}
+                    {invoiceEntries.length}
                   </p>
                 </div>
               </CardContent>
@@ -133,7 +171,7 @@ export default function SupplierProfile() {
                 <div className="text-center">
                   <p className="text-sm text-blue-200 mb-1">Total Amount</p>
                   <p className="text-2xl font-bold text-cyan-300">
-                    ₹{supplierPurchases.reduce((sum, p) => sum + p.total_cost, 0).toLocaleString('en-IN')}
+                    {formatCurrency(supplierPurchases.reduce((sum, p) => sum + p.total_cost, 0))}
                   </p>
                 </div>
               </CardContent>
@@ -143,7 +181,7 @@ export default function SupplierProfile() {
                 <div className="text-center">
                   <p className="text-sm text-blue-200 mb-1">Outstanding Balance</p>
                   <p className={`text-2xl font-bold ${getTotalBalance() >= 0 ? 'text-red-400' : 'text-green-400'}`}>
-                    ₹{Math.abs(getTotalBalance()).toLocaleString('en-IN')}
+                    {formatCurrency(Math.abs(getTotalBalance()))}
                     {getTotalBalance() >= 0 ? ' Dr' : ' Cr'}
                   </p>
                 </div>
@@ -151,11 +189,11 @@ export default function SupplierProfile() {
             </Card>
           </div>
 
-          {/* Purchase History */}
+          {/* Invoice History */}
           <Card className="futuristic-card">
             <CardHeader>
               <CardTitle className="text-cyan-300 glow-text">
-                Purchase History ({supplierPurchases.length})
+                Invoice History ({invoiceEntries.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -164,20 +202,24 @@ export default function SupplierProfile() {
                   <TableHeader>
                     <TableRow className="border-blue-500/30">
                       <TableHead className="text-blue-200">Date</TableHead>
-                      <TableHead className="text-blue-200">Item</TableHead>
                       <TableHead className="text-blue-200">Invoice #</TableHead>
-                      <TableHead className="text-right text-blue-200">Quantity</TableHead>
-                      <TableHead className="text-right text-blue-200">Amount</TableHead>
+                      <TableHead className="text-blue-200">Description</TableHead>
+                      <TableHead className="text-right text-blue-200">Total Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {supplierPurchases.map((purchase) => (
-                      <TableRow key={purchase.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                        <TableCell className="text-blue-100">{purchase.date}</TableCell>
-                        <TableCell className="text-blue-100">{purchase.item_name}</TableCell>
-                        <TableCell className="text-blue-200">{purchase.invoice_number || '-'}</TableCell>
-                        <TableCell className="text-right text-cyan-300">{purchase.quantity}</TableCell>
-                        <TableCell className="text-right text-cyan-300">₹{purchase.total_cost.toLocaleString('en-IN')}</TableCell>
+                    {invoiceEntries.map((invoice, index) => (
+                      <TableRow key={index} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                        <TableCell className="text-blue-100">
+                          {new Date(invoice.date).toLocaleDateString('en-GB')}
+                        </TableCell>
+                        <TableCell className="text-blue-200">{invoice.invoice_number || '-'}</TableCell>
+                        <TableCell className="text-blue-200">
+                          Invoice: {invoice.items.map((item: any) => item.item_name).join(', ')}
+                        </TableCell>
+                        <TableCell className="text-right text-cyan-300 font-semibold">
+                          {formatCurrency(invoice.total_amount)}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -208,14 +250,16 @@ export default function SupplierProfile() {
                   <TableBody>
                     {ledgerEntries.map((entry) => (
                       <TableRow key={entry.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                        <TableCell className="text-blue-100">{entry.transaction_date}</TableCell>
+                        <TableCell className="text-blue-100">
+                          {new Date(entry.transaction_date).toLocaleDateString('en-GB')}
+                        </TableCell>
                         <TableCell className="text-blue-200 capitalize">{entry.transaction_type}</TableCell>
                         <TableCell className="text-blue-200">{entry.description}</TableCell>
                         <TableCell className="text-right text-red-400">
-                          {entry.debit_amount > 0 ? `₹${entry.debit_amount.toLocaleString('en-IN')}` : '-'}
+                          {entry.debit_amount > 0 ? formatCurrency(entry.debit_amount) : '-'}
                         </TableCell>
                         <TableCell className="text-right text-green-400">
-                          {entry.credit_amount > 0 ? `₹${entry.credit_amount.toLocaleString('en-IN')}` : '-'}
+                          {entry.credit_amount > 0 ? formatCurrency(entry.credit_amount) : '-'}
                         </TableCell>
                       </TableRow>
                     ))}

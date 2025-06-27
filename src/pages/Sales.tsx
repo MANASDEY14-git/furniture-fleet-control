@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Plus, Search, Eye } from 'lucide-react';
+import { Plus, Search, Eye, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,16 +11,21 @@ import StoreSelector from '@/components/StoreSelector';
 import SupplierSelector from '@/components/SupplierSelector';
 import SalesOrderForm from '@/components/SalesOrderForm';
 import StatusBadge from '@/components/StatusBadge';
+import ExportButton from '@/components/ExportButton';
+import DateFilterSelector from '@/components/DateFilterSelector';
 import { useSalesOrders, useUpdateSalesOrderStatus } from '@/hooks/useSalesOrders';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { DeliveryStatus } from '@/types';
+import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 export default function Sales() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingOrder, setViewingOrder] = useState<any>(null);
+  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
   const { data: salesOrders = [], isLoading: ordersLoading } = useSalesOrders();
   const { data: stores = [], isLoading: storesLoading } = useStores();
@@ -28,13 +33,46 @@ export default function Sales() {
   const updateOrderStatus = useUpdateSalesOrderStatus();
 
   const filteredOrders = useMemo(() => {
-    return salesOrders.filter(order => {
+    let filtered = salesOrders.filter(order => {
       const matchesStore = selectedStore === 'all' || order.store_id === selectedStore;
       const matchesSupplier = selectedSupplier === 'all' || order.supplier_id === selectedSupplier;
       const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStore && matchesSupplier && matchesSearch;
     });
-  }, [salesOrders, selectedStore, selectedSupplier, searchTerm]);
+
+    // Apply date filter
+    if (dateFilter !== 'month' || customDateRange) {
+      const now = new Date();
+      let startDate: Date;
+      let endDate = now;
+
+      switch (dateFilter) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'custom':
+          if (!customDateRange) return filtered;
+          startDate = customDateRange.from;
+          endDate = customDateRange.to;
+          break;
+        default:
+          return filtered;
+      }
+
+      filtered = filtered.filter(order => {
+        const orderDate = new Date(order.date);
+        return orderDate >= startDate && orderDate <= endDate;
+      });
+    }
+
+    return filtered;
+  }, [salesOrders, selectedStore, selectedSupplier, searchTerm, dateFilter, customDateRange]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
@@ -71,14 +109,29 @@ export default function Sales() {
           <h1 className="text-3xl font-bold glow-text">Sales Management</h1>
           <p className="text-blue-300">Track sales orders by supplier and outlet with delivery status</p>
         </div>
-        <SalesOrderForm
-          trigger={
-            <Button className="cyber-button text-white font-semibold">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Order
-            </Button>
-          }
-        />
+        <div className="flex gap-2">
+          <ExportButton 
+            data={filteredOrders.map(order => ({
+              'Date': new Date(order.date).toLocaleDateString('en-GB'),
+              'Order Number': order.order_number,
+              'Store': getStoreName(order.store_id),
+              'Customer': getSupplierName(order.supplier_id || ''),
+              'Total Amount': order.total_amount,
+              'Status': order.delivery_status,
+              'Items Count': order.sales_order_items?.length || 0
+            }))} 
+            filename={`sales-orders-${dateFilter}`} 
+            type="sales"
+          />
+          <SalesOrderForm
+            trigger={
+              <Button className="cyber-button text-white font-semibold">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Order
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -118,7 +171,7 @@ export default function Sales() {
       {/* Filters */}
       <Card className="futuristic-card">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
               <Input
@@ -139,6 +192,12 @@ export default function Sales() {
               value={selectedSupplier} 
               onValueChange={setSelectedSupplier}
               placeholder="All suppliers"
+            />
+            <DateFilterSelector
+              dateFilter={dateFilter}
+              onDateFilterChange={setDateFilter}
+              customDateRange={customDateRange}
+              onCustomDateRangeChange={setCustomDateRange}
             />
           </div>
         </CardContent>
@@ -166,7 +225,7 @@ export default function Sales() {
               <TableBody>
                 {filteredOrders.map((order) => (
                   <TableRow key={order.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                    <TableCell className="text-blue-100">{order.date}</TableCell>
+                    <TableCell className="text-blue-100">{new Date(order.date).toLocaleDateString('en-GB')}</TableCell>
                     <TableCell className="font-medium text-cyan-300">{order.order_number}</TableCell>
                     <TableCell className="text-blue-200">{getStoreName(order.store_id)}</TableCell>
                     <TableCell className="text-blue-200">{getSupplierName(order.supplier_id || '')}</TableCell>
@@ -213,7 +272,7 @@ export default function Sales() {
                                 <p className="text-blue-200"><strong>Customer:</strong> {getSupplierName(order.supplier_id || '')}</p>
                               </div>
                               <div>
-                                <p className="text-blue-200"><strong>Date:</strong> {order.date}</p>
+                                <p className="text-blue-200"><strong>Date:</strong> {new Date(order.date).toLocaleDateString('en-GB')}</p>
                                 <p className="text-blue-200"><strong>Status:</strong> <StatusBadge status={order.delivery_status} /></p>
                               </div>
                             </div>

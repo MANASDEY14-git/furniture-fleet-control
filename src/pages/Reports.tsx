@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, DollarSign, Package, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MetricCard from '@/components/MetricCard';
@@ -13,17 +13,106 @@ import { useSales } from '@/hooks/useSales';
 import { usePurchases } from '@/hooks/usePurchases';
 import { usePayments } from '@/hooks/usePayments';
 import { useItems } from '@/hooks/useItems';
+import { supabase } from '@/integrations/supabase/client';
+import { formatCurrency } from '@/utils/currencyUtils';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 export default function Reports() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   
-  const { data: metrics, isLoading: metricsLoading } = useEnhancedDashboardMetrics(dateFilter, customDateRange);
-  const { data: sales = [] } = useSales();
-  const { data: purchases = [] } = usePurchases();
-  const { data: payments = [] } = usePayments();
-  const { data: items = [] } = useItems();
+  const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useEnhancedDashboardMetrics(dateFilter, customDateRange);
+  const { data: sales = [], refetch: refetchSales } = useSales();
+  const { data: purchases = [], refetch: refetchPurchases } = usePurchases();
+  const { data: payments = [], refetch: refetchPayments } = usePayments();
+  const { data: items = [], refetch: refetchItems } = useItems();
+
+  // Set up real-time subscriptions for reports
+  useEffect(() => {
+    const channels: any[] = [];
+
+    // Sales real-time updates
+    const salesChannel = supabase
+      .channel('reports-sales-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales'
+        },
+        () => {
+          console.log('Sales data changed, refreshing reports...');
+          refetchMetrics();
+          refetchSales();
+        }
+      )
+      .subscribe();
+    channels.push(salesChannel);
+
+    // Purchases real-time updates
+    const purchasesChannel = supabase
+      .channel('reports-purchases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchases'
+        },
+        () => {
+          console.log('Purchases data changed, refreshing reports...');
+          refetchMetrics();
+          refetchPurchases();
+        }
+      )
+      .subscribe();
+    channels.push(purchasesChannel);
+
+    // Payments real-time updates
+    const paymentsChannel = supabase
+      .channel('reports-payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        () => {
+          console.log('Payments data changed, refreshing reports...');
+          refetchMetrics();
+          refetchPayments();
+        }
+      )
+      .subscribe();
+    channels.push(paymentsChannel);
+
+    // Items real-time updates
+    const itemsChannel = supabase
+      .channel('reports-items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items'
+        },
+        () => {
+          console.log('Items data changed, refreshing reports...');
+          refetchMetrics();
+          refetchItems();
+        }
+      )
+      .subscribe();
+    channels.push(itemsChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [refetchMetrics, refetchSales, refetchPurchases, refetchPayments, refetchItems]);
 
   // Filter data based on date range
   const getFilteredData = (data: any[], dateField = 'date') => {
@@ -99,19 +188,19 @@ export default function Reports() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Total Sales"
-          value={`$${metrics?.totalSales.toLocaleString() || 0}`}
+          value={formatCurrency(metrics?.totalSales || 0)}
           icon={<DollarSign />}
           description="Revenue generated"
         />
         <MetricCard
           title="Total Purchases"
-          value={`$${metrics?.totalPurchases.toLocaleString() || 0}`}
+          value={formatCurrency(metrics?.totalPurchases || 0)}
           icon={<Package />}
           description="Cost of goods purchased"
         />
         <MetricCard
           title="Net Profit"
-          value={`$${metrics?.totalProfit.toLocaleString() || 0}`}
+          value={formatCurrency(metrics?.totalProfit || 0)}
           icon={<TrendingUp />}
           description="Sales minus purchases"
           trend={{
@@ -121,7 +210,7 @@ export default function Reports() {
         />
         <MetricCard
           title="Stock Value"
-          value={`$${metrics?.totalStockValue.toLocaleString() || 0}`}
+          value={formatCurrency(metrics?.totalStockValue || 0)}
           icon={<Package />}
           description="Current inventory value"
         />

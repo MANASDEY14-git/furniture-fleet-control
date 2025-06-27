@@ -1,123 +1,275 @@
 
-import { useState, useMemo } from 'react';
-import { Plus, Search, Trash2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import StoreSelector from '@/components/StoreSelector';
-import SupplierSelector from '@/components/SupplierSelector';
-import StatusBadge from '@/components/StatusBadge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Search, CreditCard, Trash2 } from 'lucide-react';
 import { usePayments, useCreatePayment, useDeletePayment } from '@/hooks/usePayments';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import StoreSelector from '@/components/StoreSelector';
+import SupplierSelector from '@/components/SupplierSelector';
+import ExportButton from '@/components/ExportButton';
+import DateFilterSelector from '@/components/DateFilterSelector';
+import { formatCurrency } from '@/utils/currencyUtils';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
+
+const paymentSchema = z.object({
+  store_id: z.string().min(1, 'Store is required'),
+  supplier_id: z.string().optional(),
+  amount: z.number().min(0.01, 'Amount must be greater than 0'),
+  type: z.enum(['Payment', 'Receipt']),
+  date: z.string().min(1, 'Date is required'),
+  description: z.string().optional(),
+});
+
+type PaymentFormData = z.infer<typeof paymentSchema>;
 
 export default function Payments() {
   const [selectedStore, setSelectedStore] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
+  const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    storeId: '',
-    supplierId: '',
-    amount: '',
-    type: 'Receipt' as 'Payment' | 'Receipt',
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-  });
-
-  const { data: payments = [], isLoading: paymentsLoading } = usePayments();
-  const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: payments = [], isLoading } = usePayments();
+  const { data: stores = [] } = useStores();
   const { data: suppliers = [] } = useSuppliers();
   const createPayment = useCreatePayment();
   const deletePayment = useDeletePayment();
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors }
+  } = useForm<PaymentFormData>({
+    resolver: zodResolver(paymentSchema),
+    defaultValues: {
+      date: new Date().toISOString().split('T')[0],
+      type: 'Receipt'
+    }
+  });
+
+  const watchedType = watch('type');
+
   const filteredPayments = useMemo(() => {
-    return payments.filter(payment => {
+    let filtered = payments.filter(payment => {
       const matchesStore = selectedStore === 'all' || payment.store_id === selectedStore;
-      const matchesType = selectedType === 'all' || payment.type === selectedType;
+      const matchesSupplier = selectedSupplier === 'all' || payment.supplier_id === selectedSupplier;
       const matchesSearch = payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
-      return matchesStore && matchesType && matchesSearch;
+      return matchesStore && matchesSupplier && matchesSearch;
     });
-  }, [payments, selectedStore, selectedType, searchTerm]);
+
+    // Apply date filter
+    if (dateFilter !== 'month' || customDateRange) {
+      const now = new Date();
+      let startDate: Date;
+      let endDate = now;
+
+      switch (dateFilter) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'custom':
+          if (!customDateRange) return filtered;
+          startDate = customDateRange.from;
+          endDate = customDateRange.to;
+          break;
+        default:
+          return filtered;
+      }
+
+      filtered = filtered.filter(payment => {
+        const paymentDate = new Date(payment.date);
+        return paymentDate >= startDate && paymentDate <= endDate;
+      });
+    }
+
+    return filtered;
+  }, [payments, selectedStore, selectedSupplier, searchTerm, dateFilter, customDateRange]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
 
-  const getSupplierName = (supplierId: string) => {
+  const getSupplierName = (supplierId?: string) => {
+    if (!supplierId) return 'N/A';
     return suppliers.find(supplier => supplier.id === supplierId)?.name || 'Unknown Supplier';
   };
 
-  const getTotals = () => {
-    const receipts = filteredPayments
-      .filter(p => p.type === 'Receipt')
-      .reduce((sum, p) => sum + p.amount, 0);
-    
-    const paymentsTotal = filteredPayments
-      .filter(p => p.type === 'Payment')
-      .reduce((sum, p) => sum + p.amount, 0);
-    
-    return { receipts, payments: paymentsTotal, net: receipts - paymentsTotal };
+  const getTotalPayments = () => {
+    return filteredPayments.filter(payment => payment.type === 'Payment').reduce((sum, payment) => sum + payment.amount, 0);
   };
 
-  const totals = getTotals();
+  const getTotalReceipts = () => {
+    return filteredPayments.filter(payment => payment.type === 'Receipt').reduce((sum, payment) => sum + payment.amount, 0);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const onSubmit = (data: PaymentFormData) => {
     createPayment.mutate({
-      store_id: formData.storeId,
-      supplier_id: formData.supplierId || undefined,
-      amount: parseFloat(formData.amount),
-      type: formData.type,
-      description: formData.description,
-      date: formData.date,
-    });
-    
-    setShowForm(false);
-    setFormData({
-      storeId: '',
-      supplierId: '',
-      amount: '',
-      type: 'Receipt',
-      description: '',
-      date: new Date().toISOString().split('T')[0],
+      ...data,
+      amount: Number(data.amount),
+      supplier_id: data.supplier_id === '' ? undefined : data.supplier_id
+    }, {
+      onSuccess: () => {
+        reset();
+        setIsDialogOpen(false);
+      }
     });
   };
 
-  const handleDeletePayment = (paymentId: string) => {
-    deletePayment.mutate(paymentId);
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this transaction?')) {
+      deletePayment.mutate(id);
+    }
   };
-
-  if (paymentsLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg glow-text">Loading payments...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold glow-text">Payment Center</h1>
-          <p className="text-blue-300">Track financial transactions with supplier ledger integration</p>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <CreditCard className="w-8 h-8 text-cyan-400" />
+          <div>
+            <h1 className="text-3xl font-bold glow-text">Payment Management</h1>
+            <p className="text-blue-300">Track payments and receipts</p>
+          </div>
         </div>
-        <Button 
-          onClick={() => setShowForm(!showForm)}
-          className="cyber-button text-white font-semibold"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {showForm ? 'Cancel' : 'Add Transaction'}
-        </Button>
+        <div className="flex gap-2">
+          <ExportButton 
+            data={filteredPayments.map(payment => ({
+              'Date': new Date(payment.date).toLocaleDateString('en-GB'),
+              'Type': payment.type,
+              'Store': getStoreName(payment.store_id),
+              'Supplier': getSupplierName(payment.supplier_id),
+              'Amount': payment.amount,
+              'Description': payment.description || 'N/A'
+            }))} 
+            filename={`payments-${dateFilter}`} 
+            type="payments"
+          />
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="cyber-button text-white font-semibold">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Transaction
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="futuristic-card">
+              <DialogHeader>
+                <DialogTitle className="text-cyan-300">Add New Transaction</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Transaction Type</Label>
+                    <select
+                      {...register('type')}
+                      className="w-full p-2 rounded border bg-slate-800 text-blue-100 border-blue-500/30"
+                    >
+                      <option value="Receipt">Receipt (Money In)</option>
+                      <option value="Payment">Payment (Money Out)</option>
+                    </select>
+                    {errors.type && <p className="text-red-400 text-sm">{errors.type.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Amount</Label>
+                    <Input
+                      {...register('amount', { valueAsNumber: true })}
+                      type="number"
+                      step="0.01"
+                      className="neon-border bg-slate-800/50 text-blue-100"
+                      placeholder="Enter amount"
+                    />
+                    {errors.amount && <p className="text-red-400 text-sm">{errors.amount.message}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="store_id">Store</Label>
+                    <select
+                      {...register('store_id')}
+                      className="w-full p-2 rounded border bg-slate-800 text-blue-100 border-blue-500/30"
+                    >
+                      <option value="">Select Store</option>
+                      {stores.map(store => (
+                        <option key={store.id} value={store.id}>{store.name}</option>
+                      ))}
+                    </select>
+                    {errors.store_id && <p className="text-red-400 text-sm">{errors.store_id.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier_id">Supplier (Optional)</Label>
+                    <select
+                      {...register('supplier_id')}
+                      className="w-full p-2 rounded border bg-slate-800 text-blue-100 border-blue-500/30"
+                    >
+                      <option value="">Select Supplier (Optional)</option>
+                      {suppliers.map(supplier => (
+                        <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Date</Label>
+                    <Input
+                      {...register('date')}
+                      type="date"
+                      className="neon-border bg-slate-800/50 text-blue-100"
+                    />
+                    {errors.date && <p className="text-red-400 text-sm">{errors.date.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      {...register('description')}
+                      className="neon-border bg-slate-800/50 text-blue-100"
+                      placeholder="Transaction description"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsDialogOpen(false)}
+                    className="border-blue-500/30 text-blue-200"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="cyber-button text-white"
+                    disabled={createPayment.isPending}
+                  >
+                    {createPayment.isPending ? 'Adding...' : 'Add Transaction'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -125,9 +277,19 @@ export default function Payments() {
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="text-center">
+              <p className="text-sm text-blue-200 mb-1">Total Transactions</p>
+              <p className="text-2xl font-bold text-cyan-300">
+                {filteredPayments.length}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="futuristic-card">
+          <CardContent className="pt-6">
+            <div className="text-center">
               <p className="text-sm text-blue-200 mb-1">Total Receipts</p>
               <p className="text-2xl font-bold text-green-400">
-                ₹{totals.receipts.toLocaleString('en-IN')}
+                {formatCurrency(getTotalReceipts())}
               </p>
             </div>
           </CardContent>
@@ -137,129 +299,21 @@ export default function Payments() {
             <div className="text-center">
               <p className="text-sm text-blue-200 mb-1">Total Payments</p>
               <p className="text-2xl font-bold text-red-400">
-                ₹{totals.payments.toLocaleString('en-IN')}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-blue-200 mb-1">Net Flow</p>
-              <p className={`text-2xl font-bold ${totals.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                ₹{Math.abs(totals.net).toLocaleString('en-IN')} {totals.net >= 0 ? '' : '-'}
+                {formatCurrency(getTotalPayments())}
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Add Payment Form */}
-      {showForm && (
-        <Card className="futuristic-card">
-          <CardHeader>
-            <CardTitle className="text-cyan-300 glow-text">Record New Transaction</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="store" className="text-blue-200">Store *</Label>
-                <Select value={formData.storeId} onValueChange={(value) => setFormData({...formData, storeId: value})} required>
-                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                    <SelectValue placeholder="Select store" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-blue-500/30">
-                    {stores.map((store) => (
-                      <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
-                        {store.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="type" className="text-blue-200">Transaction Type *</Label>
-                <Select value={formData.type} onValueChange={(value: 'Payment' | 'Receipt') => setFormData({...formData, type: value})}>
-                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-blue-500/30">
-                    <SelectItem value="Receipt" className="text-blue-100 focus:bg-blue-800/30">Receipt (Money In)</SelectItem>
-                    <SelectItem value="Payment" className="text-blue-100 focus:bg-blue-800/30">Payment (Money Out)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {formData.type === 'Payment' && (
-                <div className="space-y-2">
-                  <Label htmlFor="supplier" className="text-blue-200">
-                    Supplier <span className="text-xs">(for supplier payments)</span>
-                  </Label>
-                  <SupplierSelector 
-                    value={formData.supplierId} 
-                    onValueChange={(value) => setFormData({...formData, supplierId: value})}
-                    placeholder="Select supplier (optional)"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="amount" className="text-blue-200">Amount *</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="Enter amount"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                  required
-                  min="0"
-                  className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="date" className="text-blue-200">Date *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
-                  required
-                  className="neon-border bg-slate-800/50 text-blue-100"
-                />
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="description" className="text-blue-200">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter transaction description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <Button type="submit" className="w-full cyber-button text-white font-semibold" disabled={createPayment.isPending}>
-                  {createPayment.isPending ? 'Recording Transaction...' : 'Record Transaction'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Filters */}
       <Card className="futuristic-card">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
               <Input
-                placeholder="Search descriptions..."
+                placeholder="Search description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
@@ -269,91 +323,102 @@ export default function Payments() {
               value={selectedStore} 
               onValueChange={setSelectedStore}
               stores={stores}
-              isLoading={storesLoading}
+              isLoading={false}
               placeholder="All stores"
             />
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-blue-500/30">
-                <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Types</SelectItem>
-                <SelectItem value="Receipt" className="text-blue-100 focus:bg-blue-800/30">Receipts</SelectItem>
-                <SelectItem value="Payment" className="text-blue-100 focus:bg-blue-800/30">Payments</SelectItem>
-              </SelectContent>
-            </Select>
+            <SupplierSelector 
+              value={selectedSupplier} 
+              onValueChange={setSelectedSupplier}
+              includeAll={true}
+              placeholder="All suppliers"
+            />
+            <div className="lg:col-span-2">
+              <DateFilterSelector
+                dateFilter={dateFilter}
+                onDateFilterChange={setDateFilter}
+                customDateRange={customDateRange}
+                onCustomDateRangeChange={setCustomDateRange}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Payments Table */}
+      {/* Transactions Table */}
       <Card className="futuristic-card">
         <CardHeader>
-          <CardTitle className="text-cyan-300 glow-text">Transaction History ({filteredPayments.length})</CardTitle>
+          <CardTitle className="text-cyan-300 glow-text">
+            Payment Records ({filteredPayments.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table className="data-grid">
-              <TableHeader>
-                <TableRow className="border-blue-500/30">
-                  <TableHead className="text-blue-200">Date</TableHead>
-                  <TableHead className="text-blue-200">Store</TableHead>
-                  <TableHead className="text-blue-200">Type</TableHead>
-                  <TableHead className="text-blue-200">Supplier</TableHead>
-                  <TableHead className="text-right text-blue-200">Amount</TableHead>
-                  <TableHead className="text-blue-200">Description</TableHead>
-                  <TableHead className="text-right text-blue-200">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPayments.map((payment) => (
-                  <TableRow key={payment.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                    <TableCell className="text-blue-100">{payment.date}</TableCell>
-                    <TableCell className="text-blue-200">{getStoreName(payment.store_id)}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={payment.type} />
-                    </TableCell>
-                    <TableCell className="text-blue-200">
-                      {payment.supplier_id ? getSupplierName(payment.supplier_id) : '-'}
-                    </TableCell>
-                    <TableCell className={`text-right font-medium ${payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400'}`}>
-                      {payment.type === 'Receipt' ? '+' : '-'}₹{payment.amount.toLocaleString('en-IN')}
-                    </TableCell>
-                    <TableCell className="text-blue-200">{payment.description || 'No description'}</TableCell>
-                    <TableCell className="text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="futuristic-card">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-cyan-300">Delete Transaction</AlertDialogTitle>
-                            <AlertDialogDescription className="text-blue-200">
-                              Are you sure you want to delete this transaction? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600">Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDeletePayment(payment.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          {filteredPayments.length === 0 && (
+          {isLoading ? (
             <div className="text-center py-8">
-              <p className="text-blue-300">No transactions found matching your criteria</p>
+              <p className="text-blue-300">Loading transactions...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table className="data-grid">
+                <TableHeader>
+                  <TableRow className="border-blue-500/30">
+                    <TableHead className="text-blue-200">Date</TableHead>
+                    <TableHead className="text-blue-200">Type</TableHead>
+                    <TableHead className="text-blue-200">Store</TableHead>
+                    <TableHead className="text-blue-200">Supplier</TableHead>
+                    <TableHead className="text-blue-200">Description</TableHead>
+                    <TableHead className="text-right text-blue-200">Amount</TableHead>
+                    <TableHead className="text-right text-blue-200">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPayments.map((payment) => (
+                    <TableRow key={payment.id} className="border-blue-500/20 hover:bg-blue-800/20">
+                      <TableCell className="text-blue-100">
+                        {new Date(payment.date).toLocaleDateString('en-GB')}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          payment.type === 'Receipt' 
+                            ? 'bg-green-900/30 text-green-400' 
+                            : 'bg-red-900/30 text-red-400'
+                        }`}>
+                          {payment.type}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-blue-200">
+                        {getStoreName(payment.store_id)}
+                      </TableCell>
+                      <TableCell className="text-blue-200">
+                        {getSupplierName(payment.supplier_id)}
+                      </TableCell>
+                      <TableCell className="text-blue-200">
+                        {payment.description || 'N/A'}
+                      </TableCell>
+                      <TableCell className={`text-right font-semibold ${
+                        payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {formatCurrency(payment.amount)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(payment.id)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {!isLoading && filteredPayments.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-blue-300 mb-4">No transactions found for the selected criteria</p>
             </div>
           )}
         </CardContent>
