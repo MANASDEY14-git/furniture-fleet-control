@@ -1,25 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Eye, Download, Receipt } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import StoreSelector from '@/components/StoreSelector';
-import SupplierSelector from '@/components/SupplierSelector';
-import EnhancedSalesOrderForm from '@/components/EnhancedSalesOrderForm';
-import StatusBadge from '@/components/StatusBadge';
-import ExportButton from '@/components/ExportButton';
-import DateFilterSelector from '@/components/DateFilterSelector';
 import { useSalesOrders, useUpdateSalesOrderStatus } from '@/hooks/useSalesOrders';
 import { useSalePaymentStatus, useRecordPayment } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { DeliveryStatus } from '@/types';
-import { formatCurrency } from '@/utils/currencyUtils';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
+import SalesHeader from '@/components/sales/SalesHeader';
+import SalesMetricsGrid from '@/components/sales/SalesMetricsGrid';
+import SalesFilters from '@/components/sales/SalesFilters';
+import SalesTable from '@/components/sales/SalesTable';
+import OrderDetailsDialog from '@/components/sales/OrderDetailsDialog';
+import PaymentRecordDialog from '@/components/sales/PaymentRecordDialog';
 
 export default function Sales() {
   const [selectedStore, setSelectedStore] = useState('all');
@@ -89,18 +80,6 @@ export default function Sales() {
     return suppliers.find(supplier => supplier.id === supplierId)?.name || 'Walk-in Customer';
   };
 
-  const getTotalRevenue = () => {
-    return filteredOrders.reduce((sum, order) => sum + order.total_price, 0);
-  };
-
-  const getTotalPaid = () => {
-    return filteredOrders.reduce((sum, order) => sum + order.total_paid, 0);
-  };
-
-  const getTotalOutstanding = () => {
-    return filteredOrders.reduce((sum, order) => sum + order.balance_due, 0);
-  };
-
   const handleStatusUpdate = (orderId: string, newStatus: DeliveryStatus) => {
     updateOrderStatus.mutate({ id: orderId, delivery_status: newStatus });
   };
@@ -135,334 +114,54 @@ export default function Sales() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold glow-text">Sales Management</h1>
-          <p className="text-blue-300">Track sales orders with advance payments and delivery tracking</p>
-        </div>
-        <div className="flex gap-2">
-          <ExportButton 
-            data={filteredOrders.map(order => ({
-              'Date': new Date(order.sale_date).toLocaleDateString('en-GB'),
-              'Order Number': order.order_number,
-              'Store': getStoreName(order.store_id),
-              'Customer': order.customer_name || getSupplierName(order.supplier_id || ''),
-              'Total Amount': order.total_price,
-              'Total Paid': order.total_paid,
-              'Balance Due': order.balance_due,
-              'Status': order.delivery_status,
-              'Delivery Date': order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : 'Not Set'
-            }))} 
-            filename={`sales-orders-${dateFilter}`} 
-            type="sales"
-          />
-          <EnhancedSalesOrderForm
-            trigger={
-              <Button className="cyber-button text-white font-semibold">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Order
-              </Button>
-            }
-          />
-        </div>
-      </div>
+      <SalesHeader 
+        filteredOrders={filteredOrders}
+        dateFilter={dateFilter}
+        getStoreName={getStoreName}
+        getSupplierName={getSupplierName}
+      />
 
-      {/* Enhanced Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-blue-200 mb-1">Total Orders</p>
-              <p className="text-2xl font-bold text-cyan-300">
-                {filteredOrders.length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-blue-200 mb-1">Total Revenue</p>
-              <p className="text-2xl font-bold text-cyan-300">
-                {formatCurrency(getTotalRevenue())}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-blue-200 mb-1">Total Collected</p>
-              <p className="text-2xl font-bold text-green-400">
-                {formatCurrency(getTotalPaid())}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-sm text-blue-200 mb-1">Outstanding</p>
-              <p className="text-2xl font-bold text-orange-400">
-                {formatCurrency(getTotalOutstanding())}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <SalesMetricsGrid filteredOrders={filteredOrders} />
 
-      {/* Filters */}
-      <Card className="futuristic-card">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
-              <Input
-                placeholder="Search order number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
-              />
-            </div>
-            <StoreSelector 
-              value={selectedStore} 
-              onValueChange={setSelectedStore}
-              stores={stores}
-              isLoading={storesLoading}
-              placeholder="All stores"
-            />
-            <SupplierSelector 
-              value={selectedSupplier} 
-              onValueChange={setSelectedSupplier}
-              placeholder="All suppliers"
-            />
-            <DateFilterSelector
-              dateFilter={dateFilter}
-              onDateFilterChange={setDateFilter}
-              customDateRange={customDateRange}
-              onCustomDateRangeChange={setCustomDateRange}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <SalesFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        selectedStore={selectedStore}
+        setSelectedStore={setSelectedStore}
+        selectedSupplier={selectedSupplier}
+        setSelectedSupplier={setSelectedSupplier}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        customDateRange={customDateRange}
+        setCustomDateRange={setCustomDateRange}
+        stores={stores}
+        storesLoading={storesLoading}
+      />
 
-      {/* Enhanced Orders Table */}
-      <Card className="futuristic-card">
-        <CardHeader>
-          <CardTitle className="text-cyan-300 glow-text">Sales Orders ({filteredOrders.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table className="data-grid">
-              <TableHeader>
-                <TableRow className="border-blue-500/30">
-                  <TableHead className="text-blue-200">Date</TableHead>
-                  <TableHead className="text-blue-200">Order #</TableHead>
-                  <TableHead className="text-blue-200">Customer</TableHead>
-                  <TableHead className="text-blue-200">Store</TableHead>
-                  <TableHead className="text-right text-blue-200">Total</TableHead>
-                  <TableHead className="text-right text-blue-200">Paid</TableHead>
-                  <TableHead className="text-right text-blue-200">Balance</TableHead>
-                  <TableHead className="text-blue-200">Delivery</TableHead>
-                  <TableHead className="text-blue-200">Status</TableHead>
-                  <TableHead className="text-right text-blue-200">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrders.map((order) => (
-                  <TableRow key={order.sale_id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                    <TableCell className="text-blue-100">{new Date(order.sale_date).toLocaleDateString('en-GB')}</TableCell>
-                    <TableCell className="font-medium text-cyan-300">{order.order_number}</TableCell>
-                    <TableCell className="text-blue-200">
-                      {order.customer_name || getSupplierName(order.supplier_id || '')}
-                    </TableCell>
-                    <TableCell className="text-blue-200">{getStoreName(order.store_id)}</TableCell>
-                    <TableCell className="text-right text-cyan-300 font-semibold">{formatCurrency(order.total_price)}</TableCell>
-                    <TableCell className="text-right text-green-400 font-semibold">{formatCurrency(order.total_paid)}</TableCell>
-                    <TableCell className="text-right">
-                      {order.balance_due > 0 ? (
-                        <span className="text-orange-400 font-semibold">{formatCurrency(order.balance_due)}</span>
-                      ) : (
-                        <Badge className="bg-green-500/20 text-green-400">Paid</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-blue-200">
-                      {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : 'Not Set'}
-                    </TableCell>
-                    <TableCell>
-                      <Select 
-                        value={order.delivery_status} 
-                        onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.sale_id, value)}
-                      >
-                        <SelectTrigger className="w-36 neon-border bg-slate-800/50 text-blue-100">
-                          <SelectValue>
-                            <StatusBadge status={order.delivery_status} />
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-blue-500/30">
-                          <SelectItem value={DeliveryStatus.Pending} className="text-blue-100 focus:bg-blue-800/30">Pending</SelectItem>
-                          <SelectItem value={DeliveryStatus.PaidInFull} className="text-blue-100 focus:bg-blue-800/30">Paid in Full</SelectItem>
-                          <SelectItem value={DeliveryStatus.Delivered} className="text-blue-100 focus:bg-blue-800/30">Delivered</SelectItem>
-                          <SelectItem value={DeliveryStatus.Shipped} className="text-blue-100 focus:bg-blue-800/30">Shipped</SelectItem>
-                          <SelectItem value={DeliveryStatus.Cancelled} className="text-blue-100 focus:bg-blue-800/30">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20"
-                              onClick={() => setViewingOrder(order)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="futuristic-card max-w-6xl">
-                            <DialogHeader>
-                              <DialogTitle className="text-cyan-300">Order Details - {order.order_number}</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <p className="text-blue-200"><strong>Customer:</strong> {order.customer_name || 'Walk-in'}</p>
-                                  <p className="text-blue-200"><strong>Phone:</strong> {order.customer_phone || 'N/A'}</p>
-                                  <p className="text-blue-200"><strong>Store:</strong> {getStoreName(order.store_id)}</p>
-                                </div>
-                                <div>
-                                  <p className="text-blue-200"><strong>Date:</strong> {new Date(order.sale_date).toLocaleDateString('en-GB')}</p>
-                                  <p className="text-blue-200"><strong>Status:</strong> <StatusBadge status={order.delivery_status} /></p>
-                                  <p className="text-blue-200"><strong>Delivery:</strong> {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : 'Not Set'}</p>
-                                </div>
-                              </div>
-                              {order.customer_address && (
-                                <div>
-                                  <p className="text-blue-200"><strong>Address:</strong></p>
-                                  <p className="text-blue-100 ml-4">{order.customer_address}</p>
-                                </div>
-                              )}
+      <SalesTable
+        filteredOrders={filteredOrders}
+        getStoreName={getStoreName}
+        getSupplierName={getSupplierName}
+        handleStatusUpdate={handleStatusUpdate}
+        setViewingOrder={setViewingOrder}
+        setRecordingPayment={setRecordingPayment}
+      />
 
-                              {/* Order Items */}
-                              <div className="border-t border-blue-500/30 pt-4">
-                                <h4 className="text-blue-200 font-semibold mb-2">Order Items</h4>
-                                <div className="overflow-x-auto">
-                                  <Table className="data-grid">
-                                    <TableHeader>
-                                      <TableRow className="border-blue-500/30">
-                                        <TableHead className="text-blue-200">Item</TableHead>
-                                        <TableHead className="text-blue-200">Quantity</TableHead>
-                                        <TableHead className="text-blue-200">Unit Price</TableHead>
-                                        <TableHead className="text-blue-200">Total</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {getOrderItems(order.sale_id).map((item: any) => (
-                                        <TableRow key={item.id} className="border-blue-500/20">
-                                          <TableCell className="text-blue-200">{item.item_name}</TableCell>
-                                          <TableCell className="text-blue-200">{item.quantity}</TableCell>
-                                          <TableCell className="text-blue-200">{formatCurrency(item.unit_price)}</TableCell>
-                                          <TableCell className="text-cyan-300 font-semibold">{formatCurrency(item.total_price)}</TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
-                                </div>
-                              </div>
+      <OrderDetailsDialog
+        viewingOrder={viewingOrder}
+        setViewingOrder={setViewingOrder}
+        getStoreName={getStoreName}
+        getOrderItems={getOrderItems}
+      />
 
-                              <div className="grid grid-cols-3 gap-4 p-4 bg-slate-800/30 rounded-lg">
-                                <div className="text-center">
-                                  <p className="text-blue-200 text-sm">Total Amount</p>
-                                  <p className="text-cyan-300 font-bold text-lg">{formatCurrency(order.total_price)}</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-blue-200 text-sm">Total Paid</p>
-                                  <p className="text-green-400 font-bold text-lg">{formatCurrency(order.total_paid)}</p>
-                                </div>
-                                <div className="text-center">
-                                  <p className="text-blue-200 text-sm">Balance Due</p>
-                                  <p className="text-orange-400 font-bold text-lg">{formatCurrency(order.balance_due)}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        
-                        {order.balance_due > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-green-400 hover:text-green-300 hover:bg-green-900/20"
-                            onClick={() => setRecordingPayment(order)}
-                          >
-                            <Receipt className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          {filteredOrders.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-blue-300">No sales orders found matching your criteria</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Record Payment Dialog */}
-      <Dialog open={!!recordingPayment} onOpenChange={() => setRecordingPayment(null)}>
-        <DialogContent className="futuristic-card">
-          <DialogHeader>
-            <DialogTitle className="text-cyan-300">Record Payment</DialogTitle>
-          </DialogHeader>
-          {recordingPayment && (
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-800/30 rounded-lg">
-                <p className="text-blue-200"><strong>Order:</strong> {recordingPayment.order_number}</p>
-                <p className="text-blue-200"><strong>Customer:</strong> {recordingPayment.customer_name || 'Walk-in'}</p>
-                <p className="text-blue-200"><strong>Balance Due:</strong> <span className="text-orange-400 font-bold">{formatCurrency(recordingPayment.balance_due)}</span></p>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-blue-200 font-semibold">Payment Amount</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  max={recordingPayment.balance_due}
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  className="neon-border bg-slate-800/50 text-blue-100"
-                  placeholder="Enter payment amount"
-                />
-              </div>
-              
-              <div className="flex gap-2 justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setRecordingPayment(null)}
-                  className="border-blue-500/30 text-blue-200"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleRecordPayment}
-                  disabled={!paymentAmount || recordPayment.isPending}
-                  className="cyber-button text-white"
-                >
-                  {recordPayment.isPending ? 'Recording...' : 'Record Payment'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <PaymentRecordDialog
+        recordingPayment={recordingPayment}
+        setRecordingPayment={setRecordingPayment}
+        paymentAmount={paymentAmount}
+        setPaymentAmount={setPaymentAmount}
+        handleRecordPayment={handleRecordPayment}
+        isRecordingPayment={recordPayment.isPending}
+      />
     </div>
   );
 }
