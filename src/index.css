@@ -1,82 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import 'react-big-calendar/lib/css/react-big-calendar.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
-
 @layer base {
   :root {
-    --background: 220 100% 4%;
-    --foreground: 210 40% 98%;
-
-    --card: 220 50% 8%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 220 50% 8%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 220 100% 4%;
-
-    --secondary: 220 30% 12%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 220 30% 12%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 217 91% 60%;
-    --accent-foreground: 220 100% 4%;
-
-    --destructive: 0 84% 60%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 220 30% 18%;
-    --input: 220 30% 18%;
-    --ring: 217 91% 60%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 220 50% 6%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 220 100% 4%;
-    --sidebar-accent: 220 30% 12%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 30% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
-    --background: 220 100% 4%;
+    --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 220 50% 8%;
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-    --popover: 220 50% 8%;
+    --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 220 100% 4%;
-    --secondary: 220 30% 12%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 220 30% 12%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 91% 60%;
-    --accent-foreground: 220 100% 4%;
-    --destructive: 0 84% 60%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 220 30% 18%;
-    --input: 220 30% 18%;
-    --ring: 217 91% 60%;
-    --sidebar-background: 220 50% 6%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 220 100% 4%;
-    --sidebar-accent: 220 30% 12%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 30% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -84,127 +66,115 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-foreground min-h-screen;
-    background-attachment: fixed;
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
+/* Futuristic styling */
 @layer components {
   .futuristic-card {
-    @apply bg-gradient-to-br from-blue-900/20 to-purple-900/20 backdrop-blur-sm border border-blue-500/30 rounded-xl shadow-2xl;
-    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+    @apply bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-md border border-blue-500/30 shadow-2xl shadow-blue-500/10;
   }
-
-  .futuristic-card:hover {
-    @apply border-blue-400/50;
-    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.2);
-    transition: all 0.3s ease;
+  
+  .neon-border {
+    @apply border-blue-500/50 shadow-sm shadow-blue-500/20 focus:border-cyan-400 focus:shadow-cyan-400/30;
   }
-
+  
   .glow-text {
-    @apply text-blue-300;
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300;
     text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
   }
-
+  
   .cyber-button {
-    @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 border border-blue-400/50 rounded-lg transition-all duration-300;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    @apply bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 border border-blue-500/50 shadow-lg shadow-blue-500/25 transition-all duration-300;
   }
-
-  .cyber-button:hover {
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-    transform: translateY(-1px);
-  }
-
-  .neon-border {
-    @apply border border-cyan-400/60 rounded-lg;
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3), inset 0 0 20px rgba(34, 211, 238, 0.1);
-  }
-
+  
   .data-grid {
-    @apply bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-lg;
+    @apply border-separate border-spacing-0;
+  }
+  
+  .data-grid th {
+    @apply bg-slate-800/50 backdrop-blur-sm border-b border-blue-500/30 px-4 py-3 text-left;
+  }
+  
+  .data-grid td {
+    @apply px-4 py-3 border-b border-blue-500/20;
   }
 }
 
-/* Calendar Styles */
+/* Calendar styling */
 .delivery-calendar {
-  font-family: 'Inter', sans-serif;
+  @apply text-blue-100;
+}
+
+.delivery-calendar .rbc-calendar {
+  @apply bg-transparent;
 }
 
 .delivery-calendar .rbc-header {
-  background: rgba(30, 41, 59, 0.5);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
-  color: #93c5fd;
-  font-weight: 600;
-  padding: 8px;
+  @apply text-blue-200 font-semibold bg-slate-800/50 border-b border-blue-500/30 py-3;
 }
 
 .delivery-calendar .rbc-month-view {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 8px;
+  @apply border border-blue-500/30 rounded-lg overflow-hidden;
 }
 
 .delivery-calendar .rbc-date-cell {
-  color: #cbd5e1;
-  padding: 8px;
-}
-
-.delivery-calendar .rbc-date-cell.rbc-off-range {
-  color: #64748b;
+  @apply text-blue-300 p-2;
 }
 
 .delivery-calendar .rbc-today {
-  background: rgba(14, 165, 233, 0.1);
-  border: 1px solid rgba(14, 165, 233, 0.3);
+  @apply bg-blue-600/20;
+}
+
+.delivery-calendar .rbc-off-range-bg {
+  @apply bg-slate-800/30;
 }
 
 .delivery-calendar .rbc-event {
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  margin: 1px;
-  padding: 2px 4px;
-}
-
-.delivery-calendar .rbc-show-more {
-  color: #06b6d4;
-  font-weight: 600;
+  @apply text-white font-medium px-2 py-1 rounded text-xs;
 }
 
 .delivery-calendar .rbc-toolbar {
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
+  @apply mb-4 flex flex-wrap gap-2 items-center justify-between;
 }
 
 .delivery-calendar .rbc-toolbar button {
-  background: rgba(59, 130, 246, 0.2);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #93c5fd;
-  padding: 8px 16px;
-  border-radius: 4px;
-  margin: 0 2px;
-  font-weight: 500;
-  transition: all 0.2s;
+  @apply px-3 py-2 bg-slate-700/50 text-blue-200 border border-blue-500/30 rounded hover:bg-blue-600/30 transition-colors;
 }
 
 .delivery-calendar .rbc-toolbar button:hover {
-  background: rgba(59, 130, 246, 0.3);
-  color: #dbeafe;
+  @apply text-cyan-300;
 }
 
 .delivery-calendar .rbc-toolbar button.rbc-active {
-  background: rgba(6, 182, 212, 0.3);
-  border-color: rgba(6, 182, 212, 0.5);
-  color: #67e8f9;
+  @apply bg-blue-600/50 text-cyan-300;
+}
+
+.delivery-calendar .rbc-btn-group {
+  @apply flex gap-1;
 }
 
 .delivery-calendar .rbc-toolbar-label {
-  color: #e2e8f0;
-  font-weight: 700;
-  font-size: 1.1em;
+  @apply text-cyan-300 font-bold text-lg;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-800/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-blue-600/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-blue-500/70;
 }

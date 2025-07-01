@@ -1,132 +1,140 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  Home, 
-  Package, 
+  LayoutDashboard, 
   ShoppingCart, 
-  CreditCard, 
+  Package, 
   DollarSign, 
-  BarChart3, 
-  Menu, 
-  X,
+  FileText, 
   Settings,
-  Users,
-  BookOpen,
-  Warehouse
+  Menu,
+  X,
+  Calendar,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
-// Define the type for navigation items
-interface NavigationItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const navigation: NavigationItem[] = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Inventory', href: '/inventory', icon: Package },
-  { name: 'Inventory by Supplier', href: '/inventory-supplier', icon: Warehouse },
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Sales', href: '/sales', icon: ShoppingCart },
-  { name: 'Purchases', href: '/purchases', icon: CreditCard },
+  { name: 'Delivery Calendar', href: '/delivery-calendar', icon: Calendar },
+  { name: 'Enhanced Payments', href: '/enhanced-payments', icon: CreditCard },
+  { name: 'Inventory', href: '/inventory', icon: Package },
+  { name: 'Purchases', href: '/purchases', icon: ShoppingCart },
   { name: 'Payments', href: '/payments', icon: DollarSign },
-  { name: 'Supplier Ledger', href: '/supplier-ledger', icon: BookOpen },
-  { name: 'Supplier Profile', href: '/supplier-profile', icon: Users },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Reports', href: '/reports', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex">
-      {/* Sidebar for desktop */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div className="flex flex-col flex-grow futuristic-card m-4 mr-0 rounded-r-none border-r-0">
-          <div className="flex items-center flex-shrink-0 px-6 py-6 border-b border-blue-500/30">
-            <h1 className="text-xl font-bold glow-text">⚡ FutureAdmin</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Mobile sidebar */}
+      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-y-0 left-0 flex w-full max-w-xs flex-col bg-slate-800 border-r border-blue-500/30">
+          <div className="flex h-16 shrink-0 items-center justify-between px-6">
+            <span className="text-xl font-bold glow-text">Furniture ERP</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(false)}
+              className="text-blue-200 hover:text-blue-100"
+            >
+              <X className="h-6 w-6" />
+            </Button>
           </div>
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-300',
-                    isActive
-                      ? 'bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-cyan-300 border border-blue-400/50 shadow-lg'
-                      : 'text-blue-100 hover:bg-blue-800/30 hover:text-cyan-300 hover:shadow-md'
-                  )}
-                >
-                  <item.icon className={cn("w-5 h-5 mr-3", isActive && "text-cyan-300")} />
-                  {item.name}
-                </Link>
-              );
-            })}
+          <nav className="flex flex-1 flex-col px-6 pb-4">
+            <ul className="flex flex-1 flex-col gap-y-7">
+              <li>
+                <ul className="-mx-2 space-y-1">
+                  {navigation.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <li key={item.name}>
+                        <Link
+                          to={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-all duration-200 ${
+                            isActive
+                              ? 'bg-blue-600/30 text-cyan-300 shadow-lg shadow-blue-500/20'
+                              : 'text-blue-200 hover:text-cyan-300 hover:bg-blue-800/30'
+                          }`}
+                        >
+                          <item.icon className="h-6 w-6 shrink-0" />
+                          {item.name}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            </ul>
           </nav>
         </div>
       </div>
 
-      {/* Mobile sidebar */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <div className="relative flex flex-col w-64 max-w-xs futuristic-card m-4 rounded-r-xl">
-            <div className="flex items-center justify-between px-4 py-4 border-b border-blue-500/30">
-              <h1 className="text-xl font-bold glow-text">⚡ FutureAdmin</h1>
-              <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)} className="text-blue-300 hover:text-cyan-300">
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-            <nav className="flex-1 px-4 py-4 space-y-2">
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      'flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-300',
-                      isActive
-                        ? 'bg-gradient-to-r from-blue-600/30 to-purple-600/30 text-cyan-300 border border-blue-400/50'
-                        : 'text-blue-100 hover:bg-blue-800/30 hover:text-cyan-300'
-                    )}
-                  >
-                    <item.icon className="w-5 h-5 mr-3" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </nav>
+      {/* Desktop sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-slate-800/90 backdrop-blur-xl border-r border-blue-500/30 px-6 pb-4">
+          <div className="flex h-16 shrink-0 items-center">
+            <span className="text-xl font-bold glow-text">Furniture ERP</span>
           </div>
+          <nav className="flex flex-1 flex-col">
+            <ul className="flex flex-1 flex-col gap-y-7">
+              <li>
+                <ul className="-mx-2 space-y-1">
+                  {navigation.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <li key={item.name}>
+                        <Link
+                          to={item.href}
+                          className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-all duration-200 ${
+                            isActive
+                              ? 'bg-blue-600/30 text-cyan-300 shadow-lg shadow-blue-500/20 glow-text'
+                              : 'text-blue-200 hover:text-cyan-300 hover:bg-blue-800/30'
+                          }`}
+                        >
+                          <item.icon className="h-6 w-6 shrink-0" />
+                          {item.name}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            </ul>
+          </nav>
         </div>
-      )}
+      </div>
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 lg:ml-64">
-        {/* Mobile header */}
-        <div className="flex items-center justify-between px-4 py-3 futuristic-card m-4 mb-0 lg:hidden">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="text-blue-300">
-            <Menu className="w-5 h-5" />
+      <div className="lg:pl-72">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-500/30 bg-slate-800/90 backdrop-blur-xl px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(true)}
+            className="text-blue-200 hover:text-blue-100 lg:hidden"
+          >
+            <Menu className="h-6 w-6" />
           </Button>
-          <h1 className="text-lg font-semibold glow-text">⚡ FutureAdmin</h1>
-          <div className="w-10" />
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div className="flex items-center gap-x-4 lg:gap-x-6">
+              <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-blue-500/30" />
+            </div>
+          </div>
         </div>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 lg:p-8">
-          {children}
+        <main className="py-10">
+          <div className="px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </main>
       </div>
     </div>
