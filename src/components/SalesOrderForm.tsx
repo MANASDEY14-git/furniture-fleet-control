@@ -252,6 +252,7 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
                 </div>
               </div>
 
+              {/* Items Table */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-blue-200">Items</h3>

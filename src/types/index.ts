@@ -25,7 +25,9 @@ export enum DeliveryStatus {
   Pending = 'Pending',
   InTransit = 'In Transit',
   Delivered = 'Delivered',
-  Cancelled = 'Cancelled'
+  Shipped = 'Shipped',
+  Cancelled = 'Cancelled',
+  PaidInFull = 'Paid in Full'
 }
 
 export interface Purchase {
