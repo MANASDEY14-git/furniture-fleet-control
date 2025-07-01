@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
@@ -7,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar as CalendarIcon, Phone, MapPin, Package } from 'lucide-react';
 import { useSalePaymentStatus, useUpdateDeliveryDate } from '@/hooks/useSalePaymentStatus';
+import { useSalesOrders } from '@/hooks/useSalesOrders';
 import { useStores } from '@/hooks/useStores';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { DeliveryEvent } from '@/types/erp';
@@ -22,6 +23,7 @@ export default function DeliveryCalendar() {
   const [newDeliveryDate, setNewDeliveryDate] = useState('');
 
   const { data: salePaymentStatus = [] } = useSalePaymentStatus();
+  const { data: salesOrders = [] } = useSalesOrders();
   const { data: stores = [] } = useStores();
   const updateDeliveryDate = useUpdateDeliveryDate();
 
@@ -41,22 +43,24 @@ export default function DeliveryCalendar() {
         }
 
         const store = stores.find(s => s.id === sale.store_id);
+        const salesOrder = salesOrders.find(order => order.id === sale.sale_id);
         
         return {
           id: sale.sale_id,
-          title: `${sale.customer_name || 'Customer'} - ${sale.order_number}`,
+          title: sale.order_number, // Show order number instead of customer name
           start: deliveryDate,
           end: deliveryDate,
           customer_name: sale.customer_name || 'Walk-in Customer',
           customer_phone: sale.customer_phone || 'N/A',
           customer_address: sale.customer_address || 'N/A',
-          items: [], // Will be populated from sales_order_items if needed
+          items: salesOrder?.sales_order_items || [], // Include order items
           store_name: store?.name || 'Unknown Store',
           balance_due: sale.balance_due,
           status,
+          order_number: sale.order_number,
         } as DeliveryEvent;
       });
-  }, [salePaymentStatus, stores]);
+  }, [salePaymentStatus, stores, salesOrders]);
 
   const eventStyleGetter = (event: DeliveryEvent) => {
     let backgroundColor = '#10b981'; // green for upcoming
@@ -141,21 +145,25 @@ export default function DeliveryCalendar() {
 
       {/* Event Details Dialog */}
       <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-        <DialogContent className="futuristic-card max-w-2xl">
+        <DialogContent className="futuristic-card max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="text-cyan-300">Delivery Details</DialogTitle>
+            <DialogTitle className="text-cyan-300">Delivery Details - {selectedEvent?.order_number}</DialogTitle>
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-blue-100">
-                  {selectedEvent.title}
+                  Order: {selectedEvent.order_number}
                 </h3>
                 {getStatusBadge(selectedEvent.status)}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-blue-200">
+                    <span className="font-semibold">Customer:</span>
+                    <span>{selectedEvent.customer_name}</span>
+                  </div>
                   <div className="flex items-center gap-2 text-blue-200">
                     <Phone className="w-4 h-4" />
                     <span>{selectedEvent.customer_phone}</span>
@@ -183,6 +191,35 @@ export default function DeliveryCalendar() {
                   </div>
                 </div>
               </div>
+
+              {/* Order Items */}
+              {selectedEvent.items && selectedEvent.items.length > 0 && (
+                <div className="border-t border-blue-500/30 pt-4">
+                  <h4 className="text-blue-200 font-semibold mb-2">Order Items</h4>
+                  <div className="overflow-x-auto">
+                    <Table className="data-grid">
+                      <TableHeader>
+                        <TableRow className="border-blue-500/30">
+                          <TableHead className="text-blue-200">Item</TableHead>
+                          <TableHead className="text-blue-200">Quantity</TableHead>
+                          <TableHead className="text-blue-200">Unit Price</TableHead>
+                          <TableHead className="text-blue-200">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedEvent.items.map((item: any) => (
+                          <TableRow key={item.id} className="border-blue-500/20">
+                            <TableCell className="text-blue-200">{item.item_name}</TableCell>
+                            <TableCell className="text-blue-200">{item.quantity}</TableCell>
+                            <TableCell className="text-blue-200">{formatCurrency(item.unit_price)}</TableCell>
+                            <TableCell className="text-cyan-300 font-semibold">{formatCurrency(item.total_price)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
 
               <div className="border-t border-blue-500/30 pt-4">
                 <h4 className="text-blue-200 font-semibold mb-2">Update Delivery Date</h4>

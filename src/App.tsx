@@ -12,6 +12,8 @@ import Purchases from '@/pages/Purchases';
 import Payments from '@/pages/Payments';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
+import Suppliers from '@/pages/Suppliers';
+import SupplierLedger from '@/pages/SupplierLedger';
 import NotFound from '@/pages/NotFound';
 import './App.css';
 
@@ -37,6 +39,8 @@ function App() {
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/payments" element={<Payments />} />
+            <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/supplier-ledger" element={<SupplierLedger />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />

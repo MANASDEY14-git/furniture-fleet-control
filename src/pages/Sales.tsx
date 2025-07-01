@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Plus, Search, Eye, Download, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -119,6 +118,11 @@ export default function Sales() {
     
     setRecordingPayment(null);
     setPaymentAmount('');
+  };
+
+  const getOrderItems = (saleId: string) => {
+    const salesOrder = salesOrders.find(order => order.id === saleId);
+    return salesOrder?.sales_order_items || [];
   };
 
   if (ordersLoading) {
@@ -318,7 +322,7 @@ export default function Sales() {
                               <Eye className="w-4 h-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="futuristic-card max-w-4xl">
+                          <DialogContent className="futuristic-card max-w-6xl">
                             <DialogHeader>
                               <DialogTitle className="text-cyan-300">Order Details - {order.order_number}</DialogTitle>
                             </DialogHeader>
@@ -341,6 +345,34 @@ export default function Sales() {
                                   <p className="text-blue-100 ml-4">{order.customer_address}</p>
                                 </div>
                               )}
+
+                              {/* Order Items */}
+                              <div className="border-t border-blue-500/30 pt-4">
+                                <h4 className="text-blue-200 font-semibold mb-2">Order Items</h4>
+                                <div className="overflow-x-auto">
+                                  <Table className="data-grid">
+                                    <TableHeader>
+                                      <TableRow className="border-blue-500/30">
+                                        <TableHead className="text-blue-200">Item</TableHead>
+                                        <TableHead className="text-blue-200">Quantity</TableHead>
+                                        <TableHead className="text-blue-200">Unit Price</TableHead>
+                                        <TableHead className="text-blue-200">Total</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {getOrderItems(order.sale_id).map((item: any) => (
+                                        <TableRow key={item.id} className="border-blue-500/20">
+                                          <TableCell className="text-blue-200">{item.item_name}</TableCell>
+                                          <TableCell className="text-blue-200">{item.quantity}</TableCell>
+                                          <TableCell className="text-blue-200">{formatCurrency(item.unit_price)}</TableCell>
+                                          <TableCell className="text-cyan-300 font-semibold">{formatCurrency(item.total_price)}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+
                               <div className="grid grid-cols-3 gap-4 p-4 bg-slate-800/30 rounded-lg">
                                 <div className="text-center">
                                   <p className="text-blue-200 text-sm">Total Amount</p>

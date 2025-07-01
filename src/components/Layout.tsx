@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -11,7 +10,9 @@ import {
   Menu,
   X,
   Calendar,
-  CreditCard
+  CreditCard,
+  Users,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +24,8 @@ const navigation = [
   { name: 'Inventory', href: '/inventory', icon: Package },
   { name: 'Purchases', href: '/purchases', icon: ShoppingCart },
   { name: 'Payments', href: '/payments', icon: DollarSign },
+  { name: 'Suppliers', href: '/suppliers', icon: Users },
+  { name: 'Supplier Ledger', href: '/supplier-ledger', icon: BookOpen },
   { name: 'Reports', href: '/reports', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
