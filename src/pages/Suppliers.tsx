@@ -52,7 +52,7 @@ export default function Suppliers() {
               'Created Date': new Date(supplier.created_at).toLocaleDateString('en-GB')
             }))} 
             filename="suppliers" 
-            type="suppliers"
+            type="items"
           />
           <SupplierForm
             trigger={

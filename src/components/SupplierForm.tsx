@@ -8,12 +8,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useCreateSupplier, useUpdateSupplier, type Supplier } from '@/hooks/useSuppliers';
 
 interface SupplierFormProps {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   supplier?: Supplier;
   onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export default function SupplierForm({ trigger, supplier, onSuccess }: SupplierFormProps) {
+export default function SupplierForm({ trigger, supplier, onSuccess, onClose }: SupplierFormProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: supplier?.name || '',
@@ -37,6 +38,7 @@ export default function SupplierForm({ trigger, supplier, onSuccess }: SupplierF
     if (!createSupplier.isPending && !updateSupplier.isPending) {
       setOpen(false);
       onSuccess?.();
+      onClose?.();
       if (!supplier) {
         setFormData({
           name: '',
@@ -49,6 +51,94 @@ export default function SupplierForm({ trigger, supplier, onSuccess }: SupplierF
       }
     }
   };
+
+  // If no trigger is provided, render the form directly (for edit mode)
+  if (!trigger) {
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-blue-200">Supplier Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+              placeholder="Enter supplier name"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="contact_person" className="text-blue-200">Contact Person</Label>
+            <Input
+              id="contact_person"
+              value={formData.contact_person}
+              onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+              className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+              placeholder="Contact person name"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-blue-200">Phone</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+              placeholder="Phone number"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-blue-200">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+              placeholder="Email address"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="gstin" className="text-blue-200">GSTIN</Label>
+            <Input
+              id="gstin"
+              value={formData.gstin}
+              onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+              className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+              placeholder="GST number"
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="address" className="text-blue-200">Address</Label>
+          <Textarea
+            id="address"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+            placeholder="Complete address"
+          />
+        </div>
+        
+        <Button 
+          type="submit" 
+          className="w-full cyber-button text-white font-semibold"
+          disabled={createSupplier.isPending || updateSupplier.isPending}
+        >
+          {createSupplier.isPending || updateSupplier.isPending 
+            ? (supplier ? 'Updating...' : 'Creating...') 
+            : (supplier ? 'Update Supplier' : 'Create Supplier')
+          }
+        </Button>
+      </form>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

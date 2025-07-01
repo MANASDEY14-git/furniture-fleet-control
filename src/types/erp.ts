@@ -19,3 +19,35 @@ export interface DeliveryEvent {
   status: 'overdue' | 'today' | 'upcoming';
   order_number: string;
 }
+
+export interface PaymentSummary {
+  store_id: string;
+  total_receipts: number;
+  total_payments: number;
+  net_balance: number;
+}
+
+export interface DashboardMetrics {
+  totalSales: number;
+  totalPurchases: number;
+  grossProfit: number;
+  lowStockCount: number;
+  outstandingBalance: number;
+  supplierPayable: number;
+}
+
+export interface SalePaymentStatus {
+  sale_id: string;
+  store_id: string;
+  supplier_id: string;
+  order_number: string;
+  sale_date: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string;
+  delivery_status: string;
+  delivery_date: string;
+  total_price: number;
+  total_paid: number;
+  balance_due: number;
+}
