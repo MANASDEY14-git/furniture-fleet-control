@@ -35,7 +35,7 @@ export const useCreateSalesOrder = () => {
 
   return useMutation({
     mutationFn: async (data: CreateSalesOrderData) => {
-      // Create the sales order
+      // Create the sales order with customer and payment fields
       const { data: order, error: orderError } = await supabase
         .from('sales_orders')
         .insert([{
@@ -44,6 +44,11 @@ export const useCreateSalesOrder = () => {
           supplier_id: data.supplier_id,
           delivery_status: data.delivery_status,
           date: data.date,
+          customer_name: data.customer_name,
+          customer_phone: data.customer_phone,
+          customer_address: data.customer_address,
+          delivery_date: data.delivery_date,
+          advance_paid: data.advance_paid || 0,
           total_amount: data.items.reduce((sum, item) => sum + item.total_price, 0)
         }])
         .select()
@@ -71,6 +76,26 @@ export const useCreateSalesOrder = () => {
         throw itemsError;
       }
 
+      // Create advance payment record if advance was paid
+      if (data.advance_paid && data.advance_paid > 0) {
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert([{
+            type: 'Receipt',
+            amount: data.advance_paid,
+            date: data.date,
+            sale_id: order.id,
+            store_id: data.store_id,
+            description: `Advance payment for order ${data.order_number}`,
+            reference_type: 'sales_order',
+            reference_id: order.id
+          }]);
+
+        if (paymentError) {
+          console.error('Failed to create advance payment record:', paymentError);
+        }
+      }
+
       // Update inventory for each item
       for (const item of data.items) {
         const { data: currentItem, error: fetchError } = await supabase
@@ -95,6 +120,8 @@ export const useCreateSalesOrder = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
       queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['sale-payment-status'] });
+      queryClient.invalidateQueries({ queryKey: ['payment-summary'] });
       toast({
         title: "Success",
         description: "Sales order created successfully",

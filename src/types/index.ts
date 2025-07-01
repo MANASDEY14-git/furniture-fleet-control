@@ -23,10 +23,9 @@ export interface Item {
 
 export enum DeliveryStatus {
   Pending = 'Pending',
-  Shipped = 'Shipped',
+  InTransit = 'In Transit',
   Delivered = 'Delivered',
-  Cancelled = 'Cancelled',
-  PaidInFull = 'Paid in Full'
+  Cancelled = 'Cancelled'
 }
 
 export interface Purchase {
@@ -57,12 +56,26 @@ export interface SalesOrder {
   id: string;
   order_number: string;
   store_id: string;
-  supplier_id?: string;
-  delivery_status: DeliveryStatus;
+  supplier_id: string | null;
+  delivery_status: string;
   date: string;
   total_amount: number;
-  created_at?: string;
-  updated_at?: string;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_address?: string | null;
+  delivery_date?: string | null;
+  advance_paid?: number;
+  balance_due?: number;
+  created_at: string;
+  updated_at: string;
+  sales_order_items?: {
+    id: string;
+    item_id: string | null;
+    item_name: string;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+  }[];
 }
 
 export interface SalesOrderItem {
@@ -78,9 +91,14 @@ export interface SalesOrderItem {
 export interface CreateSalesOrderData {
   order_number: string;
   store_id: string;
-  supplier_id?: string;
+  supplier_id: string | null;
   delivery_status: DeliveryStatus;
   date: string;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_address?: string | null;
+  delivery_date?: string | null;
+  advance_paid?: number;
   items: {
     item_id: string;
     item_name: string;
