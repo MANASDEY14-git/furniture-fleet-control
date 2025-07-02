@@ -8,6 +8,7 @@ import { useStores, useDeleteStore } from '@/hooks/useStores';
 import { useCategories, useDeleteCategory } from '@/hooks/useCategories';
 import StoreForm from '@/components/StoreForm';
 import CategoryForm from '@/components/CategoryForm';
+import AttributeManager from '@/components/AttributeManager';
 
 export default function Settings() {
   const { data: stores = [], isLoading: storesLoading } = useStores();
@@ -29,7 +30,7 @@ export default function Settings() {
         <SettingsIcon className="w-8 h-8 text-cyan-400" />
         <div>
           <h1 className="text-3xl font-bold glow-text">System Configuration</h1>
-          <p className="text-blue-300">Manage stores and categories</p>
+          <p className="text-blue-300">Manage stores, categories, and product attributes</p>
         </div>
       </div>
 
@@ -188,6 +189,22 @@ export default function Settings() {
               <p className="text-blue-300">No categories found. Add your first category above.</p>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Attributes Management */}
+      <Card className="futuristic-card">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-cyan-300 glow-text">Product Attributes</CardTitle>
+          <AttributeManager />
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-blue-300">
+              Manage global product attributes like Color, Size, Material, etc. 
+              These can be used when creating product variants.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
