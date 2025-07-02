@@ -14,6 +14,7 @@ import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
 import { useCreatePurchase } from '@/hooks/usePurchases';
+import ItemVariantSelector from '@/components/ItemVariantSelector';
 
 interface EnhancedPurchaseFormProps {
   trigger: React.ReactNode;
@@ -28,6 +29,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
     invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
     itemId: '',
+    variantId: '',
     quantity: 0,
     totalCost: 0,
   });
@@ -96,6 +98,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
       invoiceNumber: '',
       date: new Date().toISOString().split('T')[0],
       itemId: '',
+      variantId: '',
       quantity: 0,
       totalCost: 0,
     });
@@ -115,7 +118,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto futuristic-card">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto futuristic-card" onInteractOutside={(e) => e.preventDefault()}>
         <Card className="border-none shadow-none">
           <CardHeader>
             <CardTitle className="text-cyan-300 glow-text">Enhanced Purchase Entry</CardTitle>
@@ -252,10 +255,25 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                  )}
+                     </div>
+                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {/* Variant Selection */}
+                   {!isNewItem && formData.itemId && (
+                     <div className="space-y-2">
+                       <Label className="text-blue-200">Select Variant</Label>
+                       <ItemVariantSelector
+                         itemId={formData.itemId}
+                         value={formData.variantId}
+                         onValueChange={(variantId, variantData) => {
+                           setFormData({...formData, variantId});
+                         }}
+                         placeholder="Select item variant"
+                       />
+                     </div>
+                   )}
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="quantity" className="text-blue-200">Quantity *</Label>
                       <Input

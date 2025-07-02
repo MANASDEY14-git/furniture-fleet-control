@@ -14,10 +14,12 @@ import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
 import { DeliveryStatus } from '@/types';
+import ItemVariantSelector from '@/components/ItemVariantSelector';
 
 interface OrderItem {
   id: string;
   itemId: string;
+  variantId: string;
   itemName: string;
   quantity: number;
   unitPrice: number;
@@ -46,7 +48,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
   });
 
   const [items, setItems] = useState<OrderItem[]>([
-    { id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }
+    { id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }
   ]);
 
   const { data: availableItems = [] } = useItems();
@@ -63,6 +65,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
     setItems([...items, {
       id: Date.now().toString(),
       itemId: '',
+      variantId: '',
       itemName: '',
       quantity: 0,
       unitPrice: 0,
@@ -87,6 +90,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
           updatedItem.itemName = selectedItem?.name || '';
           updatedItem.unitPrice = selectedItem?.selling_price || 0;
           updatedItem.availableStock = selectedItem?.quantity_available || 0;
+          updatedItem.variantId = ''; // Reset variant when item changes
         }
         
         if (field === 'quantity' || field === 'unitPrice') {
@@ -163,7 +167,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       deliveryDate: '',
       advancePaid: 0,
     });
-    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
+    setItems([{ id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
     setIsWalkInCustomer(false);
   };
 
@@ -175,7 +179,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto futuristic-card">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto futuristic-card" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-cyan-300 glow-text">Create Sales Order</DialogTitle>
         </DialogHeader>
@@ -315,6 +319,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                     <TableHeader>
                       <TableRow className="border-blue-500/30">
                         <TableHead className="text-blue-200">Item</TableHead>
+                        <TableHead className="text-blue-200">Variant</TableHead>
                         <TableHead className="text-blue-200">Available</TableHead>
                         <TableHead className="text-blue-200">Quantity</TableHead>
                         <TableHead className="text-blue-200">Unit Price</TableHead>
@@ -338,6 +343,24 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                                 </option>
                               ))}
                             </select>
+                          </TableCell>
+                          <TableCell>
+                            {item.itemId ? (
+                              <ItemVariantSelector
+                                itemId={item.itemId}
+                                value={item.variantId}
+                                onValueChange={(variantId, variantData) => {
+                                  updateItem(item.id, 'variantId', variantId);
+                                  if (variantData) {
+                                    updateItem(item.id, 'unitPrice', variantData.selling_price);
+                                    updateItem(item.id, 'availableStock', variantData.quantity_available);
+                                  }
+                                }}
+                                placeholder="Select variant"
+                              />
+                            ) : (
+                              <span className="text-gray-400 text-sm">Select item first</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-cyan-300">
                             {item.availableStock}
