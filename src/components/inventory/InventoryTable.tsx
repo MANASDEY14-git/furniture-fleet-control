@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Pencil, Trash2, AlertTriangle, Search, Filter } from 'lucide-react';
+import { Pencil, Trash2, AlertTriangle, Search, Filter, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import ItemForm from '@/components/ItemForm';
+import ItemVariantManager from '@/components/ItemVariantManager';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { Item } from '@/hooks/useItems';
 import type { Store } from '@/types';
@@ -274,6 +275,14 @@ export default function InventoryTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      <ItemVariantManager
+                        item={item}
+                        trigger={
+                          <Button variant="ghost" size="sm" className="text-green-400 hover:text-green-300 hover:bg-green-900/20">
+                            <Package className="w-4 h-4" />
+                          </Button>
+                        }
+                      />
                       <ItemForm
                         item={item}
                         trigger={

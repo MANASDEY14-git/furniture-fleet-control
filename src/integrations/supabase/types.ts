@@ -9,6 +9,59 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      attribute_values: {
+        Row: {
+          attribute_id: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          attribute_id?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          attribute_id?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attribute_values_attribute_id_fkey"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "attributes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attributes: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       audit_trails: {
         Row: {
           action: string
@@ -62,6 +115,83 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      item_variant_attributes: {
+        Row: {
+          attribute_value_id: string | null
+          created_at: string | null
+          id: string
+          variant_id: string | null
+        }
+        Insert: {
+          attribute_value_id?: string | null
+          created_at?: string | null
+          id?: string
+          variant_id?: string | null
+        }
+        Update: {
+          attribute_value_id?: string | null
+          created_at?: string | null
+          id?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_variant_attributes_attribute_value_id_fkey"
+            columns: ["attribute_value_id"]
+            isOneToOne: false
+            referencedRelation: "attribute_values"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_variant_attributes_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_variants: {
+        Row: {
+          cost_price: number
+          created_at: string | null
+          id: string
+          item_id: string | null
+          quantity_available: number | null
+          selling_price: number
+          sku: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cost_price: number
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          quantity_available?: number | null
+          selling_price: number
+          sku?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          quantity_available?: number | null
+          selling_price?: number
+          sku?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_variants_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       items: {
         Row: {
