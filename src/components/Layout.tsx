@@ -22,6 +22,7 @@ const navigation = [
   { name: 'Delivery Calendar', href: '/delivery-calendar', icon: Calendar },
   { name: 'Enhanced Payments', href: '/enhanced-payments', icon: CreditCard },
   { name: 'Inventory', href: '/inventory', icon: Package },
+  { name: 'Materials', href: '/materials', icon: Package },
   { name: 'Purchases', href: '/purchases', icon: ShoppingCart },
   { name: 'Payments', href: '/payments', icon: DollarSign },
   { name: 'Suppliers', href: '/suppliers', icon: Users },

@@ -14,6 +14,7 @@ import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
 import Suppliers from '@/pages/Suppliers';
 import SupplierLedger from '@/pages/SupplierLedger';
+import Materials from '@/pages/Materials';
 import NotFound from '@/pages/NotFound';
 import './App.css';
 
@@ -41,6 +42,7 @@ function App() {
             <Route path="/payments" element={<Payments />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/supplier-ledger" element={<SupplierLedger />} />
+            <Route path="/materials" element={<Materials />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />

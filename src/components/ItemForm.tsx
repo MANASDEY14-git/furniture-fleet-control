@@ -7,6 +7,7 @@ import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useIt
 import ItemBasicInfoForm from '@/components/ItemBasicInfoForm';
 import ItemVariantsTab from '@/components/ItemVariantsTab';
 import ItemAttributesTab from '@/components/ItemAttributesTab';
+import BOMManager from '@/components/BOMManager';
 
 interface ItemFormProps {
   item?: Item;
@@ -59,12 +60,15 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
+          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
             <TabsTrigger value="basic" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
               Basic Info
             </TabsTrigger>
             <TabsTrigger value="variants" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
               Variants
+            </TabsTrigger>
+            <TabsTrigger value="bom" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
+              BOM
             </TabsTrigger>
             <TabsTrigger value="attributes" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
               <Settings className="w-4 h-4 mr-1" />
@@ -83,6 +87,10 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
 
           <TabsContent value="variants" className="mt-6">
             <ItemVariantsTab item={item} />
+          </TabsContent>
+
+          <TabsContent value="bom" className="mt-6">
+            {item && <BOMManager item={item} />}
           </TabsContent>
 
           <TabsContent value="attributes" className="mt-6">

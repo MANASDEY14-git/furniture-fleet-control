@@ -95,6 +95,83 @@ export type Database = {
         }
         Relationships: []
       }
+      bom: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          item_id: string | null
+          name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_id?: string | null
+          name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          item_id?: string | null
+          name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bom_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bom_components: {
+        Row: {
+          bom_id: string | null
+          created_at: string | null
+          id: string
+          material_id: string | null
+          notes: string | null
+          quantity_required: number
+        }
+        Insert: {
+          bom_id?: string | null
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          notes?: string | null
+          quantity_required: number
+        }
+        Update: {
+          bom_id?: string | null
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          notes?: string | null
+          quantity_required?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bom_components_bom_id_fkey"
+            columns: ["bom_id"]
+            isOneToOne: false
+            referencedRelation: "bom"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bom_components_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -295,6 +372,159 @@ export type Database = {
           threshold_quantity?: number
         }
         Relationships: []
+      }
+      material_purchases: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          id: string
+          invoice_number: string | null
+          material_id: string | null
+          quantity: number
+          store_id: string | null
+          supplier_id: string | null
+          total_cost: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          invoice_number?: string | null
+          material_id?: string | null
+          quantity: number
+          store_id?: string | null
+          supplier_id?: string | null
+          total_cost: number
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          invoice_number?: string | null
+          material_id?: string | null
+          quantity?: number
+          store_id?: string | null
+          supplier_id?: string | null
+          total_cost?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_purchases_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_purchases_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_purchases_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_stock_movements: {
+        Row: {
+          created_at: string | null
+          id: string
+          material_id: string | null
+          movement_type: string
+          notes: string | null
+          quantity_change: number
+          reference_id: string | null
+          reference_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          movement_type: string
+          notes?: string | null
+          quantity_change: number
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          movement_type?: string
+          notes?: string | null
+          quantity_change?: number
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_stock_movements_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materials: {
+        Row: {
+          cost_price: number
+          created_at: string | null
+          id: string
+          name: string
+          quantity_available: number | null
+          store_id: string | null
+          supplier_id: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cost_price?: number
+          created_at?: string | null
+          id?: string
+          name: string
+          quantity_available?: number | null
+          store_id?: string | null
+          supplier_id?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string | null
+          id?: string
+          name?: string
+          quantity_available?: number | null
+          store_id?: string | null
+          supplier_id?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materials_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materials_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
