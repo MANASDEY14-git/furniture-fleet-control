@@ -2,17 +2,35 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export interface BOMComponentOption {
+  id: string;
+  bom_component_id: string;
+  material_id: string;
+  option_name: string;
+  materials: {
+    id: string;
+    name: string;
+    unit?: string;
+    quantity_available: number;
+    cost_price: number;
+  };
+}
+
 export interface BOMComponent {
   id: string;
   bom_id: string;
   material_id: string;
   quantity_required: number;
+  component_name?: string;
+  is_customizable: boolean;
+  notes?: string;
   materials: {
     id: string;
     name: string;
     unit?: string;
     quantity_available: number;
   };
+  bom_component_options: BOMComponentOption[];
 }
 
 export interface BOM {
@@ -25,13 +43,22 @@ export interface BOM {
   bom_components: BOMComponent[];
 }
 
+export interface CreateBOMComponentData {
+  material_id: string;
+  quantity_required: number;
+  component_name?: string;
+  is_customizable: boolean;
+  notes?: string;
+  options?: {
+    material_id: string;
+    option_name: string;
+  }[];
+}
+
 export interface CreateBOMData {
   item_id: string;
   name?: string;
-  components: {
-    material_id: string;
-    quantity_required: number;
-  }[];
+  components: CreateBOMComponentData[];
 }
 
 export const useBOMByItem = (itemId: string) => {
@@ -49,6 +76,16 @@ export const useBOMByItem = (itemId: string) => {
               name,
               unit,
               quantity_available
+            ),
+            bom_component_options (
+              *,
+              materials (
+                id,
+                name,
+                unit,
+                quantity_available,
+                cost_price
+              )
             )
           )
         `)
@@ -86,14 +123,36 @@ export const useCreateBOM = () => {
       const components = data.components.map(comp => ({
         bom_id: bom.id,
         material_id: comp.material_id,
-        quantity_required: comp.quantity_required
+        quantity_required: comp.quantity_required,
+        component_name: comp.component_name,
+        is_customizable: comp.is_customizable,
+        notes: comp.notes
       }));
 
-      const { error: componentsError } = await supabase
+      const { data: createdComponents, error: componentsError } = await supabase
         .from('bom_components')
-        .insert(components);
+        .insert(components)
+        .select();
 
       if (componentsError) throw componentsError;
+
+      // Create component options for customizable components
+      for (let i = 0; i < data.components.length; i++) {
+        const comp = data.components[i];
+        if (comp.is_customizable && comp.options && comp.options.length > 0) {
+          const options = comp.options.map(opt => ({
+            bom_component_id: createdComponents[i].id,
+            material_id: opt.material_id,
+            option_name: opt.option_name
+          }));
+
+          const { error: optionsError } = await supabase
+            .from('bom_component_options')
+            .insert(options);
+
+          if (optionsError) throw optionsError;
+        }
+      }
 
       return bom;
     },
@@ -122,8 +181,22 @@ export const useUpdateBOM = () => {
     mutationFn: async ({ bomId, itemId, components }: { 
       bomId: string; 
       itemId: string; 
-      components: { material_id: string; quantity_required: number }[] 
+      components: CreateBOMComponentData[] 
     }) => {
+      // Delete existing component options first
+      const { data: existingComponents } = await supabase
+        .from('bom_components')
+        .select('id')
+        .eq('bom_id', bomId);
+
+      if (existingComponents && existingComponents.length > 0) {
+        const componentIds = existingComponents.map(c => c.id);
+        await supabase
+          .from('bom_component_options')
+          .delete()
+          .in('bom_component_id', componentIds);
+      }
+
       // Delete existing components
       await supabase
         .from('bom_components')
@@ -134,14 +207,36 @@ export const useUpdateBOM = () => {
       const newComponents = components.map(comp => ({
         bom_id: bomId,
         material_id: comp.material_id,
-        quantity_required: comp.quantity_required
+        quantity_required: comp.quantity_required,
+        component_name: comp.component_name,
+        is_customizable: comp.is_customizable,
+        notes: comp.notes
       }));
 
-      const { error } = await supabase
+      const { data: createdComponents, error: componentsError } = await supabase
         .from('bom_components')
-        .insert(newComponents);
+        .insert(newComponents)
+        .select();
 
-      if (error) throw error;
+      if (componentsError) throw componentsError;
+
+      // Create component options for customizable components
+      for (let i = 0; i < components.length; i++) {
+        const comp = components[i];
+        if (comp.is_customizable && comp.options && comp.options.length > 0) {
+          const options = comp.options.map(opt => ({
+            bom_component_id: createdComponents[i].id,
+            material_id: opt.material_id,
+            option_name: opt.option_name
+          }));
+
+          const { error: optionsError } = await supabase
+            .from('bom_component_options')
+            .insert(options);
+
+          if (optionsError) throw optionsError;
+        }
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['bom', variables.itemId] });

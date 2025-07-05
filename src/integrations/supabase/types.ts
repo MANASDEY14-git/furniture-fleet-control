@@ -130,27 +130,72 @@ export type Database = {
           },
         ]
       }
+      bom_component_options: {
+        Row: {
+          bom_component_id: string | null
+          created_at: string | null
+          id: string
+          material_id: string | null
+          option_name: string
+        }
+        Insert: {
+          bom_component_id?: string | null
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          option_name: string
+        }
+        Update: {
+          bom_component_id?: string | null
+          created_at?: string | null
+          id?: string
+          material_id?: string | null
+          option_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bom_component_options_bom_component_id_fkey"
+            columns: ["bom_component_id"]
+            isOneToOne: false
+            referencedRelation: "bom_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bom_component_options_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bom_components: {
         Row: {
           bom_id: string | null
+          component_name: string | null
           created_at: string | null
           id: string
+          is_customizable: boolean | null
           material_id: string | null
           notes: string | null
           quantity_required: number
         }
         Insert: {
           bom_id?: string | null
+          component_name?: string | null
           created_at?: string | null
           id?: string
+          is_customizable?: boolean | null
           material_id?: string | null
           notes?: string | null
           quantity_required: number
         }
         Update: {
           bom_id?: string | null
+          component_name?: string | null
           created_at?: string | null
           id?: string
+          is_customizable?: boolean | null
           material_id?: string | null
           notes?: string | null
           quantity_required?: number
@@ -718,6 +763,58 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_customizations: {
+        Row: {
+          bom_component_id: string | null
+          created_at: string | null
+          id: string
+          quantity_used: number
+          sale_id: string | null
+          selected_material_id: string | null
+          selected_option_name: string | null
+        }
+        Insert: {
+          bom_component_id?: string | null
+          created_at?: string | null
+          id?: string
+          quantity_used: number
+          sale_id?: string | null
+          selected_material_id?: string | null
+          selected_option_name?: string | null
+        }
+        Update: {
+          bom_component_id?: string | null
+          created_at?: string | null
+          id?: string
+          quantity_used?: number
+          sale_id?: string | null
+          selected_material_id?: string | null
+          selected_option_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customizations_bom_component_id_fkey"
+            columns: ["bom_component_id"]
+            isOneToOne: false
+            referencedRelation: "bom_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customizations_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customizations_selected_material_id_fkey"
+            columns: ["selected_material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
             referencedColumns: ["id"]
           },
         ]

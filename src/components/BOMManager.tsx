@@ -18,6 +18,9 @@ interface BOMManagerProps {
 interface BOMComponentForm {
   material_id: string;
   quantity_required: number;
+  component_name?: string;
+  is_customizable: boolean;
+  notes?: string;
 }
 
 export default function BOMManager({ item }: BOMManagerProps) {
@@ -34,13 +37,16 @@ export default function BOMManager({ item }: BOMManagerProps) {
       setBomName(bom.name || '');
       setComponents(bom.bom_components.map(comp => ({
         material_id: comp.material_id,
-        quantity_required: comp.quantity_required
+        quantity_required: comp.quantity_required,
+        component_name: comp.component_name,
+        is_customizable: comp.is_customizable,
+        notes: comp.notes
       })));
     }
   }, [bom]);
 
   const addComponent = () => {
-    setComponents([...components, { material_id: '', quantity_required: 1 }]);
+    setComponents([...components, { material_id: '', quantity_required: 1, component_name: '', is_customizable: false, notes: '' }]);
   };
 
   const removeComponent = (index: number) => {

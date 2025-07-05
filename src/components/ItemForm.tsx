@@ -7,7 +7,7 @@ import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useIt
 import ItemBasicInfoForm from '@/components/ItemBasicInfoForm';
 import ItemVariantsTab from '@/components/ItemVariantsTab';
 import ItemAttributesTab from '@/components/ItemAttributesTab';
-import BOMManager from '@/components/BOMManager';
+import EnhancedBOMManager from '@/components/bom/EnhancedBOMManager';
 
 interface ItemFormProps {
   item?: Item;
@@ -90,7 +90,7 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
           </TabsContent>
 
           <TabsContent value="bom" className="mt-6">
-            {item && <BOMManager item={item} />}
+            {item && <EnhancedBOMManager item={item} />}
           </TabsContent>
 
           <TabsContent value="attributes" className="mt-6">

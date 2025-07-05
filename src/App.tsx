@@ -42,7 +42,8 @@ function App() {
             <Route path="/payments" element={<Payments />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/supplier-ledger" element={<SupplierLedger />} />
-            <Route path="/materials" element={<Materials />} />
+        <Route path="/materials" element={<Materials />} />
+        <Route path="/material-purchases" element={<MaterialPurchases />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
