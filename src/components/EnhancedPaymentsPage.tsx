@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,17 +23,68 @@ import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import StoreSelector from '@/components/StoreSelector';
 import { formatCurrency } from '@/utils/currencyUtils';
+import ExportButton from '@/components/ExportButton';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function EnhancedPaymentsPage() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
-  const { data: payments = [], isLoading: paymentsLoading } = usePayments();
-  const { data: paymentSummary = [] } = usePaymentSummary(selectedStore);
-  const { data: salePaymentStatus = [] } = useSalePaymentStatus();
+  const { data: payments = [], isLoading: paymentsLoading, refetch: refetchPayments } = usePayments();
+  const { data: paymentSummary = [], refetch: refetchPaymentSummary } = usePaymentSummary(selectedStore);
+  const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
   const { data: stores = [] } = useStores();
   const { data: suppliers = [] } = useSuppliers();
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const channels: any[] = [];
+
+    // Subscribe to payments changes
+    const paymentsChannel = supabase
+      .channel('enhanced-payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        () => {
+          console.log('Payments changed, refreshing enhanced payments...');
+          refetchPayments();
+          refetchPaymentSummary();
+          refetchSalePaymentStatus();
+        }
+      )
+      .subscribe();
+    channels.push(paymentsChannel);
+
+    // Subscribe to sales_orders changes for outstanding balances
+    const salesOrdersChannel = supabase
+      .channel('enhanced-payments-sales-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales_orders'
+        },
+        () => {
+          console.log('Sales orders changed, refreshing outstanding balances...');
+          refetchSalePaymentStatus();
+        }
+      )
+      .subscribe();
+    channels.push(salesOrdersChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [refetchPayments, refetchPaymentSummary, refetchSalePaymentStatus]);
 
   const filteredPayments = useMemo(() => {
     return payments.filter(payment => {
@@ -78,6 +129,18 @@ export default function EnhancedPaymentsPage() {
           <h1 className="text-3xl font-bold glow-text">Enhanced Payments</h1>
           <p className="text-blue-300">Complete financial overview with real-time summaries</p>
         </div>
+        <ExportButton 
+          data={filteredPayments.map(payment => ({
+            'Date': new Date(payment.date).toLocaleDateString('en-GB'),
+            'Type': payment.type,
+            'Store': getStoreName(payment.store_id),
+            'Supplier': payment.supplier_id ? getSupplierName(payment.supplier_id) : 'N/A',
+            'Description': payment.description || 'No description',
+            'Amount': payment.amount
+          }))} 
+          filename="enhanced-payments" 
+          type="payments"
+        />
       </div>
 
       {/* Financial Summary Cards */}

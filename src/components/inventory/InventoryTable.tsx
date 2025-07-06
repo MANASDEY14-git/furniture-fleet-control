@@ -252,11 +252,11 @@ export default function InventoryTable({
                       onCheckedChange={(checked) => onItemSelection(item.id, checked as boolean)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium text-blue-100">
+                  <TableCell className="font-medium text-blue-100 max-w-xs">
                     <div className="flex items-center gap-2">
-                      {item.name}
+                      <span className="truncate" title={item.name}>{item.name}</span>
                       {isLowStock && (
-                        <AlertTriangle className="w-4 h-4 text-orange-400" />
+                        <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
                       )}
                     </div>
                   </TableCell>

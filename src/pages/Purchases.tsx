@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, ShoppingCart, Search } from 'lucide-react';
@@ -16,6 +16,7 @@ import DateFilterSelector from '@/components/DateFilterSelector';
 import StoreSelector from '@/components/StoreSelector';
 import SupplierSelector from '@/components/SupplierSelector';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Purchases() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
@@ -24,9 +25,38 @@ export default function Purchases() {
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: purchases = [], isLoading } = usePurchases();
+  const { data: purchases = [], isLoading, refetch: refetchPurchases } = usePurchases();
   const { data: stores = [] } = useStores();
   const { data: suppliers = [] } = useSuppliers();
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const channels: any[] = [];
+
+    // Subscribe to purchases changes
+    const purchasesChannel = supabase
+      .channel('purchases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchases'
+        },
+        () => {
+          console.log('Purchases changed, refreshing...');
+          refetchPurchases();
+        }
+      )
+      .subscribe();
+    channels.push(purchasesChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [refetchPurchases]);
 
   const filteredPurchases = useMemo(() => {
     let filtered = purchases.filter(purchase => {

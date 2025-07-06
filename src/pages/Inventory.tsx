@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Package2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InventoryHeader from '@/components/inventory/InventoryHeader';
@@ -12,15 +12,81 @@ import ItemForm from '@/components/ItemForm';
 import ExportButton from '@/components/ExportButton';
 import LowStockAlertsPanel from '@/components/LowStockAlertsPanel';
 import BulkOperationsPanel from '@/components/BulkOperationsPanel';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Inventory() {
-  const { data: items = [], isLoading } = useItems();
+  const { data: items = [], isLoading, refetch: refetchItems } = useItems();
   const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
   const deleteItem = useDeleteItem();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const channels: any[] = [];
+
+    // Subscribe to items changes
+    const itemsChannel = supabase
+      .channel('inventory-items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items'
+        },
+        () => {
+          console.log('Items changed, refreshing inventory...');
+          refetchItems();
+        }
+      )
+      .subscribe();
+    channels.push(itemsChannel);
+
+    // Subscribe to purchases changes (affects inventory)
+    const purchasesChannel = supabase
+      .channel('inventory-purchases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchases'
+        },
+        () => {
+          console.log('Purchases changed, refreshing inventory...');
+          refetchItems();
+        }
+      )
+      .subscribe();
+    channels.push(purchasesChannel);
+
+    // Subscribe to sales changes (affects inventory)
+    const salesChannel = supabase
+      .channel('inventory-sales-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales'
+        },
+        () => {
+          console.log('Sales changed, refreshing inventory...');
+          refetchItems();
+        }
+      )
+      .subscribe();
+    channels.push(salesChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [refetchItems]);
 
   const handleDeleteItem = (id: string) => {
     deleteItem.mutate(id);

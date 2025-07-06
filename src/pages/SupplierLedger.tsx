@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,8 @@ import StoreSelector from '@/components/StoreSelector';
 import { useSupplierLedger, useSupplierBalances } from '@/hooks/useSupplierLedger';
 import { useStores } from '@/hooks/useStores';
 import { Skeleton } from '@/components/ui/skeleton';
+import ExportButton from '@/components/ExportButton';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function SupplierLedger() {
   const [selectedSupplier, setSelectedSupplier] = useState('all');
@@ -16,11 +18,79 @@ export default function SupplierLedger() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: stores = [] } = useStores();
-  const { data: ledgerEntries = [], isLoading } = useSupplierLedger(
+  const { data: ledgerEntries = [], isLoading, refetch: refetchLedgerEntries } = useSupplierLedger(
     selectedSupplier === 'all' ? undefined : selectedSupplier,
     selectedStore === 'all' ? undefined : selectedStore
   );
-  const { data: balances = [] } = useSupplierBalances();
+  const { data: balances = [], refetch: refetchBalances } = useSupplierBalances();
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const channels: any[] = [];
+
+    // Subscribe to supplier_ledger changes
+    const supplierLedgerChannel = supabase
+      .channel('supplier-ledger-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'supplier_ledger'
+        },
+        () => {
+          console.log('Supplier ledger changed, refreshing...');
+          refetchLedgerEntries();
+          refetchBalances();
+        }
+      )
+      .subscribe();
+    channels.push(supplierLedgerChannel);
+
+    // Subscribe to purchases changes (which create ledger entries)
+    const purchasesChannel = supabase
+      .channel('supplier-ledger-purchases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchases'
+        },
+        () => {
+          console.log('Purchases changed, refreshing supplier ledger...');
+          refetchLedgerEntries();
+          refetchBalances();
+        }
+      )
+      .subscribe();
+    channels.push(purchasesChannel);
+
+    // Subscribe to payments changes
+    const paymentsChannel = supabase
+      .channel('supplier-ledger-payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        () => {
+          console.log('Payments changed, refreshing supplier ledger...');
+          refetchLedgerEntries();
+          refetchBalances();
+        }
+      )
+      .subscribe();
+    channels.push(paymentsChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [refetchLedgerEntries, refetchBalances]);
 
   const filteredEntries = ledgerEntries.filter(entry =>
     entry.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -48,9 +118,26 @@ export default function SupplierLedger() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold glow-text">Supplier Ledger</h1>
-        <p className="text-blue-300">Track supplier transactions and balances</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold glow-text">Supplier Ledger</h1>
+          <p className="text-blue-300">Track supplier transactions and balances</p>
+        </div>
+        <ExportButton 
+          data={filteredEntries.map(entry => ({
+            'Date': entry.transaction_date,
+            'Supplier': entry.suppliers?.name || 'Unknown',
+            'Store': entry.stores?.name || 'Unknown',
+            'Type': entry.transaction_type,
+            'Description': entry.description || 'N/A',
+            'Debit': entry.debit_amount || 0,
+            'Credit': entry.credit_amount || 0,
+            'Invoice Number': entry.invoice_number || 'N/A',
+            'Payment Reference': entry.payment_reference || 'N/A'
+          }))} 
+          filename="supplier-ledger" 
+          type="payments"
+        />
       </div>
 
       {/* Summary Cards */}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSalesOrders, useUpdateSalesOrderStatus } from '@/hooks/useSalesOrders';
 import { useSalePaymentStatus, useRecordPayment } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
@@ -11,6 +11,7 @@ import SalesFilters from '@/components/sales/SalesFilters';
 import SalesTable from '@/components/sales/SalesTable';
 import OrderDetailsDialog from '@/components/sales/OrderDetailsDialog';
 import PaymentRecordDialog from '@/components/sales/PaymentRecordDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Sales() {
   const [selectedStore, setSelectedStore] = useState('all');
@@ -22,12 +23,60 @@ export default function Sales() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
-  const { data: salesOrders = [], isLoading: ordersLoading } = useSalesOrders();
-  const { data: salePaymentStatus = [] } = useSalePaymentStatus();
+  const { data: salesOrders = [], isLoading: ordersLoading, refetch: refetchSalesOrders } = useSalesOrders();
+  const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: suppliers = [] } = useSuppliers();
   const updateOrderStatus = useUpdateSalesOrderStatus();
   const recordPayment = useRecordPayment();
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const channels: any[] = [];
+
+    // Subscribe to sales_orders changes
+    const salesOrdersChannel = supabase
+      .channel('sales-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales_orders'
+        },
+        () => {
+          console.log('Sales orders changed, refreshing...');
+          refetchSalesOrders();
+          refetchSalePaymentStatus();
+        }
+      )
+      .subscribe();
+    channels.push(salesOrdersChannel);
+
+    // Subscribe to payments changes
+    const paymentsChannel = supabase
+      .channel('sales-payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        () => {
+          console.log('Payments changed, refreshing sales...');
+          refetchSalePaymentStatus();
+        }
+      )
+      .subscribe();
+    channels.push(paymentsChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [refetchSalesOrders, refetchSalePaymentStatus]);
 
   const filteredOrders = useMemo(() => {
     // Use sale payment status data for enhanced information

@@ -19,13 +19,14 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import SalesTrendChart from '@/components/SalesTrendChart';
 import TopSellingChart from '@/components/TopSellingChart';
 import { useEnhancedDashboardMetrics } from '@/hooks/useEnhancedDashboardMetrics';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const { data: metrics, isLoading: metricsLoading } = useRealDashboardMetrics();
-  const { data: salePaymentStatus = [] } = useSalePaymentStatus();
+  const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useRealDashboardMetrics();
+  const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
   const { data: stores = [] } = useStores();
-  const { data: dashboardMetrics } = useEnhancedDashboardMetrics('month');
+  const { data: dashboardMetrics, refetch: refetchDashboardMetrics } = useEnhancedDashboardMetrics('month');
 
   // Update time every minute
   useEffect(() => {
@@ -35,6 +36,95 @@ export default function RealDashboard() {
     
     return () => clearInterval(timer);
   }, []);
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const channels: any[] = [];
+
+    // Subscribe to sales changes
+    const salesChannel = supabase
+      .channel('dashboard-sales-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales_orders'
+        },
+        () => {
+          console.log('Sales data changed, refreshing dashboard...');
+          refetchMetrics();
+          refetchSalePaymentStatus();
+          refetchDashboardMetrics();
+        }
+      )
+      .subscribe();
+    channels.push(salesChannel);
+
+    // Subscribe to purchases changes
+    const purchasesChannel = supabase
+      .channel('dashboard-purchases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'purchases'
+        },
+        () => {
+          console.log('Purchases data changed, refreshing dashboard...');
+          refetchMetrics();
+          refetchDashboardMetrics();
+        }
+      )
+      .subscribe();
+    channels.push(purchasesChannel);
+
+    // Subscribe to items changes
+    const itemsChannel = supabase
+      .channel('dashboard-items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items'
+        },
+        () => {
+          console.log('Items data changed, refreshing dashboard...');
+          refetchMetrics();
+          refetchDashboardMetrics();
+        }
+      )
+      .subscribe();
+    channels.push(itemsChannel);
+
+    // Subscribe to payments changes
+    const paymentsChannel = supabase
+      .channel('dashboard-payments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'payments'
+        },
+        () => {
+          console.log('Payments data changed, refreshing dashboard...');
+          refetchMetrics();
+          refetchSalePaymentStatus();
+          refetchDashboardMetrics();
+        }
+      )
+      .subscribe();
+    channels.push(paymentsChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [refetchMetrics, refetchSalePaymentStatus, refetchDashboardMetrics]);
 
   // Calculate overdue deliveries
   const overdueDeliveries = salePaymentStatus.filter(sale => {
@@ -61,15 +151,15 @@ export default function RealDashboard() {
       {/* Welcome Header */}
       <Card className="futuristic-card bg-gradient-to-r from-blue-600/10 to-cyan-600/10">
         <CardContent className="pt-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold glow-text">Furniture ERP Dashboard</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold glow-text">Furniture ERP Dashboard</h1>
               <p className="text-blue-300 mt-2">
                 Welcome back! Here's what's happening with your business today.
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-cyan-300 font-semibold">
+            <div className="text-left lg:text-right">
+              <p className="text-cyan-300 font-semibold text-sm sm:text-base">
                 {currentTime.toLocaleString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
@@ -88,16 +178,16 @@ export default function RealDashboard() {
       </Card>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-500/20 rounded-full">
+              <div className="p-3 bg-green-500/20 rounded-full flex-shrink-0">
                 <TrendingUp className="w-6 h-6 text-green-400" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-blue-200">Total Sales</p>
-                <p className="text-2xl font-bold text-green-400">
+                <p className="text-xl sm:text-2xl font-bold text-green-400 truncate">
                   {formatCurrency(metrics?.totalSales || 0)}
                 </p>
               </div>
@@ -108,12 +198,12 @@ export default function RealDashboard() {
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-500/20 rounded-full">
+              <div className="p-3 bg-blue-500/20 rounded-full flex-shrink-0">
                 <ShoppingCart className="w-6 h-6 text-blue-400" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-blue-200">Total Purchases</p>
-                <p className="text-2xl font-bold text-blue-400">
+                <p className="text-xl sm:text-2xl font-bold text-blue-400 truncate">
                   {formatCurrency(metrics?.totalPurchases || 0)}
                 </p>
               </div>
@@ -124,12 +214,12 @@ export default function RealDashboard() {
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-cyan-500/20 rounded-full">
+              <div className="p-3 bg-cyan-500/20 rounded-full flex-shrink-0">
                 <DollarSign className="w-6 h-6 text-cyan-400" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-blue-200">Gross Profit</p>
-                <p className={`text-2xl font-bold ${(metrics?.grossProfit || 0) >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                <p className={`text-xl sm:text-2xl font-bold truncate ${(metrics?.grossProfit || 0) >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
                   {formatCurrency(metrics?.grossProfit || 0)}
                 </p>
               </div>
@@ -140,12 +230,12 @@ export default function RealDashboard() {
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-500/20 rounded-full">
+              <div className="p-3 bg-orange-500/20 rounded-full flex-shrink-0">
                 <AlertTriangle className="w-6 h-6 text-orange-400" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-blue-200">Low Stock Items</p>
-                <p className="text-2xl font-bold text-orange-400">
+                <p className="text-xl sm:text-2xl font-bold text-orange-400">
                   {metrics?.lowStockCount || 0}
                 </p>
               </div>
@@ -155,21 +245,21 @@ export default function RealDashboard() {
       </div>
 
       {/* Financial Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-purple-500/20 rounded-full">
+              <div className="p-3 bg-purple-500/20 rounded-full flex-shrink-0">
                 <Users className="w-6 h-6 text-purple-400" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-blue-200">Outstanding from Customers</p>
-                <p className="text-2xl font-bold text-purple-400">
+                <p className="text-xl sm:text-2xl font-bold text-purple-400 truncate">
                   {formatCurrency(metrics?.outstandingBalance || 0)}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary">{customersWithBalance} customers</Badge>
               <span className="text-sm text-blue-300">have pending payments</span>
             </div>
@@ -179,17 +269,17 @@ export default function RealDashboard() {
         <Card className="futuristic-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-red-500/20 rounded-full">
+              <div className="p-3 bg-red-500/20 rounded-full flex-shrink-0">
                 <TrendingDown className="w-6 h-6 text-red-400" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-blue-200">Payable to Suppliers</p>
-                <p className="text-2xl font-bold text-red-400">
+                <p className="text-xl sm:text-2xl font-bold text-red-400 truncate">
                   {formatCurrency(metrics?.supplierPayable || 0)}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="destructive">{overdueDeliveries} overdue</Badge>
               <span className="text-sm text-blue-300">deliveries pending</span>
             </div>
