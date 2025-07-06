@@ -15,6 +15,7 @@ import Settings from '@/pages/Settings';
 import Suppliers from '@/pages/Suppliers';
 import SupplierLedger from '@/pages/SupplierLedger';
 import Materials from '@/pages/Materials';
+import MaterialPurchases from '@/pages/MaterialPurchases';
 import NotFound from '@/pages/NotFound';
 import './App.css';
 
