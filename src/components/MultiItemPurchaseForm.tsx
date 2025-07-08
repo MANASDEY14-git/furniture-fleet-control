@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import SupplierSelector from '@/components/SupplierSelector';
+import ItemVariantSelector from '@/components/ItemVariantSelector';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCreatePurchaseOrder } from '@/hooks/usePurchaseOrders';
@@ -15,6 +16,8 @@ interface PurchaseItem {
   id: string;
   itemId: string;
   itemName: string;
+  variantId?: string;
+  variantName?: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -36,6 +39,8 @@ export default function MultiItemPurchaseForm({
     id: '1',
     itemId: '',
     itemName: '',
+    variantId: '',
+    variantName: '',
     quantity: 0,
     unitPrice: 0,
     totalPrice: 0
@@ -57,6 +62,8 @@ export default function MultiItemPurchaseForm({
       id: Date.now().toString(),
       itemId: '',
       itemName: '',
+      variantId: '',
+      variantName: '',
       quantity: 0,
       unitPrice: 0,
       totalPrice: 0
@@ -78,6 +85,12 @@ export default function MultiItemPurchaseForm({
           const selectedItem = filteredItems.find(i => i.id === value);
           updatedItem.itemName = selectedItem?.name || '';
           updatedItem.unitPrice = selectedItem?.cost_price || 0;
+          // Reset variant when item changes
+          updatedItem.variantId = '';
+          updatedItem.variantName = '';
+        }
+        if (field === 'variantId') {
+          // Variant selection will be handled by the variant selector callback
         }
         if (field === 'quantity' || field === 'unitPrice') {
           updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
@@ -109,6 +122,8 @@ export default function MultiItemPurchaseForm({
       items: validItems.map(item => ({
         item_id: item.itemId,
         item_name: item.itemName,
+        variant_id: item.variantId,
+        variant_name: item.variantName,
         quantity: item.quantity,
         unit_price: item.unitPrice,
         total_price: item.totalPrice
@@ -128,6 +143,8 @@ export default function MultiItemPurchaseForm({
       id: '1',
       itemId: '',
       itemName: '',
+      variantId: '',
+      variantName: '',
       quantity: 0,
       unitPrice: 0,
       totalPrice: 0
@@ -204,6 +221,7 @@ export default function MultiItemPurchaseForm({
                     <TableHeader>
                       <TableRow className="border-blue-500/30">
                         <TableHead className="text-blue-200">Item</TableHead>
+                        <TableHead className="text-blue-200">Variant</TableHead>
                         <TableHead className="text-blue-200">Quantity</TableHead>
                         <TableHead className="text-blue-200">Unit Price</TableHead>
                         <TableHead className="text-blue-200">Total</TableHead>
@@ -223,6 +241,31 @@ export default function MultiItemPurchaseForm({
                                   </SelectItem>)}
                               </SelectContent>
                             </Select>
+                          </TableCell>
+                          <TableCell>
+                            {item.itemId ? (
+                              <ItemVariantSelector
+                                itemId={item.itemId}
+                                value={item.variantId}
+                                onValueChange={(variantId, variantData) => {
+                                  setItems(items.map(i => {
+                                    if (i.id === item.id) {
+                                      return {
+                                        ...i,
+                                        variantId: variantId,
+                                        variantName: variantData ? `${variantData.item_variant_attributes.map((attr: any) => attr.attribute_values.value).join(' / ')}` : '',
+                                        unitPrice: variantData?.cost_price || i.unitPrice,
+                                        totalPrice: (variantData?.cost_price || i.unitPrice) * i.quantity
+                                      };
+                                    }
+                                    return i;
+                                  }));
+                                }}
+                                placeholder="Select variant (optional)"
+                              />
+                            ) : (
+                              <div className="text-blue-400 text-sm">Select item first</div>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Input type="number" value={item.quantity || ''} onChange={e => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)} className="neon-border bg-slate-800/50 text-blue-100 w-24" min="1" />
