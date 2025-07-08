@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Package, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useItems';
 import ItemBasicInfoForm from '@/components/ItemBasicInfoForm';
 import ItemVariantsTab from '@/components/ItemVariantsTab';
@@ -51,7 +52,7 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl futuristic-card">
+      <DialogContent className="max-w-4xl max-h-[90vh] futuristic-card">
         <DialogHeader>
           <DialogTitle className="text-cyan-300 glow-text flex items-center gap-2">
             <Package className="w-5 h-5" />
@@ -59,44 +60,46 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
           </DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
-            <TabsTrigger value="basic" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
-              Basic Info
-            </TabsTrigger>
-            <TabsTrigger value="variants" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
-              Variants
-            </TabsTrigger>
-            <TabsTrigger value="bom" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
-              BOM
-            </TabsTrigger>
-            <TabsTrigger value="attributes" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
-              <Settings className="w-4 h-4 mr-1" />
-              Attributes
-            </TabsTrigger>
-          </TabsList>
+        <ScrollArea className="max-h-[calc(90vh-120px)] overflow-y-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pr-4">
+            <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
+              <TabsTrigger value="basic" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
+                Basic Info
+              </TabsTrigger>
+              <TabsTrigger value="variants" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
+                Variants
+              </TabsTrigger>
+              <TabsTrigger value="bom" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
+                BOM
+              </TabsTrigger>
+              <TabsTrigger value="attributes" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
+                <Settings className="w-4 h-4 mr-1" />
+                Attributes
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="basic" className="mt-6">
-            <ItemBasicInfoForm
-              item={item}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              isLoading={isLoading}
-            />
-          </TabsContent>
+            <TabsContent value="basic" className="mt-6">
+              <ItemBasicInfoForm
+                item={item}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                isLoading={isLoading}
+              />
+            </TabsContent>
 
-          <TabsContent value="variants" className="mt-6">
-            <ItemVariantsTab item={item} />
-          </TabsContent>
+            <TabsContent value="variants" className="mt-6">
+              <ItemVariantsTab item={item} />
+            </TabsContent>
 
-          <TabsContent value="bom" className="mt-6">
-            {item && <EnhancedBOMManager item={item} />}
-          </TabsContent>
+            <TabsContent value="bom" className="mt-6">
+              {item && <EnhancedBOMManager item={item} />}
+            </TabsContent>
 
-          <TabsContent value="attributes" className="mt-6">
-            <ItemAttributesTab />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="attributes" className="mt-6">
+              <ItemAttributesTab />
+            </TabsContent>
+          </Tabs>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
