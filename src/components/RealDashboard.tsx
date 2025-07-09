@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,15 +17,17 @@ import { useStores } from '@/hooks/useStores';
 import { formatCurrency } from '@/utils/currencyUtils';
 import SalesTrendChart from '@/components/SalesTrendChart';
 import TopSellingChart from '@/components/TopSellingChart';
+import MetricsGrid from '@/components/MetricsGrid';
 import { useEnhancedDashboardMetrics } from '@/hooks/useEnhancedDashboardMetrics';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month'>('month');
   const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useRealDashboardMetrics();
   const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
   const { data: stores = [] } = useStores();
-  const { data: dashboardMetrics, refetch: refetchDashboardMetrics } = useEnhancedDashboardMetrics('month');
+  const { data: dashboardMetrics, refetch: refetchDashboardMetrics } = useEnhancedDashboardMetrics(dateFilter);
 
   // Update time every minute
   useEffect(() => {
@@ -138,6 +139,24 @@ export default function RealDashboard() {
   // Calculate customers with outstanding balance
   const customersWithBalance = salePaymentStatus.filter(sale => sale.balance_due > 0).length;
 
+  // Prepare enhanced metrics for MetricsGrid
+  const enhancedMetrics = {
+    totalSalesToday: metrics?.totalSales || 0,
+    totalStockValue: metrics?.totalStockValue || 0,
+    paymentsReceived: metrics?.paymentsReceived || 0,
+    pendingDeliveries: overdueDeliveries,
+    profitMarginPercentage: metrics?.grossProfit && metrics?.totalSales 
+      ? ((metrics.grossProfit / metrics.totalSales) * 100) 
+      : 0,
+    topSellingItems: dashboardMetrics?.topSellingItems || [],
+    lowStockItems: dashboardMetrics?.lowStockItems || [],
+    salesTrend: dashboardMetrics?.salesTrend || [],
+    outstandingBalance: metrics?.outstandingBalance || 0,
+    supplierPayable: metrics?.supplierPayable || 0,
+    lowStockCount: metrics?.lowStockCount || 0,
+    grossProfit: metrics?.grossProfit || 0
+  };
+
   if (metricsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -172,77 +191,51 @@ export default function RealDashboard() {
               <p className="text-blue-400 text-sm mt-1">
                 {stores.length} Active Stores
               </p>
+              
+              {/* Date Filter Selector */}
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => setDateFilter('today')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    dateFilter === 'today' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setDateFilter('week')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    dateFilter === 'week' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                  }`}
+                >
+                  Week
+                </button>
+                <button
+                  onClick={() => setDateFilter('month')}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                    dateFilter === 'month' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
+                  }`}
+                >
+                  Month
+                </button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-500/20 rounded-full flex-shrink-0">
-                <TrendingUp className="w-6 h-6 text-green-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Total Sales</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-400 truncate">
-                  {formatCurrency(metrics?.totalSales || 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-500/20 rounded-full flex-shrink-0">
-                <ShoppingCart className="w-6 h-6 text-blue-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Total Purchases</p>
-                <p className="text-xl sm:text-2xl font-bold text-blue-400 truncate">
-                  {formatCurrency(metrics?.totalPurchases || 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-cyan-500/20 rounded-full flex-shrink-0">
-                <DollarSign className="w-6 h-6 text-cyan-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Gross Profit</p>
-                <p className={`text-xl sm:text-2xl font-bold truncate ${(metrics?.grossProfit || 0) >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
-                  {formatCurrency(metrics?.grossProfit || 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-500/20 rounded-full flex-shrink-0">
-                <AlertTriangle className="w-6 h-6 text-orange-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Low Stock Items</p>
-                <p className="text-xl sm:text-2xl font-bold text-orange-400">
-                  {metrics?.lowStockCount || 0}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Enhanced Metrics Grid */}
+      <MetricsGrid 
+        metrics={enhancedMetrics}
+        dateFilter={dateFilter}
+        isLoading={metricsLoading}
+      />
 
       {/* Financial Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
