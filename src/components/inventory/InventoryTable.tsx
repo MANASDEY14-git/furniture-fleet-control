@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
+import { PaginationControls } from '@/components/ui/pagination';
 import ItemForm from '@/components/ItemForm';
 import ItemVariantManager from '@/components/ItemVariantManager';
 import { formatCurrency } from '@/utils/currencyUtils';
@@ -25,6 +26,16 @@ interface InventoryTableProps {
   onItemSelection: (itemId: string, checked: boolean) => void;
   onDeleteItem: (id: string) => void;
   isLoading: boolean;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    startItem: number;
+    endItem: number;
+    totalItems: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+  onPageChange?: (page: number) => void;
 }
 
 const calculateStockAge = (stockReceiveDate?: string) => {
@@ -50,7 +61,9 @@ export default function InventoryTable({
   selectedItems,
   onItemSelection,
   onDeleteItem,
-  isLoading
+  isLoading,
+  pagination,
+  onPageChange
 }: InventoryTableProps) {
   const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price' | 'age'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -97,33 +110,7 @@ export default function InventoryTable({
   }, [items, searchTerm, stores, categories, sortBy, sortOrder, filterByStore, filterByCategory, showLowStockOnly]);
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex gap-4 mb-6">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="space-y-3">
-          {[...Array(10)].map((_, i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 rounded-lg bg-slate-800/30">
-              <Skeleton className="h-4 w-4" />
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-20" />
-              <div className="flex gap-2">
-                <Skeleton className="h-8 w-8" />
-                <Skeleton className="h-8 w-8" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <LoadingSkeleton type="table" rows={10} cols={8} />;
   }
 
   return (
@@ -327,10 +314,23 @@ export default function InventoryTable({
         </div>
       )}
 
-      <div className="mt-4 text-sm text-blue-300">
-        Showing {filteredAndSortedItems.length} of {items.length} items
-        {showLowStockOnly && ` (low stock only)`}
-      </div>
+      {pagination && onPageChange && (
+        <PaginationControls
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={onPageChange}
+          startItem={pagination.startItem}
+          endItem={pagination.endItem}
+          totalItems={pagination.totalItems}
+        />
+      )}
+
+      {!pagination && (
+        <div className="mt-4 text-sm text-blue-300">
+          Showing {filteredAndSortedItems.length} of {items.length} items
+          {showLowStockOnly && ` (low stock only)`}
+        </div>
+      )}
     </>
   );
 }

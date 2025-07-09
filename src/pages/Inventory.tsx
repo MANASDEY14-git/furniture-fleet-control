@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InventoryHeader from '@/components/inventory/InventoryHeader';
 import InventoryTable from '@/components/inventory/InventoryTable';
 import { useItems, useDeleteItem } from '@/hooks/useItems';
+import { usePaginatedItems } from '@/hooks/usePaginatedItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
 import ItemForm from '@/components/ItemForm';
 import ExportButton from '@/components/ExportButton';
 import LowStockAlertsPanel from '@/components/LowStockAlertsPanel';
 import BulkOperationsPanel from '@/components/BulkOperationsPanel';
+import { ErrorBoundary, QueryErrorFallback } from '@/components/ui/error-boundary';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Inventory() {
@@ -22,6 +24,31 @@ export default function Inventory() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [storeFilter, setStoreFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+
+  // Use paginated items for better performance
+  const {
+    items: paginatedItems,
+    isLoading: isPaginatedLoading,
+    error: paginatedError,
+    pagination,
+    goToPage,
+    resetToFirstPage,
+    refetch: refetchPaginated
+  } = usePaginatedItems({
+    pageSize: 25,
+    searchTerm,
+    storeId: storeFilter,
+    categoryId: categoryFilter,
+    showLowStockOnly
+  });
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    resetToFirstPage();
+  }, [searchTerm, storeFilter, categoryFilter, showLowStockOnly, resetToFirstPage]);
 
   // Set up real-time subscriptions
   useEffect(() => {
@@ -40,6 +67,7 @@ export default function Inventory() {
         () => {
           console.log('Items changed, refreshing inventory...');
           refetchItems();
+          refetchPaginated();
         }
       )
       .subscribe();
@@ -58,6 +86,7 @@ export default function Inventory() {
         () => {
           console.log('Purchases changed, refreshing inventory...');
           refetchItems();
+          refetchPaginated();
         }
       )
       .subscribe();
@@ -76,6 +105,7 @@ export default function Inventory() {
         () => {
           console.log('Sales changed, refreshing inventory...');
           refetchItems();
+          refetchPaginated();
         }
       )
       .subscribe();
@@ -86,7 +116,7 @@ export default function Inventory() {
         supabase.removeChannel(channel);
       });
     };
-  }, [refetchItems]);
+  }, [refetchItems, refetchPaginated]);
 
   const handleDeleteItem = (id: string) => {
     deleteItem.mutate(id);
@@ -103,55 +133,66 @@ export default function Inventory() {
   const lowStockItems = items.filter(item => item.quantity_available < 10);
 
   return (
-    <div className="space-y-6">
-      <InventoryHeader lowStockItems={lowStockItems} />
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <InventoryHeader lowStockItems={lowStockItems} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <LowStockAlertsPanel />
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <LowStockAlertsPanel />
+          </div>
 
-        <div className="lg:col-span-2">
-          <BulkOperationsPanel 
-            selectedItems={selectedItems}
-            onSelectionChange={setSelectedItems}
-          />
-        </div>
-      </div>
-
-      <Card className="futuristic-card">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-cyan-300 glow-text">Product Database</CardTitle>
-          <div className="flex gap-2">
-            <ExportButton 
-              data={items} 
-              filename="inventory" 
-              type="items"
-            />
-            <ItemForm
-              trigger={
-                <Button className="cyber-button text-white font-semibold">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Item
-                </Button>
-              }
+          <div className="lg:col-span-2">
+            <BulkOperationsPanel 
+              selectedItems={selectedItems}
+              onSelectionChange={setSelectedItems}
             />
           </div>
-        </CardHeader>
-        <CardContent>
-          <InventoryTable
-            items={items}
-            stores={stores}
-            categories={categories}
-            searchTerm={searchTerm}
-            onSearchTermChange={setSearchTerm}
-            selectedItems={selectedItems}
-            onItemSelection={handleItemSelection}
-            onDeleteItem={handleDeleteItem}
-            isLoading={isLoading}
-          />
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <Card className="futuristic-card">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-cyan-300 glow-text">Product Database</CardTitle>
+            <div className="flex gap-2">
+              <ExportButton 
+                data={paginatedItems} 
+                filename="inventory" 
+                type="items"
+              />
+              <ItemForm
+                trigger={
+                  <Button className="cyber-button text-white font-semibold">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item
+                  </Button>
+                }
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {paginatedError ? (
+              <QueryErrorFallback 
+                error={paginatedError} 
+                retry={refetchPaginated} 
+              />
+            ) : (
+              <InventoryTable
+                items={paginatedItems}
+                stores={stores}
+                categories={categories}
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
+                selectedItems={selectedItems}
+                onItemSelection={handleItemSelection}
+                onDeleteItem={handleDeleteItem}
+                isLoading={isPaginatedLoading}
+                pagination={pagination}
+                onPageChange={goToPage}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </ErrorBoundary>
   );
 }
