@@ -1,352 +1,105 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  ShoppingCart, 
-  Package, 
-  DollarSign, 
-  AlertTriangle,
-  Users,
-  Truck
-} from 'lucide-react';
-import { useRealDashboardMetrics } from '@/hooks/useRealDashboardMetrics';
-import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
-import { useStores } from '@/hooks/useStores';
+import { TrendingUp, Package, DollarSign, Users, Truck } from 'lucide-react';
 import { formatCurrency } from '@/utils/currencyUtils';
-import SalesTrendChart from '@/components/SalesTrendChart';
-import TopSellingChart from '@/components/TopSellingChart';
-import MetricsGrid from '@/components/MetricsGrid';
-import { useEnhancedDashboardMetrics } from '@/hooks/useEnhancedDashboardMetrics';
-import { supabase } from '@/integrations/supabase/client';
 
-export default function RealDashboard() {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month'>('month');
-  const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useRealDashboardMetrics();
-  const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
-  const { data: stores = [] } = useStores();
-  const { data: dashboardMetrics, refetch: refetchDashboardMetrics } = useEnhancedDashboardMetrics(dateFilter);
-import MetricsGrid from '@/components/DashboardMetricsGrid';
-
-  // Update time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    
-    return () => clearInterval(timer);
-  }, []);
-
-  // Set up real-time subscriptions
-  useEffect(() => {
-    const channels: any[] = [];
-
-    // Subscribe to sales changes
-    const salesChannel = supabase
-      .channel('dashboard-sales-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sales_orders'
-        },
-        () => {
-          console.log('Sales data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchSalePaymentStatus();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
-    channels.push(salesChannel);
-
-    // Subscribe to purchases changes
-    const purchasesChannel = supabase
-      .channel('dashboard-purchases-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'purchases'
-        },
-        () => {
-          console.log('Purchases data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
-    channels.push(purchasesChannel);
-
-    // Subscribe to items changes
-    const itemsChannel = supabase
-      .channel('dashboard-items-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'items'
-        },
-        () => {
-          console.log('Items data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
-    channels.push(itemsChannel);
-
-    // Subscribe to payments changes
-    const paymentsChannel = supabase
-      .channel('dashboard-payments-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'payments'
-        },
-        () => {
-          console.log('Payments data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchSalePaymentStatus();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
-    channels.push(paymentsChannel);
-
-    return () => {
-      channels.forEach(channel => {
-        supabase.removeChannel(channel);
-      });
-    };
-  }, [refetchMetrics, refetchSalePaymentStatus, refetchDashboardMetrics]);
-
-  // Calculate overdue deliveries
-  const overdueDeliveries = salePaymentStatus.filter(sale => {
-    if (!sale.delivery_date) return false;
-    const deliveryDate = new Date(sale.delivery_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return deliveryDate < today && sale.delivery_status !== 'Delivered';
-  }).length;
-
-  // Calculate customers with outstanding balance
-  const customersWithBalance = salePaymentStatus.filter(sale => sale.balance_due > 0).length;
-
-  // Prepare enhanced metrics for MetricsGrid
-  const enhancedMetrics = {
-    totalSalesToday: metrics?.totalSales || 0,
-    totalStockValue: metrics?.totalStockValue || 0,
-    paymentsReceived: metrics?.paymentsReceived || 0,
-    pendingDeliveries: overdueDeliveries,
-    profitMarginPercentage: metrics?.grossProfit && metrics?.totalSales 
-      ? ((metrics.grossProfit / metrics.totalSales) * 100) 
-      : 0,
-    topSellingItems: dashboardMetrics?.topSellingItems || [],
-    lowStockItems: dashboardMetrics?.lowStockItems || [],
-    salesTrend: dashboardMetrics?.salesTrend || [],
-    outstandingBalance: metrics?.outstandingBalance || 0,
-    supplierPayable: metrics?.supplierPayable || 0,
-    lowStockCount: metrics?.lowStockCount || 0,
-    grossProfit: metrics?.grossProfit || 0
+interface MetricsGridProps {
+  metrics: {
+    totalSalesToday: number;
+    totalStockValue: number;
+    paymentsReceived: number;
+    pendingDeliveries: number;
+    profitMarginPercentage: number;
+    outstandingBalance: number;
+    supplierPayable: number;
+    lowStockCount: number;
+    grossProfit: number;
   };
+  dateFilter: 'today' | 'week' | 'month';
+  isLoading: boolean;
+}
 
-  if (metricsLoading) {
+export default function MetricsGrid({ metrics, dateFilter, isLoading }: MetricsGridProps) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg glow-text">Loading dashboard...</div>
+      <div className="flex justify-center items-center py-10 text-blue-300">
+        Loading metrics...
       </div>
     );
   }
 
+  const cards = [
+    {
+      title: `Sales (${dateFilter})`,
+      icon: <TrendingUp className="w-5 h-5 text-green-400" />,
+      value: formatCurrency(metrics.totalSalesToday),
+      color: 'green'
+    },
+    {
+      title: 'Stock Value',
+      icon: <Package className="w-5 h-5 text-cyan-400" />,
+      value: formatCurrency(metrics.totalStockValue),
+      color: 'cyan'
+    },
+    {
+      title: 'Received Payments',
+      icon: <DollarSign className="w-5 h-5 text-purple-400" />,
+      value: formatCurrency(metrics.paymentsReceived),
+      color: 'purple'
+    },
+    {
+      title: 'Pending Deliveries',
+      icon: <Truck className="w-5 h-5 text-orange-400" />,
+      value: metrics.pendingDeliveries,
+      color: 'orange'
+    },
+    {
+      title: 'Profit Margin',
+      icon: <TrendingUp className="w-5 h-5 text-blue-400" />,
+      value: `${metrics.profitMarginPercentage.toFixed(1)}%`,
+      color: 'blue'
+    },
+    {
+      title: 'Outstanding Balance',
+      icon: <Users className="w-5 h-5 text-pink-400" />,
+      value: formatCurrency(metrics.outstandingBalance),
+      color: 'pink'
+    },
+    {
+      title: 'Supplier Payable',
+      icon: <DollarSign className="w-5 h-5 text-red-400" />,
+      value: formatCurrency(metrics.supplierPayable),
+      color: 'red'
+    },
+    {
+      title: 'Low Stock Items',
+      icon: <Package className="w-5 h-5 text-yellow-400" />,
+      value: metrics.lowStockCount,
+      color: 'yellow'
+    },
+    {
+      title: 'Gross Profit',
+      icon: <TrendingUp className="w-5 h-5 text-lime-400" />,
+      value: formatCurrency(metrics.grossProfit),
+      color: 'lime'
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <Card className="futuristic-card bg-gradient-to-r from-blue-600/10 to-cyan-600/10">
-        <CardContent className="pt-6">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold glow-text">Furniture ERP Dashboard</h1>
-              <p className="text-blue-300 mt-2">
-                Welcome back! Here's what's happening with your business today.
-              </p>
-            </div>
-            <div className="text-left lg:text-right">
-              <p className="text-cyan-300 font-semibold text-sm sm:text-base">
-                {currentTime.toLocaleString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-              <p className="text-blue-400 text-sm mt-1">
-                {stores.length} Active Stores
-              </p>
-              
-              {/* Date Filter Selector */}
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => setDateFilter('today')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    dateFilter === 'today' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
-                  }`}
-                >
-                  Today
-                </button>
-                <button
-                  onClick={() => setDateFilter('week')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    dateFilter === 'week' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
-                  }`}
-                >
-                  Week
-                </button>
-                <button
-                  onClick={() => setDateFilter('month')}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    dateFilter === 'month' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
-                  }`}
-                >
-                  Month
-                </button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Enhanced Metrics Grid */}
-      <MetricsGrid 
-        metrics={enhancedMetrics}
-        dateFilter={dateFilter}
-        isLoading={metricsLoading}
-      />
-
-      {/* Financial Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-purple-500/20 rounded-full flex-shrink-0">
-                <Users className="w-6 h-6 text-purple-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Outstanding from Customers</p>
-                <p className="text-xl sm:text-2xl font-bold text-purple-400 truncate">
-                  {formatCurrency(metrics?.outstandingBalance || 0)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary">{customersWithBalance} customers</Badge>
-              <span className="text-sm text-blue-300">have pending payments</span>
-            </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {cards.map((card, index) => (
+        <Card key={index} className="futuristic-card border border-blue-500/20 bg-gradient-to-tr from-black/20 to-blue-900/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-300">
+              {card.icon}
+              {card.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-white">{card.value}</p>
           </CardContent>
         </Card>
-
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-red-500/20 rounded-full flex-shrink-0">
-                <TrendingDown className="w-6 h-6 text-red-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Payable to Suppliers</p>
-                <p className="text-xl sm:text-2xl font-bold text-red-400 truncate">
-                  {formatCurrency(metrics?.supplierPayable || 0)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="destructive">{overdueDeliveries} overdue</Badge>
-              <span className="text-sm text-blue-300">deliveries pending</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SalesTrendChart data={dashboardMetrics?.salesTrend || []} />
-        <TopSellingChart data={dashboardMetrics?.topSellingItems || []} />
-      </div>
-
-      {/* Alerts and Notifications */}
-      <Card className="futuristic-card">
-        <CardHeader>
-          <CardTitle className="text-cyan-300 glow-text flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
-            Business Alerts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {(metrics?.lowStockCount || 0) > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                <Package className="w-5 h-5 text-orange-400" />
-                <div>
-                  <p className="text-orange-400 font-semibold">Low Stock Alert</p>
-                  <p className="text-blue-200 text-sm">
-                    {metrics?.lowStockCount} items are running low on stock
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {overdueDeliveries > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                <Truck className="w-5 h-5 text-red-400" />
-                <div>
-                  <p className="text-red-400 font-semibold">Overdue Deliveries</p>
-                  <p className="text-blue-200 text-sm">
-                    {overdueDeliveries} deliveries are past their due date
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {customersWithBalance > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                <DollarSign className="w-5 h-5 text-purple-400" />
-                <div>
-                  <p className="text-purple-400 font-semibold">Outstanding Payments</p>
-                  <p className="text-blue-200 text-sm">
-                    {customersWithBalance} customers have outstanding balances totaling {formatCurrency(metrics?.outstandingBalance || 0)}
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && (
-              <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                <TrendingUp className="w-5 h-5 text-green-400" />
-                <div>
-                  <p className="text-green-400 font-semibold">All Systems Normal</p>
-                  <p className="text-blue-200 text-sm">
-                    Your business is running smoothly with no critical alerts
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      ))}
     </div>
   );
 }
