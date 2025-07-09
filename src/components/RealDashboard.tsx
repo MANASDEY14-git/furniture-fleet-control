@@ -28,6 +28,7 @@ export default function RealDashboard() {
   const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
   const { data: stores = [] } = useStores();
   const { data: dashboardMetrics, refetch: refetchDashboardMetrics } = useEnhancedDashboardMetrics(dateFilter);
+import MetricsGrid from '@/components/DashboardMetricsGrid';
 
   // Update time every minute
   useEffect(() => {
