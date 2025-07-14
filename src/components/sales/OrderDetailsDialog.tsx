@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import StatusBadge from '@/components/StatusBadge';
 import { formatCurrency } from '@/utils/currencyUtils';
+import { useItemVariantsForOrderItems } from '@/hooks/useItemVariantsForOrderItems';
+import { getVariantDisplayName } from './OrderDetailsDialogVariantUtils';
 
 interface OrderDetailsDialogProps {
   viewingOrder: any;
@@ -53,20 +55,44 @@ export default function OrderDetailsDialog({
                 <TableHeader>
                   <TableRow className="border-blue-500/30">
                     <TableHead className="text-blue-200">Item</TableHead>
+                    <TableHead className="text-blue-200">Variant</TableHead>
                     <TableHead className="text-blue-200">Quantity</TableHead>
                     <TableHead className="text-blue-200">Unit Price</TableHead>
                     <TableHead className="text-blue-200">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {getOrderItems(viewingOrder.sale_id).map((item: any) => (
-                    <TableRow key={item.id} className="border-blue-500/20">
-                      <TableCell className="text-blue-200">{item.item_name}</TableCell>
-                      <TableCell className="text-blue-200">{item.quantity}</TableCell>
-                      <TableCell className="text-blue-200">{formatCurrency(item.unit_price)}</TableCell>
-                      <TableCell className="text-cyan-300 font-semibold">{formatCurrency(item.total_price)}</TableCell>
-                    </TableRow>
-                  ))}
+                  {(() => {
+                    const orderItems = getOrderItems(viewingOrder.sale_id);
+                    const variantIds = orderItems.map((item: any) => item.variantId).filter(Boolean);
+                    // Use the custom hook to fetch all needed variants
+                    const { data: variantsMap, isLoading: variantsLoading } = useItemVariantsForOrderItems(variantIds);
+                    return orderItems.map((item: any) => {
+                      let variantCell = null;
+                      if (item.variantId && variantsMap && variantsMap[item.variantId]) {
+                        const variant = variantsMap[item.variantId];
+                        variantCell = (
+                          <div>
+                            <div className="text-xs text-blue-300">{getVariantDisplayName(variant)}</div>
+                            <div className="text-xs text-blue-400">SKU: <span className="font-mono">{variant.sku || 'N/A'}</span></div>
+                          </div>
+                        );
+                      } else if (item.variantId) {
+                        variantCell = <span className="text-xs text-gray-500">Loading...</span>;
+                      } else {
+                        variantCell = <span className="text-xs text-gray-400">-</span>;
+                      }
+                      return (
+                        <TableRow key={item.id} className="border-blue-500/20">
+                          <TableCell className="text-blue-200">{item.item_name}</TableCell>
+                          <TableCell>{variantCell}</TableCell>
+                          <TableCell className="text-blue-200">{item.quantity}</TableCell>
+                          <TableCell className="text-blue-200">{formatCurrency(item.unit_price)}</TableCell>
+                          <TableCell className="text-cyan-300 font-semibold">{formatCurrency(item.total_price)}</TableCell>
+                        </TableRow>
+                      );
+                    });
+                  })()}
                 </TableBody>
               </Table>
             </div>
