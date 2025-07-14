@@ -43,15 +43,23 @@ export default function ItemVariantSelector({
   }
 
   return (
-    <Select value={value || ""} onValueChange={handleVariantChange} disabled={disabled}>
+    <Select
+      value={value || ""}
+      onValueChange={handleVariantChange}
+      disabled={disabled}
+    >
       <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholder}>
+          {value
+            ? getVariantDisplayName(variants.find(v => v.id === value))
+            : null}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent className="bg-slate-800 border-blue-500/30 max-h-60 overflow-y-auto">
         {variants.map((variant) => (
-          <SelectItem 
-            key={variant.id} 
-            value={variant.id} 
+          <SelectItem
+            key={variant.id}
+            value={variant.id}
             className="text-blue-100 focus:bg-blue-800/30"
           >
             <div className="flex flex-col gap-1">
