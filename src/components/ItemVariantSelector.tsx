@@ -42,6 +42,15 @@ export default function ItemVariantSelector({
     );
   }
 
+  // Debug logs to trace UI update issues
+  const selectedVariant = variants.find(v => v.id === value);
+  console.log('ItemVariantSelector debug:', {
+    value,
+    variants,
+    selectedVariant,
+    displayName: selectedVariant ? getVariantDisplayName(selectedVariant) : null
+  });
+
   return (
     <Select
       value={value || ""}
@@ -51,7 +60,7 @@ export default function ItemVariantSelector({
       <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
         <SelectValue placeholder={placeholder}>
           {value
-            ? getVariantDisplayName(variants.find(v => v.id === value))
+            ? (getVariantDisplayName(selectedVariant) || value)
             : null}
         </SelectValue>
       </SelectTrigger>
