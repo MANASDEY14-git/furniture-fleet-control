@@ -81,26 +81,35 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
   };
 
   const updateItem = (id: string, field: keyof OrderItem, value: any) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        
-        if (field === 'itemId') {
-          const selectedItem = filteredItems.find(i => i.id === value);
-          updatedItem.itemName = selectedItem?.name || '';
-          updatedItem.unitPrice = selectedItem?.selling_price || 0;
-          updatedItem.availableStock = selectedItem?.quantity_available || 0;
-          updatedItem.variantId = ''; // Reset variant when item changes
+    setItems(prevItems => {
+      const newItems = prevItems.map(item => {
+        if (item.id === id) {
+          const updatedItem = { ...item, [field]: value };
+          
+          if (field === 'itemId') {
+            const selectedItem = filteredItems.find(i => i.id === value);
+            updatedItem.itemName = selectedItem?.name || '';
+            updatedItem.unitPrice = selectedItem?.selling_price || 0;
+            updatedItem.availableStock = selectedItem?.quantity_available || 0;
+            updatedItem.variantId = ''; // Reset variant when item changes
+          }
+          
+          if (field === 'quantity' || field === 'unitPrice') {
+            updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
+          }
+          
+          // Debug log for variant selection
+          if (field === 'variantId') {
+            console.log('[EnhancedSalesOrderForm] updateItem: setting variantId', value, 'for item', id, updatedItem);
+          }
+
+          return updatedItem;
         }
-        
-        if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
-        }
-        
-        return updatedItem;
-      }
-      return item;
-    }));
+        return item;
+      });
+      console.log('[EnhancedSalesOrderForm] items after updateItem', newItems);
+      return newItems;
+    });
   };
 
   const getTotalAmount = () => {
