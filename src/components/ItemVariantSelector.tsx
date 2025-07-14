@@ -43,7 +43,7 @@ export default function ItemVariantSelector({
   }
 
   return (
-    <Select value={value} onValueChange={handleVariantChange} disabled={disabled}>
+    <Select value={value || ""} onValueChange={handleVariantChange} disabled={disabled}>
       <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
