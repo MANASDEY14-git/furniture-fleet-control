@@ -147,19 +147,21 @@ export default function RealDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-6">
       {/* Welcome Header */}
-      <Card className="futuristic-card bg-gradient-to-r from-blue-600/10 to-cyan-600/10">
-        <CardContent className="pt-6">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold glow-text">Furniture ERP Dashboard</h1>
-              <p className="text-blue-300 mt-2">
+      <Card className="futuristic-card">
+        <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold glow-text">
+                Furniture ERP Dashboard
+              </h1>
+              <p className="text-muted-foreground text-base md:text-lg">
                 Welcome back! Here's what's happening with your business today.
               </p>
             </div>
-            <div className="text-left lg:text-right">
-              <p className="text-cyan-300 font-semibold text-sm sm:text-base">
+            <div className="text-left lg:text-right space-y-2">
+              <p className="text-accent font-semibold text-lg md:text-xl">
                 {currentTime.toLocaleString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
@@ -169,7 +171,7 @@ export default function RealDashboard() {
                   minute: '2-digit',
                 })}
               </p>
-              <p className="text-blue-400 text-sm mt-1">
+              <p className="text-muted-foreground text-sm">
                 {stores.length} Active Stores
               </p>
             </div>
@@ -178,16 +180,16 @@ export default function RealDashboard() {
       </Card>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-green-500/20 rounded-full flex-shrink-0">
                 <TrendingUp className="w-6 h-6 text-green-400" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Total Sales</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-400 truncate">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground font-medium">Total Sales</p>
+                <p className="text-xl md:text-2xl font-bold text-green-400 truncate">
                   {formatCurrency(metrics?.totalSales || 0)}
                 </p>
               </div>
@@ -195,15 +197,15 @@ export default function RealDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
+        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-500/20 rounded-full flex-shrink-0">
                 <ShoppingCart className="w-6 h-6 text-blue-400" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Total Purchases</p>
-                <p className="text-xl sm:text-2xl font-bold text-blue-400 truncate">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground font-medium">Total Purchases</p>
+                <p className="text-xl md:text-2xl font-bold text-blue-400 truncate">
                   {formatCurrency(metrics?.totalPurchases || 0)}
                 </p>
               </div>
@@ -211,15 +213,15 @@ export default function RealDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
+        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-cyan-500/20 rounded-full flex-shrink-0">
                 <DollarSign className="w-6 h-6 text-cyan-400" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Gross Profit</p>
-                <p className={`text-xl sm:text-2xl font-bold truncate ${(metrics?.grossProfit || 0) >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground font-medium">Gross Profit</p>
+                <p className={`text-xl md:text-2xl font-bold truncate ${(metrics?.grossProfit || 0) >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
                   {formatCurrency(metrics?.grossProfit || 0)}
                 </p>
               </div>
@@ -227,15 +229,15 @@ export default function RealDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="futuristic-card">
-          <CardContent className="pt-6">
+        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+          <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-orange-500/20 rounded-full flex-shrink-0">
                 <AlertTriangle className="w-6 h-6 text-orange-400" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm text-blue-200">Low Stock Items</p>
-                <p className="text-xl sm:text-2xl font-bold text-orange-400">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-muted-foreground font-medium">Low Stock Items</p>
+                <p className="text-xl md:text-2xl font-bold text-orange-400">
                   {metrics?.lowStockCount || 0}
                 </p>
               </div>
