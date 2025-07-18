@@ -18,7 +18,21 @@ export default function OrderDetailsDialog({
   setViewingOrder,
   getStoreName,
 }: OrderDetailsDialogProps) {
-  if (!viewingOrder) return null;
+  if (!viewingOrder) {
+    // Always return a valid React element for React 18+ strict mode
+    return (
+      <Dialog open={false}>
+        <DialogContent className="futuristic-card max-w-6xl">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300">Order Details</DialogTitle>
+            <DialogDescription>
+              No order selected.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   // Use id or sale_id for fetching
   const orderId = viewingOrder.id || viewingOrder.sale_id;
