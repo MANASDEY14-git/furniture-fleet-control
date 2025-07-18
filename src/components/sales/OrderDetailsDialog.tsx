@@ -1,5 +1,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useSingleSalesOrder } from '@/hooks/useSingleSalesOrder';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import StatusBadge from '@/components/StatusBadge';
 import { formatCurrency } from '@/utils/currencyUtils';
@@ -10,16 +11,19 @@ interface OrderDetailsDialogProps {
   viewingOrder: any;
   setViewingOrder: (order: any) => void;
   getStoreName: (storeId: string) => string;
-  getOrderItems: (saleId: string) => any[];
 }
 
 export default function OrderDetailsDialog({
   viewingOrder,
   setViewingOrder,
   getStoreName,
-  getOrderItems
 }: OrderDetailsDialogProps) {
   if (!viewingOrder) return null;
+
+  const { data: order, isLoading, error } = useSingleSalesOrder(viewingOrder.id);
+  const orderItems = order?.sales_order_items || [];
+  console.log('Fetched order:', order);
+  console.log('Order items:', orderItems);
 
   return (
     <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
@@ -66,21 +70,20 @@ export default function OrderDetailsDialog({
                 </TableHeader>
                 <TableBody>
                   {(() => {
-                    const orderItems = getOrderItems(viewingOrder.sale_id);
-                    const variantIds = orderItems.map((item: any) => item.variantId).filter(Boolean);
-                    // Use the custom hook to fetch all needed variants
+                    // Use the new fetched orderItems
+                    const variantIds = orderItems.map((item: any) => item.variant_id).filter(Boolean);
                     const { data: variantsMap, isLoading: variantsLoading } = useItemVariantsForOrderItems(variantIds);
                     return orderItems.map((item: any) => {
                       let variantCell = null;
-                      if (item.variantId && variantsMap && variantsMap[item.variantId]) {
-                        const variant = variantsMap[item.variantId];
+                      if (item.variant_id && variantsMap && variantsMap[item.variant_id]) {
+                        const variant = variantsMap[item.variant_id];
                         variantCell = (
                           <div>
                             <div className="text-xs text-blue-300">{getVariantDisplayName(variant)}</div>
                             <div className="text-xs text-blue-400">SKU: <span className="font-mono">{variant.sku || 'N/A'}</span></div>
                           </div>
                         );
-                      } else if (item.variantId) {
+                      } else if (item.variant_id) {
                         variantCell = <span className="text-xs text-gray-500">Loading...</span>;
                       } else {
                         variantCell = <span className="text-xs text-gray-400">-</span>;
