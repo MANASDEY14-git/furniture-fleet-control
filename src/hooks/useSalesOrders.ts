@@ -12,20 +12,7 @@ export const useSalesOrders = () => {
         .from('sales_orders')
         .select(`
           id,
-          order_number,
-          store_id,
-          supplier_id,
-          total_price,
-          total_paid,
-          balance_due,
-          sale_date,
-          customer_name,
-          customer_phone,
-          delivery_status,
-          delivery_date,
-          customer_address,
-          created_at,
-          sales_order_items(id,item_id,item_name,quantity,unit_price,total_price,variant_id)
+          sales_order_items(id)
         `)
         .order('created_at', { ascending: false });
       
