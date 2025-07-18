@@ -11,7 +11,7 @@ export const useSalesOrders = () => {
       const { data, error } = await supabase
         .from('sales_orders')
         .select(`
-          id,
+          id:sale_id,
           *,
           sales_order_items (
             id,
