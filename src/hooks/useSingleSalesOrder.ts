@@ -11,15 +11,7 @@ export const useSingleSalesOrder = (orderId: string | null) => {
         .from('sales_orders')
         .select(`
           *,
-          sales_order_items (
-            id,
-            item_id,
-            item_name,
-            quantity,
-            unit_price,
-            total_price,
-            variant_id
-          )
+          sales_order_items(id,item_id,item_name,quantity,unit_price,total_price,variant_id)
         `)
         .eq('sale_id', orderId)
         .single();
