@@ -23,7 +23,10 @@ export default function OrderDetailsDialog({
 
   return (
     <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
-      <DialogContent className="futuristic-card max-w-6xl">
+      <DialogContent className="futuristic-card max-w-6xl" aria-describedby="order-details-description">
+  <div id="order-details-description" className="sr-only">
+    Detailed information about the selected order, including customer details, order items, and payment summary.
+  </div>
         <DialogHeader>
           <DialogTitle className="text-cyan-300">Order Details - {viewingOrder.order_number}</DialogTitle>
         </DialogHeader>
