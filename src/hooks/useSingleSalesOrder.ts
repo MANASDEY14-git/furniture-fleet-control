@@ -13,7 +13,7 @@ export const useSingleSalesOrder = (orderId: string | null) => {
           *,
           sales_order_items(id,item_id,item_name,quantity,unit_price,total_price,variant_id)
         `)
-        .eq('sale_id', orderId)
+        .eq('id', orderId)
         .single();
       if (error) throw error;
       return data;

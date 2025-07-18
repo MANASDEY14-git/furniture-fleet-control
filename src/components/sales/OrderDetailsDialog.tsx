@@ -19,7 +19,7 @@ export default function OrderDetailsDialog({
   getStoreName,
 }: OrderDetailsDialogProps) {
   const { data: order, isLoading, error } = useSingleSalesOrder(
-    viewingOrder?.sale_id || null
+    viewingOrder?.id || null
   );
 
   const orderItems = order?.sales_order_items || [];
