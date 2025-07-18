@@ -72,7 +72,7 @@ export default function SalesTable({
                   <TableCell>
                     <Select 
                       value={order.delivery_status} 
-                      onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.sale_id, value)}
+                      onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.id, value)}
                     >
                       <SelectTrigger className="w-36 neon-border bg-slate-800/50 text-blue-100">
                         <SelectValue>
@@ -94,7 +94,7 @@ export default function SalesTable({
                         variant="ghost" 
                         size="sm" 
                         className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20"
-                        onClick={() => setViewingOrder(order)}
+                        onClick={() => setViewingOrder({ ...order, id: order.id })}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
