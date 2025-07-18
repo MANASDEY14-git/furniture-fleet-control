@@ -7,14 +7,20 @@ export const useSingleSalesOrder = (orderId: string | null) => {
     enabled: !!orderId,
     queryFn: async () => {
       if (!orderId) return null;
+      
+      console.log('Fetching order with ID:', orderId);
+      
       const { data, error } = await supabase
         .from('sales_orders')
         .select(`
           *,
-          sales_order_items(id,item_id,item_name,quantity,unit_price,total_price,variant_id)
+          sales_order_items(*)
         `)
         .eq('id', orderId)
         .single();
+        
+      console.log('Order query result:', { data, error });
+      
       if (error) throw error;
       return data;
     },

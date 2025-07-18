@@ -34,9 +34,9 @@ export default function OrderDetailsDialog({
     // Always return a valid React element for React 18+ strict mode
     return (
       <Dialog open={false}>
-        <DialogContent className="futuristic-card max-w-6xl">
+        <DialogContent className="simple-card max-w-6xl">
           <DialogHeader>
-            <DialogTitle className="text-cyan-300">Order Details</DialogTitle>
+            <DialogTitle className="text-foreground">Order Details</DialogTitle>
             <DialogDescription>
               No order selected.
             </DialogDescription>
@@ -49,9 +49,9 @@ export default function OrderDetailsDialog({
     if (isLoading || (variantIds.length > 0 && variantsLoading)) {
     return (
       <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
-        <DialogContent className="futuristic-card max-w-6xl">
+        <DialogContent className="simple-card max-w-6xl">
           <DialogHeader>
-            <DialogTitle className="text-cyan-300">Loading Order...</DialogTitle>
+            <DialogTitle className="text-foreground">Loading Order...</DialogTitle>
             <DialogDescription>
               Loading order details. Please wait.
             </DialogDescription>
@@ -65,14 +65,14 @@ export default function OrderDetailsDialog({
   if (error) {
     return (
       <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
-        <DialogContent className="futuristic-card max-w-6xl">
+        <DialogContent className="simple-card max-w-6xl">
           <DialogHeader>
-            <DialogTitle className="text-cyan-300">Error</DialogTitle>
+            <DialogTitle className="text-foreground">Error</DialogTitle>
             <DialogDescription>
               Failed to load order details. Please try again.
             </DialogDescription>
           </DialogHeader>
-          <div className="text-red-500">Failed to load order details. Please try again.</div>
+          <div className="text-destructive">Failed to load order details. Please try again.</div>
         </DialogContent>
       </Dialog>
     );
@@ -82,9 +82,9 @@ export default function OrderDetailsDialog({
     // This handles the case where the query has run but returned no data.
     return (
       <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
-        <DialogContent className="futuristic-card max-w-6xl">
+        <DialogContent className="simple-card max-w-6xl">
           <DialogHeader>
-            <DialogTitle className="text-cyan-300">Order Not Found</DialogTitle>
+            <DialogTitle className="text-foreground">Order Not Found</DialogTitle>
             <DialogDescription>
               The selected order could not be found.
             </DialogDescription>
@@ -96,9 +96,9 @@ export default function OrderDetailsDialog({
 
   return (
     <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
-      <DialogContent className="futuristic-card max-w-6xl">
+      <DialogContent className="simple-card max-w-6xl">
         <DialogHeader>
-          <DialogTitle className="text-cyan-300">Order Details - {viewingOrder.order_number}</DialogTitle>
+          <DialogTitle className="text-foreground">Order Details - {viewingOrder.order_number}</DialogTitle>
           <DialogDescription>
             Detailed information about the selected order, including customer details, order items, and payment summary.
           </DialogDescription>
@@ -106,62 +106,72 @@ export default function OrderDetailsDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-blue-200"><strong>Customer:</strong> {viewingOrder.customer_name || 'Walk-in'}</p>
-              <p className="text-blue-200"><strong>Phone:</strong> {viewingOrder.customer_phone || 'N/A'}</p>
-              <p className="text-blue-200"><strong>Store:</strong> {getStoreName(viewingOrder.store_id)}</p>
+              <p className="text-foreground"><strong>Customer:</strong> {viewingOrder.customer_name || 'Walk-in'}</p>
+              <p className="text-foreground"><strong>Phone:</strong> {viewingOrder.customer_phone || 'N/A'}</p>
+              <p className="text-foreground"><strong>Store:</strong> {getStoreName(viewingOrder.store_id)}</p>
             </div>
             <div>
-              <p className="text-blue-200"><strong>Date:</strong> {new Date(viewingOrder.sale_date).toLocaleDateString('en-GB')}</p>
-              <p className="text-blue-200"><strong>Status:</strong> <StatusBadge status={viewingOrder.delivery_status} /></p>
-              <p className="text-blue-200"><strong>Delivery:</strong> {viewingOrder.delivery_date ? new Date(viewingOrder.delivery_date).toLocaleDateString('en-GB') : 'Not Set'}</p>
+              <p className="text-foreground"><strong>Date:</strong> {new Date(viewingOrder.sale_date).toLocaleDateString('en-GB')}</p>
+              <p className="text-foreground"><strong>Status:</strong> <StatusBadge status={viewingOrder.delivery_status} /></p>
+              <p className="text-foreground"><strong>Delivery:</strong> {viewingOrder.delivery_date ? new Date(viewingOrder.delivery_date).toLocaleDateString('en-GB') : 'Not Set'}</p>
             </div>
           </div>
           {viewingOrder.customer_address && (
             <div>
-              <p className="text-blue-200"><strong>Address:</strong></p>
-              <p className="text-blue-100 ml-4">{viewingOrder.customer_address}</p>
+              <p className="text-foreground"><strong>Address:</strong></p>
+              <p className="text-muted-foreground ml-4">{viewingOrder.customer_address}</p>
             </div>
           )}
 
           {/* Order Items */}
-          <div className="border-t border-blue-500/30 pt-4">
-            <h4 className="text-blue-200 font-semibold mb-2">Order Items</h4>
+          <div className="border-t border-border pt-4">
+            <h4 className="text-foreground font-semibold mb-2">Order Items</h4>
             <div className="overflow-x-auto">
               <Table className="data-grid">
                 <TableHeader>
-                  <TableRow className="border-blue-500/30">
-                    <TableHead className="text-blue-200">Item</TableHead>
-                    <TableHead className="text-blue-200">Variant</TableHead>
-                    <TableHead className="text-blue-200">Quantity</TableHead>
-                    <TableHead className="text-blue-200">Unit Price</TableHead>
-                    <TableHead className="text-blue-200">Total</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground">Item</TableHead>
+                    <TableHead className="text-muted-foreground">Variant</TableHead>
+                    <TableHead className="text-muted-foreground">Quantity</TableHead>
+                    <TableHead className="text-muted-foreground">Unit Price</TableHead>
+                    <TableHead className="text-muted-foreground">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(() => {
                     // Use the new fetched orderItems
-                                        return orderItems.map((item: any) => {
+                    if (!orderItems || orderItems.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            No order items found
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                    
+                    return orderItems.map((item: any) => {
                       let variantCell = null;
                       if (item.variant_id && variantsMap && variantsMap[item.variant_id]) {
                         const variant = variantsMap[item.variant_id];
                         variantCell = (
                           <div>
-                            <div className="text-xs text-blue-300">{getVariantDisplayName(variant)}</div>
-                            <div className="text-xs text-blue-400">SKU: <span className="font-mono">{variant.sku || 'N/A'}</span></div>
+                            <div className="text-xs text-muted-foreground">{getVariantDisplayName(variant)}</div>
+                            <div className="text-xs text-muted-foreground">SKU: <span className="font-mono">{variant.sku || 'N/A'}</span></div>
                           </div>
                         );
                       } else if (item.variant_id && variantsLoading) {
-                        variantCell = <span className="text-xs text-gray-500">Loading...</span>;
+                        variantCell = <span className="text-xs text-muted-foreground">Loading...</span>;
                       } else {
-                        variantCell = <span className="text-xs text-gray-400">-</span>;
+                        variantCell = <span className="text-xs text-muted-foreground">-</span>;
                       }
                       return (
-                        <TableRow key={item.id} className="border-blue-500/20">
-                          <TableCell className="text-blue-200">{item.item_name}</TableCell>
+                        <TableRow key={item.id} className="border-border">
+                          <TableCell className="text-foreground">{item.item_name}</TableCell>
                           <TableCell>{variantCell}</TableCell>
-                          <TableCell className="text-blue-200">{item.quantity}</TableCell>
-                          <TableCell className="text-blue-200">{formatCurrency(item.unit_price)}</TableCell>
-                          <TableCell className="text-cyan-300 font-semibold">{formatCurrency(item.total_price)}</TableCell>
+                          <TableCell className="text-foreground">{item.quantity}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(item.unit_price)}</TableCell>
+                          <TableCell className="text-foreground font-semibold">{formatCurrency(item.total_price)}</TableCell>
                         </TableRow>
                       );
                     });
@@ -171,18 +181,18 @@ export default function OrderDetailsDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 p-4 bg-slate-800/30 rounded-lg">
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
             <div className="text-center">
-              <p className="text-blue-200 text-sm">Total Amount</p>
-              <p className="text-cyan-300 font-bold text-lg">{formatCurrency(viewingOrder.total_price)}</p>
+              <p className="text-muted-foreground text-sm">Total Amount</p>
+              <p className="text-foreground font-bold text-lg">{formatCurrency(viewingOrder.total_price)}</p>
             </div>
             <div className="text-center">
-              <p className="text-blue-200 text-sm">Total Paid</p>
-              <p className="text-green-400 font-bold text-lg">{formatCurrency(viewingOrder.total_paid)}</p>
+              <p className="text-muted-foreground text-sm">Total Paid</p>
+              <p className="text-foreground font-bold text-lg">{formatCurrency(viewingOrder.total_paid)}</p>
             </div>
             <div className="text-center">
-              <p className="text-blue-200 text-sm">Balance Due</p>
-              <p className="text-orange-400 font-bold text-lg">{formatCurrency(viewingOrder.balance_due)}</p>
+              <p className="text-muted-foreground text-sm">Balance Due</p>
+              <p className="text-foreground font-bold text-lg">{formatCurrency(viewingOrder.balance_due)}</p>
             </div>
           </div>
         </div>
