@@ -6,6 +6,7 @@ export const useSingleSalesOrder = (orderId: string | null) => {
     queryKey: ['sales-order', orderId],
     enabled: !!orderId,
     queryFn: async () => {
+      console.log('useSingleSalesOrder: Fetching with orderId:', orderId);
       if (!orderId) return null;
       const { data, error } = await supabase
         .from('sales_orders')
@@ -23,6 +24,7 @@ export const useSingleSalesOrder = (orderId: string | null) => {
         `)
         .eq('id', orderId)
         .single();
+      console.log('useSingleSalesOrder: Supabase response', { data, error });
       if (error) throw error;
       return data;
     },

@@ -94,7 +94,10 @@ export default function SalesTable({
                         variant="ghost" 
                         size="sm" 
                         className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20"
-                        onClick={() => setViewingOrder({ ...order, id: order.id })}
+                        onClick={() => {
+                        console.log('SalesTable: Viewing order:', order);
+                        setViewingOrder({ ...order, id: order.id });
+                      }}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
