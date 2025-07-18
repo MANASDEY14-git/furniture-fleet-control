@@ -18,6 +18,18 @@ export default function OrderDetailsDialog({
   setViewingOrder,
   getStoreName,
 }: OrderDetailsDialogProps) {
+  const { data: order, isLoading, error } = useSingleSalesOrder(
+    viewingOrder?.id || null
+  );
+
+  const orderItems = order?.sales_order_items || [];
+  const variantIds = orderItems
+    .map((item: any) => item.variant_id)
+    .filter(Boolean);
+
+  const { data: variantsMap, isLoading: variantsLoading } =
+    useItemVariantsForOrderItems(variantIds);
+
   if (!viewingOrder) {
     // Always return a valid React element for React 18+ strict mode
     return (
@@ -34,12 +46,7 @@ export default function OrderDetailsDialog({
     );
   }
 
-  // Use id or sale_id for fetching
-  const orderId = viewingOrder.id || viewingOrder.sale_id;
-  const { data: order, isLoading, error } = useSingleSalesOrder(orderId);
-  const orderItems = order?.sales_order_items || [];
-
-  if (isLoading) {
+    if (isLoading || (variantIds.length > 0 && variantsLoading)) {
     return (
       <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
         <DialogContent className="futuristic-card max-w-6xl">
@@ -54,6 +61,7 @@ export default function OrderDetailsDialog({
       </Dialog>
     );
   }
+
   if (error) {
     return (
       <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
@@ -65,6 +73,22 @@ export default function OrderDetailsDialog({
             </DialogDescription>
           </DialogHeader>
           <div className="text-red-500">Failed to load order details. Please try again.</div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!order) {
+    // This handles the case where the query has run but returned no data.
+    return (
+      <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
+        <DialogContent className="futuristic-card max-w-6xl">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300">Order Not Found</DialogTitle>
+            <DialogDescription>
+              The selected order could not be found.
+            </DialogDescription>
+          </DialogHeader>
         </DialogContent>
       </Dialog>
     );
@@ -116,9 +140,7 @@ export default function OrderDetailsDialog({
                 <TableBody>
                   {(() => {
                     // Use the new fetched orderItems
-                    const variantIds = orderItems.map((item: any) => item.variant_id).filter(Boolean);
-                    const { data: variantsMap, isLoading: variantsLoading } = useItemVariantsForOrderItems(variantIds);
-                    return orderItems.map((item: any) => {
+                                        return orderItems.map((item: any) => {
                       let variantCell = null;
                       if (item.variant_id && variantsMap && variantsMap[item.variant_id]) {
                         const variant = variantsMap[item.variant_id];
@@ -128,7 +150,7 @@ export default function OrderDetailsDialog({
                             <div className="text-xs text-blue-400">SKU: <span className="font-mono">{variant.sku || 'N/A'}</span></div>
                           </div>
                         );
-                      } else if (item.variant_id) {
+                      } else if (item.variant_id && variantsLoading) {
                         variantCell = <span className="text-xs text-gray-500">Loading...</span>;
                       } else {
                         variantCell = <span className="text-xs text-gray-400">-</span>;
