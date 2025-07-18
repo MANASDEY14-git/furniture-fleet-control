@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import StatusBadge from '@/components/StatusBadge';
 import { formatCurrency } from '@/utils/currencyUtils';
@@ -23,12 +23,12 @@ export default function OrderDetailsDialog({
 
   return (
     <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
-      <DialogContent className="futuristic-card max-w-6xl" aria-describedby="order-details-description">
-  <div id="order-details-description" className="sr-only">
-    Detailed information about the selected order, including customer details, order items, and payment summary.
-  </div>
+      <DialogContent className="futuristic-card max-w-6xl">
         <DialogHeader>
           <DialogTitle className="text-cyan-300">Order Details - {viewingOrder.order_number}</DialogTitle>
+          <DialogDescription>
+            Detailed information about the selected order, including customer details, order items, and payment summary.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
