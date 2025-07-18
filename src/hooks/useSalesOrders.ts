@@ -11,7 +11,6 @@ export const useSalesOrders = () => {
       const { data, error } = await supabase
         .from('sales_orders')
         .select(`
-          id:sale_id,
           sale_id,
           order_number,
           store_id,
@@ -26,7 +25,15 @@ export const useSalesOrders = () => {
           delivery_date,
           customer_address,
           created_at,
-          sales_order_items (*)
+          sales_order_items (
+            id,
+            item_id,
+            item_name,
+            quantity,
+            unit_price,
+            total_price,
+            variant_id
+          )
         `)
         .order('created_at', { ascending: false });
       

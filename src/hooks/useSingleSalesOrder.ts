@@ -21,7 +21,7 @@ export const useSingleSalesOrder = (orderId: string | null) => {
             variant_id
           )
         `)
-        .eq('id', orderId)
+        .eq('sale_id', orderId)
         .single();
       if (error) throw error;
       return data;
