@@ -118,6 +118,13 @@ export default function Sales() {
       });
     }
 
+    // Sort by date and time (most recent first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.sale_date);
+      const dateB = new Date(b.sale_date);
+      return dateB.getTime() - dateA.getTime();
+    });
+
     return filtered;
   }, [salePaymentStatus, selectedStore, selectedSupplier, searchTerm, dateFilter, customDateRange]);
 
