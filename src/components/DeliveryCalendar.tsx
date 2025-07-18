@@ -41,7 +41,7 @@ export default function DeliveryCalendar() {
 
   return (
     <div className="space-y-6">
-      <Card className="futuristic-card">
+      <Card className="simple-card">
         <CalendarHeader />
         <CardContent>
           <CalendarView

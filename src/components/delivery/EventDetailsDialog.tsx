@@ -42,14 +42,14 @@ export default function EventDetailsDialog({
 
   return (
     <Dialog open={!!selectedEvent} onOpenChange={onClose}>
-      <DialogContent className="futuristic-card max-w-4xl">
+      <DialogContent className="simple-card max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="text-cyan-300">Delivery Details - {selectedEvent?.order_number}</DialogTitle>
+          <DialogTitle className="text-foreground">Delivery Details - {selectedEvent?.order_number}</DialogTitle>
         </DialogHeader>
         {selectedEvent && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-blue-100">
+              <h3 className="text-xl font-semibold text-foreground">
                 Order: {selectedEvent.order_number}
               </h3>
               {getStatusBadge(selectedEvent.status)}
@@ -57,32 +57,32 @@ export default function EventDetailsDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-blue-200">
+                <div className="flex items-center gap-2 text-foreground">
                   <span className="font-semibold">Customer:</span>
                   <span>{selectedEvent.customer_name}</span>
                 </div>
-                <div className="flex items-center gap-2 text-blue-200">
+                <div className="flex items-center gap-2 text-foreground">
                   <Phone className="w-4 h-4" />
                   <span>{selectedEvent.customer_phone}</span>
                 </div>
-                <div className="flex items-start gap-2 text-blue-200">
+                <div className="flex items-start gap-2 text-foreground">
                   <MapPin className="w-4 h-4 mt-1" />
                   <span>{selectedEvent.customer_address}</span>
                 </div>
-                <div className="flex items-center gap-2 text-blue-200">
+                <div className="flex items-center gap-2 text-foreground">
                   <Package className="w-4 h-4" />
                   <span>Store: {selectedEvent.store_name}</span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="text-blue-200">
+                <div className="text-foreground">
                   <span className="font-semibold">Delivery Date:</span>
                   <span className="ml-2">{moment(selectedEvent.start).format('MMMM Do, YYYY')}</span>
                 </div>
-                <div className="text-blue-200">
+                <div className="text-foreground">
                   <span className="font-semibold">Balance Due:</span>
-                  <span className="ml-2 text-orange-400 font-bold">
+                  <span className="ml-2 text-foreground font-bold">
                     {formatCurrency(selectedEvent.balance_due)}
                   </span>
                 </div>
@@ -90,47 +90,52 @@ export default function EventDetailsDialog({
             </div>
 
             {/* Order Items */}
-            {selectedEvent.items && selectedEvent.items.length > 0 && (
-              <div className="border-t border-blue-500/30 pt-4">
-                <h4 className="text-blue-200 font-semibold mb-2">Order Items</h4>
+            {selectedEvent.items && selectedEvent.items.length > 0 ? (
+              <div className="border-t border-border pt-4">
+                <h4 className="text-foreground font-semibold mb-2">Order Items</h4>
                 <div className="overflow-x-auto">
                   <Table className="data-grid">
                     <TableHeader>
-                      <TableRow className="border-blue-500/30">
-                        <TableHead className="text-blue-200">Item</TableHead>
-                        <TableHead className="text-blue-200">Quantity</TableHead>
-                        <TableHead className="text-blue-200">Unit Price</TableHead>
-                        <TableHead className="text-blue-200">Total</TableHead>
+                      <TableRow className="border-border">
+                        <TableHead className="text-muted-foreground">Item</TableHead>
+                        <TableHead className="text-muted-foreground">Quantity</TableHead>
+                        <TableHead className="text-muted-foreground">Unit Price</TableHead>
+                        <TableHead className="text-muted-foreground">Total</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {selectedEvent.items.map((item: any) => (
-                        <TableRow key={item.id} className="border-blue-500/20">
-                          <TableCell className="text-blue-200">{item.item_name}</TableCell>
-                          <TableCell className="text-blue-200">{item.quantity}</TableCell>
-                          <TableCell className="text-blue-200">{formatCurrency(item.unit_price)}</TableCell>
-                          <TableCell className="text-cyan-300 font-semibold">{formatCurrency(item.total_price)}</TableCell>
+                        <TableRow key={item.id} className="border-border">
+                          <TableCell className="text-foreground">{item.item_name}</TableCell>
+                          <TableCell className="text-foreground">{item.quantity}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(item.unit_price)}</TableCell>
+                          <TableCell className="text-foreground font-semibold">{formatCurrency(item.total_price)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
               </div>
+            ) : (
+              <div className="border-t border-border pt-4">
+                <h4 className="text-foreground font-semibold mb-2">Order Items</h4>
+                <p className="text-muted-foreground">No order items found</p>
+              </div>
             )}
 
-            <div className="border-t border-blue-500/30 pt-4">
-              <h4 className="text-blue-200 font-semibold mb-2">Update Delivery Date</h4>
+            <div className="border-t border-border pt-4">
+              <h4 className="text-foreground font-semibold mb-2">Update Delivery Date</h4>
               <div className="flex gap-2">
                 <Input
                   type="date"
                   value={newDeliveryDate}
                   onChange={(e) => onDeliveryDateChange(e.target.value)}
-                  className="neon-border bg-slate-800/50 text-blue-100"
+                  className="border-border bg-background text-foreground"
                 />
                 <Button
                   onClick={onUpdateDeliveryDate}
                   disabled={isUpdating}
-                  className="cyber-button text-white"
+                  className="bg-primary text-primary-foreground hover:bg-primary/80"
                 >
                   {isUpdating ? 'Updating...' : 'Update'}
                 </Button>
