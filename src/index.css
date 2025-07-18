@@ -7,78 +7,78 @@
 
 @layer base {
   :root {
-    --background: 218 40% 95%;
-    --foreground: 222 84% 5%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 222 84% 5%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 84% 5%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 197 71% 73%;
-    --accent-foreground: 222 84% 5%;
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
-    --radius: 0.75rem;
-    --chart-1: 217 91% 60%;
-    --chart-2: 197 71% 73%;
-    --chart-3: 173 58% 39%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 0%;
+    --radius: 0.375rem;
+    --chart-1: 0 0% 0%;
+    --chart-2: 0 0% 20%;
+    --chart-3: 0 0% 40%;
+    --chart-4: 0 0% 60%;
+    --chart-5: 0 0% 80%;
     
     /* Sidebar colors */
-    --sidebar-background: 218 40% 95%;
-    --sidebar-foreground: 222 84% 5%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 0%;
   }
 
   .dark {
-    --background: 222 84% 5%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 217 33% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 84% 5%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 197 71% 73%;
-    --accent-foreground: 222 84% 5%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
-    --chart-1: 217 91% 60%;
-    --chart-2: 197 71% 73%;
-    --chart-3: 173 58% 39%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 100%;
+    --chart-1: 0 0% 100%;
+    --chart-2: 0 0% 80%;
+    --chart-3: 0 0% 60%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 20%;
     
     /* Sidebar colors */
-    --sidebar-background: 217 33% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 222 84% 5%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 0% 100%;
   }
 }
 
@@ -92,33 +92,10 @@
   }
 }
 
-/* Enhanced design system components */
+/* Simple design system components */
 @layer components {
-  .futuristic-card {
-    @apply bg-card border-border shadow-lg backdrop-blur-sm;
-    background: linear-gradient(135deg, hsl(var(--card) / 0.9), hsl(var(--muted) / 0.7));
-    border: 1px solid hsl(var(--primary) / 0.3);
-    box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.2);
-  }
-  
-  .neon-border {
-    @apply border-primary/50 shadow-sm focus:border-accent focus:shadow-accent/30 transition-all duration-300;
-  }
-  
-  .glow-text {
-    @apply text-transparent bg-clip-text;
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-    text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
-  }
-  
-  .cyber-button {
-    @apply bg-primary hover:bg-primary/80 text-primary-foreground border border-primary/50 shadow-lg transition-all duration-300;
-    box-shadow: 0 4px 15px hsl(var(--primary) / 0.3);
-  }
-  
-  .cyber-button:hover {
-    box-shadow: 0 6px 20px hsl(var(--primary) / 0.4);
-    transform: translateY(-1px);
+  .simple-card {
+    @apply bg-card border-border shadow-sm;
   }
   
   .data-grid {
@@ -126,46 +103,16 @@
   }
   
   .data-grid th {
-    @apply bg-muted/50 backdrop-blur-sm border-b border-border px-4 py-3 text-left text-muted-foreground font-semibold;
+    @apply bg-muted border-b border-border px-4 py-3 text-left text-muted-foreground font-medium;
   }
   
   .data-grid td {
-    @apply px-4 py-3 border-b border-border/50 text-foreground;
+    @apply px-4 py-3 border-b border-border text-foreground;
   }
   
-  /* Improved dropdown styling */
+  /* Simple dropdown styling */
   .dropdown-content {
-    @apply bg-popover border-border shadow-lg backdrop-blur-sm z-50;
-    box-shadow: 0 10px 30px -10px hsl(var(--foreground) / 0.1);
-  }
-  
-  /* Enhanced animations */
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
-  }
-  
-  @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  
-  /* Status indicators */
-  .status-success {
-    @apply bg-green-500/10 text-green-400 border-green-500/30;
-  }
-  
-  .status-warning {
-    @apply bg-yellow-500/10 text-yellow-400 border-yellow-500/30;
-  }
-  
-  .status-error {
-    @apply bg-red-500/10 text-red-400 border-red-500/30;
-  }
-  
-  .status-info {
-    @apply bg-blue-500/10 text-blue-400 border-blue-500/30;
+    @apply bg-popover border-border shadow-sm;
   }
 }
 

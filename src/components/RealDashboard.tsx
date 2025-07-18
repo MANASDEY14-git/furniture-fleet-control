@@ -110,24 +110,24 @@ export default function RealDashboard() {
   const customersWithBalance = salePaymentStatus.filter(sale => sale.balance_due > 0).length;
   if (metricsLoading) {
     return <div className="flex items-center justify-center h-64">
-        <div className="text-lg glow-text">Loading dashboard...</div>
+        <div className="text-lg text-foreground">Loading dashboard...</div>
       </div>;
   }
   return <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-6">
       {/* Welcome Header */}
-      <Card className="futuristic-card">
+      <Card className="simple-card">
         <CardContent className="p-6 md:p-8">
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
             <div className="space-y-2">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold glow-text text-zinc-950">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
                 Furniture ERP Dashboard
               </h1>
-              <p className="text-base md:text-lg text-zinc-950">
+              <p className="text-base md:text-lg text-muted-foreground">
                 Welcome back! Here's what's happening with your business today.
               </p>
             </div>
             <div className="text-left lg:text-right space-y-2">
-              <p className="text-accent font-semibold text-lg md:text-xl">
+              <p className="text-foreground font-medium text-lg md:text-xl">
                 {currentTime.toLocaleString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
@@ -147,15 +147,15 @@ export default function RealDashboard() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+        <Card className="simple-card">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-500/20 rounded-full flex-shrink-0">
-                <TrendingUp className="w-6 h-6 text-green-400" />
+              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
+                <TrendingUp className="w-6 h-6 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-zinc-950">Total Sales</p>
-                <p className="text-xl md:text-2xl font-bold text-green-400 truncate">
+                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+                <p className="text-xl md:text-2xl font-bold text-foreground truncate">
                   {formatCurrency(metrics?.totalSales || 0)}
                 </p>
               </div>
@@ -163,15 +163,15 @@ export default function RealDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+        <Card className="simple-card">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-500/20 rounded-full flex-shrink-0">
-                <ShoppingCart className="w-6 h-6 text-blue-400" />
+              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
+                <ShoppingCart className="w-6 h-6 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-zinc-950">Total Purchases</p>
-                <p className="text-xl md:text-2xl font-bold text-blue-400 truncate">
+                <p className="text-sm font-medium text-muted-foreground">Total Purchases</p>
+                <p className="text-xl md:text-2xl font-bold text-foreground truncate">
                   {formatCurrency(metrics?.totalPurchases || 0)}
                 </p>
               </div>
@@ -179,15 +179,15 @@ export default function RealDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+        <Card className="simple-card">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-cyan-500/20 rounded-full flex-shrink-0">
-                <DollarSign className="w-6 h-6 text-cyan-400" />
+              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
+                <DollarSign className="w-6 h-6 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted-foreground font-medium">Gross Profit</p>
-                <p className={`text-xl md:text-2xl font-bold truncate ${(metrics?.grossProfit || 0) >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
+                <p className={`text-xl md:text-2xl font-bold truncate ${(metrics?.grossProfit || 0) >= 0 ? 'text-foreground' : 'text-destructive'}`}>
                   {formatCurrency(metrics?.grossProfit || 0)}
                 </p>
               </div>
@@ -195,15 +195,15 @@ export default function RealDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="futuristic-card hover:scale-105 transition-transform duration-300">
+        <Card className="simple-card">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-500/20 rounded-full flex-shrink-0">
-                <AlertTriangle className="w-6 h-6 text-orange-400" />
+              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted-foreground font-medium">Low Stock Items</p>
-                <p className="text-xl md:text-2xl font-bold text-orange-400">
+                <p className="text-xl md:text-2xl font-bold text-foreground">
                   {metrics?.lowStockCount || 0}
                 </p>
               </div>
@@ -214,42 +214,42 @@ export default function RealDashboard() {
 
       {/* Financial Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="futuristic-card">
+        <Card className="simple-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-purple-500/20 rounded-full flex-shrink-0">
-                <Users className="w-6 h-6 text-purple-400" />
+              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
+                <Users className="w-6 h-6 text-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm text-blue-200">Outstanding from Customers</p>
-                <p className="text-xl sm:text-2xl font-bold text-purple-400 truncate">
+                <p className="text-sm text-muted-foreground">Outstanding from Customers</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
                   {formatCurrency(metrics?.outstandingBalance || 0)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary">{customersWithBalance} customers</Badge>
-              <span className="text-sm text-blue-300">have pending payments</span>
+              <span className="text-sm text-muted-foreground">have pending payments</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="futuristic-card">
+        <Card className="simple-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-red-500/20 rounded-full flex-shrink-0">
-                <TrendingDown className="w-6 h-6 text-red-400" />
+              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
+                <TrendingDown className="w-6 h-6 text-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm text-blue-200">Payable to Suppliers</p>
-                <p className="text-xl sm:text-2xl font-bold text-red-400 truncate">
+                <p className="text-sm text-muted-foreground">Payable to Suppliers</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
                   {formatCurrency(metrics?.supplierPayable || 0)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="destructive">{overdueDeliveries} overdue</Badge>
-              <span className="text-sm text-blue-300">deliveries pending</span>
+              <span className="text-sm text-muted-foreground">deliveries pending</span>
             </div>
           </CardContent>
         </Card>
@@ -262,50 +262,50 @@ export default function RealDashboard() {
       </div>
 
       {/* Alerts and Notifications */}
-      <Card className="futuristic-card">
+      <Card className="simple-card">
         <CardHeader>
-          <CardTitle className="text-cyan-300 glow-text flex items-center gap-2">
+          <CardTitle className="text-foreground flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             Business Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {(metrics?.lowStockCount || 0) > 0 && <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                <Package className="w-5 h-5 text-orange-400" />
+            {(metrics?.lowStockCount || 0) > 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+                <Package className="w-5 h-5 text-foreground" />
                 <div>
-                  <p className="text-orange-400 font-semibold">Low Stock Alert</p>
-                  <p className="text-blue-200 text-sm">
+                  <p className="text-foreground font-semibold">Low Stock Alert</p>
+                  <p className="text-muted-foreground text-sm">
                     {metrics?.lowStockCount} items are running low on stock
                   </p>
                 </div>
               </div>}
             
-            {overdueDeliveries > 0 && <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                <Truck className="w-5 h-5 text-red-400" />
+            {overdueDeliveries > 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+                <Truck className="w-5 h-5 text-foreground" />
                 <div>
-                  <p className="text-red-400 font-semibold">Overdue Deliveries</p>
-                  <p className="text-blue-200 text-sm">
+                  <p className="text-foreground font-semibold">Overdue Deliveries</p>
+                  <p className="text-muted-foreground text-sm">
                     {overdueDeliveries} deliveries are past their due date
                   </p>
                 </div>
               </div>}
             
-            {customersWithBalance > 0 && <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                <DollarSign className="w-5 h-5 text-purple-400" />
+            {customersWithBalance > 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+                <DollarSign className="w-5 h-5 text-foreground" />
                 <div>
-                  <p className="text-purple-400 font-semibold">Outstanding Payments</p>
-                  <p className="text-blue-200 text-sm">
+                  <p className="text-foreground font-semibold">Outstanding Payments</p>
+                  <p className="text-muted-foreground text-sm">
                     {customersWithBalance} customers have outstanding balances totaling {formatCurrency(metrics?.outstandingBalance || 0)}
                   </p>
                 </div>
               </div>}
             
-            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                <TrendingUp className="w-5 h-5 text-green-400" />
+            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+                <TrendingUp className="w-5 h-5 text-foreground" />
                 <div>
-                  <p className="text-green-400 font-semibold">All Systems Normal</p>
-                  <p className="text-blue-200 text-sm">
+                  <p className="text-foreground font-semibold">All Systems Normal</p>
+                  <p className="text-muted-foreground text-sm">
                     Your business is running smoothly with no critical alerts
                   </p>
                 </div>
