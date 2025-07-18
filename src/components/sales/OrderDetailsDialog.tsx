@@ -31,6 +31,9 @@ export default function OrderDetailsDialog({
         <DialogContent className="futuristic-card max-w-6xl">
           <DialogHeader>
             <DialogTitle className="text-cyan-300">Loading Order...</DialogTitle>
+            <DialogDescription>
+              Loading order details. Please wait.
+            </DialogDescription>
           </DialogHeader>
           <div>Loading order details...</div>
         </DialogContent>
@@ -43,6 +46,9 @@ export default function OrderDetailsDialog({
         <DialogContent className="futuristic-card max-w-6xl">
           <DialogHeader>
             <DialogTitle className="text-cyan-300">Error</DialogTitle>
+            <DialogDescription>
+              Failed to load order details. Please try again.
+            </DialogDescription>
           </DialogHeader>
           <div className="text-red-500">Failed to load order details. Please try again.</div>
         </DialogContent>
