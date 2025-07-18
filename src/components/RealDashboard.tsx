@@ -1,17 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  ShoppingCart, 
-  Package, 
-  DollarSign, 
-  AlertTriangle,
-  Users,
-  Truck
-} from 'lucide-react';
+import { TrendingUp, TrendingDown, ShoppingCart, Package, DollarSign, AlertTriangle, Users, Truck } from 'lucide-react';
 import { useRealDashboardMetrics } from '@/hooks/useRealDashboardMetrics';
 import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
@@ -20,20 +10,30 @@ import SalesTrendChart from '@/components/SalesTrendChart';
 import TopSellingChart from '@/components/TopSellingChart';
 import { useEnhancedDashboardMetrics } from '@/hooks/useEnhancedDashboardMetrics';
 import { supabase } from '@/integrations/supabase/client';
-
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useRealDashboardMetrics();
-  const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
-  const { data: stores = [] } = useStores();
-  const { data: dashboardMetrics, refetch: refetchDashboardMetrics } = useEnhancedDashboardMetrics('month');
+  const {
+    data: metrics,
+    isLoading: metricsLoading,
+    refetch: refetchMetrics
+  } = useRealDashboardMetrics();
+  const {
+    data: salePaymentStatus = [],
+    refetch: refetchSalePaymentStatus
+  } = useSalePaymentStatus();
+  const {
+    data: stores = []
+  } = useStores();
+  const {
+    data: dashboardMetrics,
+    refetch: refetchDashboardMetrics
+  } = useEnhancedDashboardMetrics('month');
 
   // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-    
     return () => clearInterval(timer);
   }, []);
 
@@ -42,83 +42,54 @@ export default function RealDashboard() {
     const channels: any[] = [];
 
     // Subscribe to sales changes
-    const salesChannel = supabase
-      .channel('dashboard-sales-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sales_orders'
-        },
-        () => {
-          console.log('Sales data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchSalePaymentStatus();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
+    const salesChannel = supabase.channel('dashboard-sales-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'sales_orders'
+    }, () => {
+      console.log('Sales data changed, refreshing dashboard...');
+      refetchMetrics();
+      refetchSalePaymentStatus();
+      refetchDashboardMetrics();
+    }).subscribe();
     channels.push(salesChannel);
 
     // Subscribe to purchases changes
-    const purchasesChannel = supabase
-      .channel('dashboard-purchases-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'purchases'
-        },
-        () => {
-          console.log('Purchases data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
+    const purchasesChannel = supabase.channel('dashboard-purchases-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'purchases'
+    }, () => {
+      console.log('Purchases data changed, refreshing dashboard...');
+      refetchMetrics();
+      refetchDashboardMetrics();
+    }).subscribe();
     channels.push(purchasesChannel);
 
     // Subscribe to items changes
-    const itemsChannel = supabase
-      .channel('dashboard-items-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'items'
-        },
-        () => {
-          console.log('Items data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
+    const itemsChannel = supabase.channel('dashboard-items-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'items'
+    }, () => {
+      console.log('Items data changed, refreshing dashboard...');
+      refetchMetrics();
+      refetchDashboardMetrics();
+    }).subscribe();
     channels.push(itemsChannel);
 
     // Subscribe to payments changes
-    const paymentsChannel = supabase
-      .channel('dashboard-payments-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'payments'
-        },
-        () => {
-          console.log('Payments data changed, refreshing dashboard...');
-          refetchMetrics();
-          refetchSalePaymentStatus();
-          refetchDashboardMetrics();
-        }
-      )
-      .subscribe();
+    const paymentsChannel = supabase.channel('dashboard-payments-changes').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'payments'
+    }, () => {
+      console.log('Payments data changed, refreshing dashboard...');
+      refetchMetrics();
+      refetchSalePaymentStatus();
+      refetchDashboardMetrics();
+    }).subscribe();
     channels.push(paymentsChannel);
-
     return () => {
       channels.forEach(channel => {
         supabase.removeChannel(channel);
@@ -137,39 +108,34 @@ export default function RealDashboard() {
 
   // Calculate customers with outstanding balance
   const customersWithBalance = salePaymentStatus.filter(sale => sale.balance_due > 0).length;
-
   if (metricsLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
+    return <div className="flex items-center justify-center h-64">
         <div className="text-lg glow-text">Loading dashboard...</div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-6">
+  return <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-6">
       {/* Welcome Header */}
       <Card className="futuristic-card">
         <CardContent className="p-6 md:p-8">
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
             <div className="space-y-2">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold glow-text">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold glow-text text-zinc-950">
                 Furniture ERP Dashboard
               </h1>
-              <p className="text-muted-foreground text-base md:text-lg">
+              <p className="text-base md:text-lg text-zinc-950">
                 Welcome back! Here's what's happening with your business today.
               </p>
             </div>
             <div className="text-left lg:text-right space-y-2">
               <p className="text-accent font-semibold text-lg md:text-xl">
                 {currentTime.toLocaleString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
               </p>
               <p className="text-muted-foreground text-sm">
                 {stores.length} Active Stores
@@ -188,7 +154,7 @@ export default function RealDashboard() {
                 <TrendingUp className="w-6 h-6 text-green-400" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-muted-foreground font-medium">Total Sales</p>
+                <p className="text-sm font-medium text-zinc-950">Total Sales</p>
                 <p className="text-xl md:text-2xl font-bold text-green-400 truncate">
                   {formatCurrency(metrics?.totalSales || 0)}
                 </p>
@@ -204,7 +170,7 @@ export default function RealDashboard() {
                 <ShoppingCart className="w-6 h-6 text-blue-400" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-muted-foreground font-medium">Total Purchases</p>
+                <p className="text-sm font-medium text-zinc-950">Total Purchases</p>
                 <p className="text-xl md:text-2xl font-bold text-blue-400 truncate">
                   {formatCurrency(metrics?.totalPurchases || 0)}
                 </p>
@@ -305,8 +271,7 @@ export default function RealDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {(metrics?.lowStockCount || 0) > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+            {(metrics?.lowStockCount || 0) > 0 && <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
                 <Package className="w-5 h-5 text-orange-400" />
                 <div>
                   <p className="text-orange-400 font-semibold">Low Stock Alert</p>
@@ -314,11 +279,9 @@ export default function RealDashboard() {
                     {metrics?.lowStockCount} items are running low on stock
                   </p>
                 </div>
-              </div>
-            )}
+              </div>}
             
-            {overdueDeliveries > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+            {overdueDeliveries > 0 && <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
                 <Truck className="w-5 h-5 text-red-400" />
                 <div>
                   <p className="text-red-400 font-semibold">Overdue Deliveries</p>
@@ -326,11 +289,9 @@ export default function RealDashboard() {
                     {overdueDeliveries} deliveries are past their due date
                   </p>
                 </div>
-              </div>
-            )}
+              </div>}
             
-            {customersWithBalance > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+            {customersWithBalance > 0 && <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
                 <DollarSign className="w-5 h-5 text-purple-400" />
                 <div>
                   <p className="text-purple-400 font-semibold">Outstanding Payments</p>
@@ -338,11 +299,9 @@ export default function RealDashboard() {
                     {customersWithBalance} customers have outstanding balances totaling {formatCurrency(metrics?.outstandingBalance || 0)}
                   </p>
                 </div>
-              </div>
-            )}
+              </div>}
             
-            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && (
-              <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                 <TrendingUp className="w-5 h-5 text-green-400" />
                 <div>
                   <p className="text-green-400 font-semibold">All Systems Normal</p>
@@ -350,11 +309,9 @@ export default function RealDashboard() {
                     Your business is running smoothly with no critical alerts
                   </p>
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
