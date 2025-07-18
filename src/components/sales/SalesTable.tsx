@@ -72,7 +72,7 @@ export default function SalesTable({
                   <TableCell>
                     <Select 
                       value={order.delivery_status} 
-                      onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.id, value)}
+                      onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.sale_id, value)}
                     >
                       <SelectTrigger className="w-36 neon-border bg-slate-800/50 text-blue-100">
                         <SelectValue>
