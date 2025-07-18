@@ -148,11 +148,6 @@ export default function Sales() {
     setPaymentAmount('');
   };
 
-  const getOrderItems = (saleId: string) => {
-    const salesOrder = salesOrders.find(order => order.id === saleId);
-    return salesOrder?.sales_order_items || [];
-  };
-
   if (ordersLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -200,7 +195,6 @@ export default function Sales() {
         viewingOrder={viewingOrder}
         setViewingOrder={setViewingOrder}
         getStoreName={getStoreName}
-        getOrderItems={getOrderItems}
       />
 
       <PaymentRecordDialog

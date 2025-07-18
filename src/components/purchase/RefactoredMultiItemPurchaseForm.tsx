@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
-import { useCreatePurchase } from '@/hooks/usePurchases';
+import { useCreatePurchaseOrder } from '@/hooks/usePurchaseOrders';
+import { supabase } from '@/integrations/supabase/client';
 import PurchaseFormBasicInfo from './PurchaseFormBasicInfo';
 import PurchaseItemsTable from './PurchaseItemsTable';
 
@@ -58,7 +59,7 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
   const { data: availableItems = [] } = useItems();
   const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
-  const createPurchase = useCreatePurchase();
+  const createPurchase = useCreatePurchaseOrder();
 
   const addItem = () => {
     setItems([...items, {
@@ -130,39 +131,44 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
       return;
     }
 
+    // Handle new items first by creating them
+    for (const item of validItems) {
+      if (item.isNewItem) {
+        const { data: newItem, error: itemError } = await supabase
+          .from('items')
+          .insert([{
+            name: item.newItemName,
+            category_id: item.newItemCategoryId,
+            supplier_id: formData.supplierId,
+            store_id: formData.storeId,
+            cost_price: item.newItemCostPrice,
+            selling_price: item.newItemSellingPrice,
+            quantity_available: item.quantity
+          }])
+          .select()
+          .single();
+
+        if (itemError) throw itemError;
+        
+        // Update item with new ID and name
+        item.itemId = newItem.id;
+        item.itemName = newItem.name;
+      }
+    }
+
     const purchaseData = {
-      supplier_id: formData.supplierId,
+      order_number: formData.invoiceNumber || `PO-${Date.now()}`,
       store_id: formData.storeId,
-      invoice_number: formData.invoiceNumber,
-      invoice_date: formData.invoiceDate,
+      supplier_id: formData.supplierId,
       date: formData.invoiceDate,
-      total_cost: getTotalAmount(),
-      items: validItems.map(item => {
-        if (item.isNewItem) {
-          return {
-            new_item: {
-              name: item.newItemName,
-              category_id: item.newItemCategoryId,
-              supplier_id: formData.supplierId,
-              store_id: formData.storeId,
-              cost_price: item.newItemCostPrice,
-              selling_price: item.newItemSellingPrice,
-              quantity_available: item.quantity
-            },
-            quantity: item.quantity,
-            unit_price: item.unitPrice,
-            total_price: item.totalPrice
-          };
-        } else {
-          return {
-            item_id: item.itemId,
-            variant_id: item.variantId || null,
-            quantity: item.quantity,
-            unit_price: item.unitPrice,
-            total_price: item.totalPrice
-          };
-        }
-      })
+      items: validItems.map(item => ({
+        item_id: item.itemId,
+        item_name: item.itemName,
+        variant_id: item.variantId || undefined,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total_price: item.totalPrice
+      }))
     };
 
     await createPurchase.mutateAsync(purchaseData);

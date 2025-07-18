@@ -13,7 +13,7 @@ interface PurchaseFormBasicInfoProps {
     storeId: string;
   };
   stores: Store[];
-  onFormDataChange: (updates: Partial<typeof formData>) => void;
+  onFormDataChange: (updates: Partial<PurchaseFormBasicInfoProps['formData']>) => void;
 }
 
 export default function PurchaseFormBasicInfo({
