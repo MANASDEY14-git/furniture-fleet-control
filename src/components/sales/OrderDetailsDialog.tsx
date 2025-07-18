@@ -20,10 +20,35 @@ export default function OrderDetailsDialog({
 }: OrderDetailsDialogProps) {
   if (!viewingOrder) return null;
 
-  const { data: order, isLoading, error } = useSingleSalesOrder(viewingOrder.id);
+  // Use id or sale_id for fetching
+  const orderId = viewingOrder.id || viewingOrder.sale_id;
+  const { data: order, isLoading, error } = useSingleSalesOrder(orderId);
   const orderItems = order?.sales_order_items || [];
-  console.log('Fetched order:', order);
-  console.log('Order items:', orderItems);
+
+  if (isLoading) {
+    return (
+      <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
+        <DialogContent className="futuristic-card max-w-6xl">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300">Loading Order...</DialogTitle>
+          </DialogHeader>
+          <div>Loading order details...</div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+  if (error) {
+    return (
+      <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
+        <DialogContent className="futuristic-card max-w-6xl">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300">Error</DialogTitle>
+          </DialogHeader>
+          <div className="text-red-500">Failed to load order details. Please try again.</div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
