@@ -95,43 +95,58 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
         });
       });
 
-      // Fetch sales
-      let salesQuery = supabase
-        .from('sales')
+      // Fetch sales from sales_order_items with sales_orders
+      let salesOrderItemsQuery = supabase
+        .from('sales_order_items')
         .select(`
           id,
-          date,
           item_name,
           item_id,
           quantity,
+          unit_price,
           total_price,
-          store_id
-        `)
-        .gte('date', startDate.toISOString().split('T')[0])
-        .lte('date', endDate.toISOString().split('T')[0]);
+          order_id,
+          sales_orders!inner (
+            date,
+            store_id,
+            order_number
+          )
+        `);
 
-      if (itemId && itemId !== 'all') {
-        salesQuery = salesQuery.eq('item_id', itemId);
-      }
-      if (storeId) {
-        salesQuery = salesQuery.eq('store_id', storeId);
-      }
-
-      const { data: sales, error: salesError } = await salesQuery;
+      const { data: salesOrderItems, error: salesError } = await salesOrderItemsQuery;
       if (salesError) throw salesError;
 
-      // Add sales to stock entries
-      sales?.forEach(sale => {
-        const unitPrice = sale.quantity > 0 ? sale.total_price / sale.quantity : 0;
+      // Filter and add sales to stock entries
+      salesOrderItems?.forEach(saleItem => {
+        const saleDate = saleItem.sales_orders.date;
+        const saleStoreId = saleItem.sales_orders.store_id;
+        
+        // Apply date filter
+        const saleDateTime = new Date(saleDate);
+        if (saleDateTime < startDate || saleDateTime > endDate) {
+          return;
+        }
+
+        // Apply item filter
+        if (itemId && itemId !== 'all' && saleItem.item_id !== itemId) {
+          return;
+        }
+
+        // Apply store filter
+        if (storeId && saleStoreId !== storeId) {
+          return;
+        }
+
         stockEntries.push({
-          date: sale.date,
+          date: saleDate,
           type: 'sale',
-          item_name: sale.item_name,
-          item_id: sale.item_id,
-          quantity: sale.quantity,
-          unit_price: unitPrice,
-          total_amount: sale.total_price,
-          store_id: sale.store_id
+          item_name: saleItem.item_name,
+          item_id: saleItem.item_id,
+          quantity: saleItem.quantity,
+          unit_price: saleItem.unit_price,
+          total_amount: saleItem.total_price,
+          reference_number: saleItem.sales_orders.order_number,
+          store_id: saleStoreId
         });
       });
 
