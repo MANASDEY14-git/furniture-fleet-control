@@ -53,6 +53,7 @@ export const useCreateSalesOrder = () => {
       const orderItems = data.items.map(item => ({
         order_id: order.id,
         item_id: item.item_id,
+        variant_id: item.variant_id || null,
         item_name: item.item_name,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -89,24 +90,9 @@ export const useCreateSalesOrder = () => {
         }
       }
 
-      // Update inventory for each item
-      for (const item of data.items) {
-        const { data: currentItem, error: fetchError } = await supabase
-          .from('items')
-          .select('quantity_available')
-          .eq('id', item.item_id)
-          .single();
-
-        if (fetchError) continue; // Skip if item not found
-
-        await supabase
-          .from('items')
-          .update({ 
-            quantity_available: Math.max(0, (currentItem.quantity_available || 0) - item.quantity),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', item.item_id);
-      }
+      // Note: Stock deduction is now handled by database triggers
+      // The handle_sales_variant_stock_v2 trigger will automatically
+      // deduct stock from variants or items based on sales_order_items
 
       return order;
     },

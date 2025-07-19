@@ -277,6 +277,13 @@ export type Database = {
             referencedRelation: "item_variants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "item_variant_attributes_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_details"
+            referencedColumns: ["id"]
+          },
         ]
       }
       item_variants: {
@@ -647,6 +654,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       purchases: {
         Row: {
           created_at: string | null
@@ -656,6 +693,7 @@ export type Database = {
           invoice_number: string | null
           item_id: string | null
           item_name: string
+          items: Json | null
           quantity: number
           store_id: string | null
           supplier_id: string | null
@@ -669,6 +707,7 @@ export type Database = {
           invoice_number?: string | null
           item_id?: string | null
           item_name: string
+          items?: Json | null
           quantity: number
           store_id?: string | null
           supplier_id?: string | null
@@ -682,6 +721,7 @@ export type Database = {
           invoice_number?: string | null
           item_id?: string | null
           item_name?: string
+          items?: Json | null
           quantity?: number
           store_id?: string | null
           supplier_id?: string | null
@@ -834,6 +874,7 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
@@ -844,6 +885,7 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
@@ -854,8 +896,23 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit_price?: number
+          variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_variant_id"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_variant_id"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_details"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_order_items_item_id_fkey"
             columns: ["item_id"]
@@ -875,6 +932,20 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_details"
             referencedColumns: ["id"]
           },
         ]
@@ -1068,6 +1139,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       payment_summary: {
@@ -1120,12 +1212,49 @@ export type Database = {
           },
         ]
       }
+      variant_details: {
+        Row: {
+          category_id: string | null
+          cost_price: number | null
+          created_at: string | null
+          id: string | null
+          item_id: string | null
+          item_name: string | null
+          quantity_available: number | null
+          selling_price: number | null
+          sku: string | null
+          updated_at: string | null
+          variant_display_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_variants_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1252,6 +1381,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "employee"],
+    },
   },
 } as const

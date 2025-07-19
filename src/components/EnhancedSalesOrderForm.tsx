@@ -152,6 +152,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       advance_paid: formData.advancePaid,
       items: validItems.map(item => ({
         item_id: item.itemId,
+        variant_id: item.variantId || null,
         item_name: item.itemName,
         quantity: item.quantity,
         unit_price: item.unitPrice,

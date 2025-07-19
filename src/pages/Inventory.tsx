@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InventoryHeader from '@/components/inventory/InventoryHeader';
 import InventoryTable from '@/components/inventory/InventoryTable';
+import VariantSystemTest from '@/components/VariantSystemTest';
 import { useItems, useDeleteItem } from '@/hooks/useItems';
 import { usePaginatedItems } from '@/hooks/usePaginatedItems';
 import { useStores } from '@/hooks/useStores';
@@ -135,7 +136,12 @@ export default function Inventory() {
   return (
     <ErrorBoundary>
       <div className="space-y-6">
-        <InventoryHeader lowStockItems={lowStockItems} />
+        <div className="flex justify-between items-center">
+          <div className="flex-1">
+            <InventoryHeader lowStockItems={lowStockItems} />
+          </div>
+          <VariantSystemTest />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">

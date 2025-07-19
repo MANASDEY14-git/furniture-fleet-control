@@ -11,6 +11,7 @@ import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { PaginationControls } from '@/components/ui/pagination';
 import ItemForm from '@/components/ItemForm';
 import ItemVariantManager from '@/components/ItemVariantManager';
+import ItemVariantsDisplay from './ItemVariantsDisplay';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { Item } from '@/hooks/useItems';
 import type { Store } from '@/types';
@@ -239,14 +240,17 @@ export default function InventoryTable({
                       onCheckedChange={(checked) => onItemSelection(item.id, checked as boolean)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium text-blue-100 max-w-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate" title={item.name}>{item.name}</span>
-                      {isLowStock && (
-                        <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                      )}
-                    </div>
-                  </TableCell>
+                   <TableCell className="font-medium text-blue-100 max-w-xs">
+                     <div className="space-y-2">
+                       <div className="flex items-center gap-2">
+                         <span className="truncate" title={item.name}>{item.name}</span>
+                         {isLowStock && (
+                           <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                         )}
+                       </div>
+                       <ItemVariantsDisplay itemId={item.id} itemName={item.name} />
+                     </div>
+                   </TableCell>
                   <TableCell className="text-blue-200">{store?.name || 'Unknown'}</TableCell>
                   <TableCell className="text-blue-200">{category?.name || 'Unknown'}</TableCell>
                   <TableCell className={`${isLowStock ? 'text-orange-300 font-semibold' : 'text-blue-200'}`}>
