@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, DollarSign, FileText, Settings, Menu, X, Calendar, CreditCard, Users, BookOpen } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, DollarSign, FileText, Settings, Menu, X, Calendar, CreditCard, Users, BookOpen, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 const navigation = [{
   name: 'Dashboard',
-  href: '/',
+  href: '/dashboard',
   icon: LayoutDashboard
 }, {
   name: 'Sales',
@@ -62,6 +63,11 @@ export default function Layout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { signOut, user } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
   return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
@@ -128,6 +134,15 @@ export default function Layout({
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-blue-500/30" />
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-blue-200">
+                {user?.email}
+              </span>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-blue-200 hover:text-blue-100">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
             </div>
           </div>
         </div>

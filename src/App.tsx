@@ -2,7 +2,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
+import Auth from '@/pages/Auth';
+import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import Sales from '@/pages/Sales';
 import DeliveryCalendar from '@/pages/DeliveryCalendar';
@@ -32,28 +36,38 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <Layout>
+      <AuthProvider>
+        <Router>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/delivery-calendar" element={<DeliveryCalendar />} />
-            <Route path="/enhanced-payments" element={<EnhancedPayments />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/purchases" element={<Purchases />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/supplier-ledger" element={<SupplierLedger />} />
-        <Route path="/materials" element={<Materials />} />
-        <Route path="/material-purchases" element={<MaterialPurchases />} />
-            <Route path="/stock-ledger" element={<StockLedger />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/sales" element={<Sales />} />
+                    <Route path="/delivery-calendar" element={<DeliveryCalendar />} />
+                    <Route path="/enhanced-payments" element={<EnhancedPayments />} />
+                    <Route path="/inventory" element={<Inventory />} />
+                    <Route path="/purchases" element={<Purchases />} />
+                    <Route path="/payments" element={<Payments />} />
+                    <Route path="/suppliers" element={<Suppliers />} />
+                    <Route path="/supplier-ledger" element={<SupplierLedger />} />
+                    <Route path="/materials" element={<Materials />} />
+                    <Route path="/material-purchases" element={<MaterialPurchases />} />
+                    <Route path="/stock-ledger" element={<StockLedger />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </Layout>
-        <Toaster />
-      </Router>
+          <Toaster />
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
