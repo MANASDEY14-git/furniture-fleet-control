@@ -69,7 +69,7 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
         .gte('date', startDate.toISOString().split('T')[0])
         .lte('date', endDate.toISOString().split('T')[0]);
 
-      if (itemId) {
+      if (itemId && itemId !== 'all') {
         purchaseQuery = purchaseQuery.eq('item_id', itemId);
       }
       if (storeId) {
@@ -110,7 +110,7 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
         .gte('date', startDate.toISOString().split('T')[0])
         .lte('date', endDate.toISOString().split('T')[0]);
 
-      if (itemId) {
+      if (itemId && itemId !== 'all') {
         salesQuery = salesQuery.eq('item_id', itemId);
       }
       if (storeId) {

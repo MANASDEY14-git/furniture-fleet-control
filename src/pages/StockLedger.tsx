@@ -13,7 +13,7 @@ import { useStockLedger } from '@/hooks/useStockLedger';
 import { format } from 'date-fns';
 
 export default function StockLedger() {
-  const [selectedItem, setSelectedItem] = useState<string>('');
+  const [selectedItem, setSelectedItem] = useState<string>('all');
   const [selectedStore, setSelectedStore] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'custom'>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
@@ -74,7 +74,7 @@ export default function StockLedger() {
                   <SelectValue placeholder="Select an item" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Items</SelectItem>
+                  <SelectItem value="all">All Items</SelectItem>
                   {items.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
                       {item.name}
