@@ -43,6 +43,10 @@ const navigation = [{
   href: '/supplier-ledger',
   icon: BookOpen
 }, {
+  name: 'Stock Ledger',
+  href: '/stock-ledger',
+  icon: BookOpen
+}, {
   name: 'Reports',
   href: '/reports',
   icon: FileText
