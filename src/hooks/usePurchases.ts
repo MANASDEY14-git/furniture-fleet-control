@@ -24,7 +24,7 @@ export const useCreatePurchase = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: CreatePurchaseData & { createNewItem?: boolean; itemData?: any }) => {
+    mutationFn: async (data: CreatePurchaseData & { createNewItem?: boolean; itemData?: any; variantId?: string }) => {
       // If creating a new item, add it to inventory first
       if (data.createNewItem && data.itemData) {
         const { data: newItem, error: itemError } = await supabase
@@ -49,6 +49,14 @@ export const useCreatePurchase = () => {
         data.item_name = newItem.name;
       }
 
+      // Create items array for the database function to handle variants properly
+      const itemsArray = [{
+        item_id: data.item_id,
+        variant_id: data.variantId || null,
+        quantity: data.quantity,
+        unit_price: data.total_cost / data.quantity
+      }];
+
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert([{
@@ -59,40 +67,16 @@ export const useCreatePurchase = () => {
           invoice_number: data.invoice_number,
           quantity: data.quantity,
           total_cost: data.total_cost,
-          date: data.date
+          date: data.date,
+          items: itemsArray // Add items JSON for variant handling
         }])
         .select()
         .single();
 
       if (purchaseError) throw purchaseError;
 
-      // If not creating new item, update existing item quantity
-      if (!data.createNewItem) {
-        const { data: currentItem, error: fetchError } = await supabase
-          .from('items')
-          .select('quantity_available')
-          .eq('id', data.item_id)
-          .single();
-
-        if (fetchError) {
-          await supabase.from('purchases').delete().eq('id', purchase.id);
-          throw fetchError;
-        }
-
-        const { error: updateError } = await supabase
-          .from('items')
-          .update({ 
-            quantity_available: (currentItem.quantity_available || 0) + data.quantity,
-            updated_at: new Date().toISOString(),
-            last_restocked_date: data.date
-          })
-          .eq('id', data.item_id);
-
-        if (updateError) {
-          await supabase.from('purchases').delete().eq('id', purchase.id);
-          throw updateError;
-        }
-      }
+      // The database function will handle stock updates automatically
+      // No need for manual stock updates here since the trigger handles it
 
       return purchase;
     },

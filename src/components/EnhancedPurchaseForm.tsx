@@ -70,6 +70,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
       quantity: formData.quantity,
       total_cost: formData.totalCost,
       date: formData.date,
+      variantId: formData.variantId || undefined, // Pass variant ID for proper stock handling
       createNewItem: isNewItem,
       itemData: isNewItem ? {
         name: newItemData.name,
