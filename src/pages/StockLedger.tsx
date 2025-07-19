@@ -43,18 +43,18 @@ export default function StockLedger() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Stock Ledger</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">Stock Ledger</h1>
       </div>
 
       {/* Filters */}
       <Card className="bg-slate-800/50 border-blue-500/30">
-        <CardHeader>
-          <CardTitle className="text-white">Filters</CardTitle>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-white text-lg sm:text-xl">Filters</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Date Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-blue-200">Date Filter</label>
@@ -100,11 +100,11 @@ export default function StockLedger() {
             <div className="flex items-end">
               <Button 
                 onClick={handleSearch} 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10"
                 disabled={stockLoading}
               >
-                <Search className="w-4 h-4 mr-2" />
-                Search
+                <Search className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Search</span>
               </Button>
             </div>
           </div>
@@ -113,61 +113,86 @@ export default function StockLedger() {
 
       {/* Results Table */}
       <Card className="bg-slate-800/50 border-blue-500/30">
-        <CardHeader>
-          <CardTitle className="text-white">Stock Movements</CardTitle>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-white text-lg sm:text-xl">Stock Movements</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {stockLoading ? (
             <div className="text-center py-8 text-blue-200">Loading stock data...</div>
           ) : stockData.length === 0 ? (
-            <div className="text-center py-8 text-blue-200">
+            <div className="text-center py-8 text-blue-200 px-4">
               No stock movements found for the selected criteria.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-blue-500/30 hover:bg-slate-700/50">
-                  <TableHead className="text-blue-200">Date</TableHead>
-                  <TableHead className="text-blue-200">Type</TableHead>
-                  <TableHead className="text-blue-200">Item</TableHead>
-                  <TableHead className="text-blue-200">Quantity</TableHead>
-                  <TableHead className="text-blue-200">Unit Price</TableHead>
-                  <TableHead className="text-blue-200">Total Amount</TableHead>
-                  <TableHead className="text-blue-200">Reference</TableHead>
-                  <TableHead className="text-blue-200">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stockData.map((transaction, index) => (
-                  <TableRow key={index} className="border-blue-500/30 hover:bg-slate-700/50">
-                    <TableCell className="text-white">
-                      {format(new Date(transaction.date), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getTransactionTypeColor(transaction.type)}>
-                        {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-white">{transaction.item_name}</TableCell>
-                    <TableCell className="text-white">{transaction.quantity}</TableCell>
-                    <TableCell className="text-white">₹{transaction.unit_price}</TableCell>
-                    <TableCell className="text-white">₹{transaction.total_amount}</TableCell>
-                    <TableCell className="text-white">
-                      {transaction.reference_number || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-blue-200 hover:text-blue-100 hover:bg-blue-800/30"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-blue-500/30 hover:bg-slate-700/50">
+                    <TableHead className="text-blue-200 min-w-[100px]">Date</TableHead>
+                    <TableHead className="text-blue-200 min-w-[80px]">Type</TableHead>
+                    <TableHead className="text-blue-200 min-w-[120px]">Item</TableHead>
+                    <TableHead className="text-blue-200 min-w-[80px] text-right">Qty</TableHead>
+                    <TableHead className="text-blue-200 min-w-[100px] text-right hidden sm:table-cell">Unit Price</TableHead>
+                    <TableHead className="text-blue-200 min-w-[100px] text-right">Total</TableHead>
+                    <TableHead className="text-blue-200 min-w-[100px] hidden md:table-cell">Reference</TableHead>
+                    <TableHead className="text-blue-200 min-w-[80px] text-center">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {stockData.map((transaction, index) => (
+                    <TableRow key={index} className="border-blue-500/30 hover:bg-slate-700/50">
+                      <TableCell className="text-white text-sm">
+                        <div className="font-medium">{format(new Date(transaction.date), 'dd/MM/yy')}</div>
+                        <div className="text-xs text-blue-200 sm:hidden">
+                          {format(new Date(transaction.date), 'MMM dd')}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`${getTransactionTypeColor(transaction.type)} text-xs px-2 py-1`}>
+                          <span className="hidden sm:inline">
+                            {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                          </span>
+                          <span className="sm:hidden">
+                            {transaction.type.charAt(0).toUpperCase()}
+                          </span>
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-white text-sm">
+                        <div className="truncate max-w-[120px] sm:max-w-none" title={transaction.item_name}>
+                          {transaction.item_name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-white text-sm text-right font-medium">
+                        {transaction.quantity}
+                      </TableCell>
+                      <TableCell className="text-white text-sm text-right hidden sm:table-cell">
+                        ₹{transaction.unit_price}
+                      </TableCell>
+                      <TableCell className="text-white text-sm text-right font-medium">
+                        <div>₹{transaction.total_amount}</div>
+                        <div className="text-xs text-blue-200 sm:hidden">
+                          @₹{transaction.unit_price}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-white text-sm hidden md:table-cell">
+                        <div className="truncate max-w-[100px]" title={transaction.reference_number || '-'}>
+                          {transaction.reference_number || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-blue-200 hover:text-blue-100 hover:bg-blue-800/30 h-8 w-8 p-0"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
