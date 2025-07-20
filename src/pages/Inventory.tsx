@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InventoryHeader from '@/components/inventory/InventoryHeader';
 import InventoryTable from '@/components/inventory/InventoryTable';
 import VariantSystemTest from '@/components/VariantSystemTest';
+import StoreSelector from '@/components/StoreSelector';
 import { useItems, useDeleteItem } from '@/hooks/useItems';
 import { usePaginatedItems } from '@/hooks/usePaginatedItems';
 import { useStores } from '@/hooks/useStores';
@@ -176,8 +177,8 @@ export default function Inventory() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Search section moved here */}
-            <div className="mb-6">
+            {/* Search and filters section */}
+            <div className="mb-6 space-y-4">
               <div className="relative flex-1 max-w-md">
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
                 <input
@@ -186,6 +187,15 @@ export default function Inventory() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-300/50 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                />
+              </div>
+              
+              <div className="flex gap-4 flex-wrap">
+                <StoreSelector
+                  value={storeFilter}
+                  onValueChange={setStoreFilter}
+                  stores={stores}
+                  placeholder="All stores"
                 />
               </div>
             </div>
