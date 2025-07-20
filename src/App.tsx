@@ -8,6 +8,7 @@ import Layout from '@/components/Layout';
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
+import Onboarding from '@/pages/Onboarding';
 import Sales from '@/pages/Sales';
 import DeliveryCalendar from '@/pages/DeliveryCalendar';
 import EnhancedPayments from '@/pages/EnhancedPayments';
@@ -40,6 +41,11 @@ function App() {
         <Router>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/onboarding" element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            } />
             <Route path="/*" element={
               <ProtectedRoute>
                 <Layout>
