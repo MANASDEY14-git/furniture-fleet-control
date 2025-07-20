@@ -68,25 +68,11 @@ export default function InventoryTable({
 }: InventoryTableProps) {
   const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price' | 'age'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [filterByStore, setFilterByStore] = useState<string>('all');
-  const [filterByCategory, setFilterByCategory] = useState<string>('all');
-  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
-
-  const filteredAndSortedItems = useMemo(() => {
-    let filtered = items.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        stores.find(store => store.id === item.store_id)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        categories.find(cat => cat.id === item.category_id)?.name.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStore = filterByStore === 'all' || item.store_id === filterByStore;
-      const matchesCategory = filterByCategory === 'all' || item.category_id === filterByCategory;
-      const matchesLowStock = !showLowStockOnly || item.quantity_available < 10;
-
-      return matchesSearch && matchesStore && matchesCategory && matchesLowStock;
-    });
-
-    // Sort items
-    filtered.sort((a, b) => {
+  const sortedItems = useMemo(() => {
+    // Since filtering is handled by usePaginatedItems hook, we only need to sort
+    const sorted = [...items];
+    
+    sorted.sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
         case 'name':
@@ -107,8 +93,8 @@ export default function InventoryTable({
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-    return filtered;
-  }, [items, searchTerm, stores, categories, sortBy, sortOrder, filterByStore, filterByCategory, showLowStockOnly]);
+    return sorted;
+  }, [items, sortBy, sortOrder]);
 
   if (isLoading) {
     return <LoadingSkeleton type="table" rows={10} cols={8} />;
@@ -150,46 +136,6 @@ export default function InventoryTable({
           </Button>
         </div>
 
-        <div className="flex gap-4">
-          <Select value={filterByStore} onValueChange={setFilterByStore}>
-            <SelectTrigger className="w-48 neon-border bg-slate-800/50 text-blue-100">
-              <SelectValue placeholder="All stores" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-500/30">
-              <SelectItem value="all" className="text-blue-100">All Stores</SelectItem>
-              {stores.map((store) => (
-                <SelectItem key={store.id} value={store.id} className="text-blue-100">
-                  {store.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={filterByCategory} onValueChange={setFilterByCategory}>
-            <SelectTrigger className="w-48 neon-border bg-slate-800/50 text-blue-100">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-500/30">
-              <SelectItem value="all" className="text-blue-100">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id} className="text-blue-100">
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="lowStock"
-              checked={showLowStockOnly}
-              onCheckedChange={(checked) => setShowLowStockOnly(checked as boolean)}
-            />
-            <label htmlFor="lowStock" className="text-sm text-blue-200 cursor-pointer">
-              Low stock only
-            </label>
-          </div>
-        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -198,10 +144,10 @@ export default function InventoryTable({
             <TableRow className="border-blue-500/30">
               <TableHead className="text-blue-200 w-12">
                 <Checkbox
-                  checked={selectedItems.length === filteredAndSortedItems.length && filteredAndSortedItems.length > 0}
+                  checked={selectedItems.length === sortedItems.length && sortedItems.length > 0}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      const allItemIds = filteredAndSortedItems.map(item => item.id);
+                      const allItemIds = sortedItems.map(item => item.id);
                       allItemIds.forEach(id => onItemSelection(id, true));
                     } else {
                       selectedItems.forEach(id => onItemSelection(id, false));
@@ -220,7 +166,7 @@ export default function InventoryTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedItems.map((item) => {
+            {sortedItems.map((item) => {
               const store = stores.find(s => s.id === item.store_id);
               const category = categories.find(c => c.id === item.category_id);
               const isLowStock = item.quantity_available < 10;
@@ -312,7 +258,7 @@ export default function InventoryTable({
         </Table>
       </div>
 
-      {filteredAndSortedItems.length === 0 && !isLoading && (
+      {sortedItems.length === 0 && !isLoading && (
         <div className="text-center py-8">
           <p className="text-blue-300">No items found matching your criteria</p>
         </div>
@@ -331,8 +277,7 @@ export default function InventoryTable({
 
       {!pagination && (
         <div className="mt-4 text-sm text-blue-300">
-          Showing {filteredAndSortedItems.length} of {items.length} items
-          {showLowStockOnly && ` (low stock only)`}
+          Showing {sortedItems.length} of {items.length} items
         </div>
       )}
     </>
