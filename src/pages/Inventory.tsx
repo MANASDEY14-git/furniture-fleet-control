@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Package2, ShoppingCart } from 'lucide-react';
+import { Plus, Package2, ShoppingCart, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InventoryHeader from '@/components/inventory/InventoryHeader';
@@ -176,6 +176,19 @@ export default function Inventory() {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Search section moved here */}
+            <div className="mb-6">
+              <div className="relative flex-1 max-w-md">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search items, stores, categories..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-300/50 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
+                />
+              </div>
+            </div>
             {paginatedError ? (
               <QueryErrorFallback 
                 error={paginatedError} 
@@ -186,8 +199,6 @@ export default function Inventory() {
                 items={paginatedItems}
                 stores={stores}
                 categories={categories}
-                searchTerm={searchTerm}
-                onSearchTermChange={setSearchTerm}
                 selectedItems={selectedItems}
                 onItemSelection={handleItemSelection}
                 onDeleteItem={handleDeleteItem}

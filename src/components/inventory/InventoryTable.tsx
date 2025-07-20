@@ -21,8 +21,6 @@ interface InventoryTableProps {
   items: Item[];
   stores: Store[];
   categories: Category[];
-  searchTerm: string;
-  onSearchTermChange: (value: string) => void;
   selectedItems: string[];
   onItemSelection: (itemId: string, checked: boolean) => void;
   onDeleteItem: (id: string) => void;
@@ -57,8 +55,6 @@ export default function InventoryTable({
   items,
   stores,
   categories,
-  searchTerm,
-  onSearchTermChange,
   selectedItems,
   onItemSelection,
   onDeleteItem,
@@ -102,18 +98,8 @@ export default function InventoryTable({
 
   return (
     <>
-      <div className="flex flex-col gap-4 mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
-            <Input
-              placeholder="Search items, stores, categories..."
-              value={searchTerm}
-              onChange={(e) => onSearchTermChange(e.target.value)}
-              className="pl-10 neon-border bg-slate-800/50 text-blue-100"
-            />
-          </div>
-          
           <Select value={sortBy} onValueChange={(value: 'name' | 'quantity' | 'price' | 'age') => setSortBy(value)}>
             <SelectTrigger className="w-32 neon-border bg-slate-800/50 text-blue-100">
               <SelectValue />
@@ -135,7 +121,6 @@ export default function InventoryTable({
             {sortOrder === 'asc' ? '↑' : '↓'}
           </Button>
         </div>
-
       </div>
 
       <div className="overflow-x-auto">
