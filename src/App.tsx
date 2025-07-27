@@ -22,6 +22,7 @@ import SupplierLedger from '@/pages/SupplierLedger';
 import Materials from '@/pages/Materials';
 import MaterialPurchases from '@/pages/MaterialPurchases';
 import StockLedger from '@/pages/StockLedger';
+import BOMManagement from '@/pages/BOMManagement';
 import NotFound from '@/pages/NotFound';
 import './App.css';
 
@@ -62,6 +63,7 @@ function App() {
                     <Route path="/supplier-ledger" element={<SupplierLedger />} />
                     <Route path="/materials" element={<Materials />} />
                     <Route path="/material-purchases" element={<MaterialPurchases />} />
+                    <Route path="/bom-management" element={<BOMManagement />} />
                     <Route path="/stock-ledger" element={<StockLedger />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/settings" element={<Settings />} />
