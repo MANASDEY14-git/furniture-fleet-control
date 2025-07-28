@@ -47,11 +47,11 @@ export const useItemVariants = (itemId?: string) => {
           item_variant_attributes (
             id,
             attribute_value_id,
-            attribute_values (
+            attribute_values!item_variant_attributes_attribute_value_id_fkey (
               id,
               value,
               attribute_id,
-              attributes (
+              attributes!fk_attribute_values_attribute_id (
                 id,
                 name
               )
