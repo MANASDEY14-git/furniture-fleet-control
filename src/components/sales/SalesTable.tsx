@@ -99,16 +99,15 @@ export default function SalesTable({
                         <Eye className="w-4 h-4" />
                       </Button>
                       
-                      {order.balance_due > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-400 hover:text-green-300 hover:bg-green-900/20"
-                          onClick={() => setRecordingPayment(order)}
-                        >
-                          <Receipt className="w-4 h-4" />
-                        </Button>
-                      )}
+                      {/* Temporarily always show payment button for testing */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-400 hover:text-green-300 hover:bg-green-900/20"
+                        onClick={() => setRecordingPayment(order)}
+                      >
+                        <Receipt className="w-4 h-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
