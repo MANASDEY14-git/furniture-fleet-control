@@ -9,6 +9,7 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
 import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
 import { supabase } from '@/integrations/supabase/client';
+
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const {
@@ -81,6 +82,7 @@ export default function RealDashboard() {
       refetchSalePaymentStatus();
     }).subscribe();
     channels.push(paymentsChannel);
+    
     return () => {
       channels.forEach(channel => {
         supabase.removeChannel(channel);
@@ -99,12 +101,17 @@ export default function RealDashboard() {
 
   // Calculate customers with outstanding balance
   const customersWithBalance = salePaymentStatus.filter(sale => sale.balance_due > 0).length;
+  
   if (metricsLoading) {
-    return <div className="flex items-center justify-center h-64">
+    return (
+      <div className="flex items-center justify-center h-64">
         <div className="text-lg text-foreground">Loading dashboard...</div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-8">
+
+  return (
+    <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-8">
       {/* Welcome Header */}
       <Card className="simple-card">
         <CardContent className="p-6 md:p-8">
@@ -120,13 +127,13 @@ export default function RealDashboard() {
             <div className="text-left lg:text-right space-y-2">
               <p className="text-foreground font-medium text-lg md:text-xl">
                 {currentTime.toLocaleString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </p>
               <p className="text-muted-foreground text-sm">
                 {stores.length} Active Stores
@@ -252,7 +259,6 @@ export default function RealDashboard() {
         <EnhancedMetricsGrid metrics={metrics} isLoading={metricsLoading} />
       </div>
 
-
       {/* Advanced Analytics Section */}
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-foreground">Advanced Analytics</h2>
@@ -269,7 +275,8 @@ export default function RealDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {(metrics?.lowStockCount || 0) > 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+            {(metrics?.lowStockCount || 0) > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
                 <Package className="w-5 h-5 text-foreground" />
                 <div>
                   <p className="text-foreground font-semibold">Low Stock Alert</p>
@@ -277,9 +284,11 @@ export default function RealDashboard() {
                     {metrics?.lowStockCount} items are running low on stock
                   </p>
                 </div>
-              </div>}
+              </div>
+            )}
             
-            {overdueDeliveries > 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+            {overdueDeliveries > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
                 <Truck className="w-5 h-5 text-foreground" />
                 <div>
                   <p className="text-foreground font-semibold">Overdue Deliveries</p>
@@ -287,9 +296,11 @@ export default function RealDashboard() {
                     {overdueDeliveries} deliveries are past their due date
                   </p>
                 </div>
-              </div>}
+              </div>
+            )}
             
-            {customersWithBalance > 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+            {customersWithBalance > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
                 <DollarSign className="w-5 h-5 text-foreground" />
                 <div>
                   <p className="text-foreground font-semibold">Outstanding Payments</p>
@@ -297,9 +308,11 @@ export default function RealDashboard() {
                     {customersWithBalance} customers have outstanding balances totaling {formatCurrency(metrics?.outstandingBalance || 0)}
                   </p>
                 </div>
-              </div>}
+              </div>
+            )}
             
-            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
+            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && (
+              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
                 <TrendingUp className="w-5 h-5 text-foreground" />
                 <div>
                   <p className="text-foreground font-semibold">All Systems Normal</p>
@@ -307,9 +320,11 @@ export default function RealDashboard() {
                     Your business is running smoothly with no critical alerts
                   </p>
                 </div>
-              </div>}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 }
