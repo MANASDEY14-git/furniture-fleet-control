@@ -115,7 +115,7 @@ export default function RealDashboard() {
         <div className="text-lg text-foreground">Loading dashboard...</div>
       </div>;
   }
-  return <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-6">
+  return <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-8">
       {/* Welcome Header */}
       <Card className="simple-card">
         <CardContent className="p-6 md:p-8">
@@ -148,7 +148,7 @@ export default function RealDashboard() {
       </Card>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="simple-card">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
@@ -258,7 +258,7 @@ export default function RealDashboard() {
       </div>
 
       {/* Enhanced Metrics Grid */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <h2 className="text-2xl font-bold text-foreground">Business Analytics</h2>
         <EnhancedMetricsGrid metrics={metrics} isLoading={metricsLoading} />
       </div>
@@ -270,7 +270,7 @@ export default function RealDashboard() {
       </div>
 
       {/* Advanced Analytics Section */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <h2 className="text-2xl font-bold text-foreground">Advanced Analytics</h2>
         <BusinessAnalyticsSection metrics={metrics} isLoading={metricsLoading} />
       </div>

@@ -11,15 +11,15 @@ interface BusinessAnalyticsSectionProps {
 export default function BusinessAnalyticsSection({ metrics, isLoading }: BusinessAnalyticsSectionProps) {
   if (isLoading) {
     return (
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
         <Card className="simple-card animate-pulse">
           <CardContent className="p-6">
-            <div className="h-64 bg-muted rounded" />
+            <div className="h-80 bg-muted rounded" />
           </CardContent>
         </Card>
         <Card className="simple-card animate-pulse">
           <CardContent className="p-6">
-            <div className="h-64 bg-muted rounded" />
+            <div className="h-80 bg-muted rounded" />
           </CardContent>
         </Card>
       </div>
@@ -51,15 +51,15 @@ export default function BusinessAnalyticsSection({ metrics, isLoading }: Busines
   const COLORS = ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6'];
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-8">
+      <div className="grid gap-8 lg:grid-cols-2">
         {/* Order Status Distribution */}
         <Card className="simple-card">
           <CardHeader>
             <CardTitle className="text-foreground">Order Status Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="p-6">
+            <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
                   data={orderStatusData}
@@ -84,8 +84,8 @@ export default function BusinessAnalyticsSection({ metrics, isLoading }: Busines
           <CardHeader>
             <CardTitle className="text-foreground">Inventory Value Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="p-6">
+            <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
                   data={inventoryStatusData}
@@ -111,8 +111,8 @@ export default function BusinessAnalyticsSection({ metrics, isLoading }: Busines
         <CardHeader>
           <CardTitle className="text-foreground">Financial Overview</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+        <CardContent className="p-6">
+          <ResponsiveContainer width="100%" height={320}>
             <BarChart data={financialData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 

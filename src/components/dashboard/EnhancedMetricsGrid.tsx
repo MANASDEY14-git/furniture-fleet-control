@@ -22,12 +22,12 @@ interface EnhancedMetricsGridProps {
 
 export default function EnhancedMetricsGrid({ metrics, isLoading }: EnhancedMetricsGridProps) {
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i} className="simple-card animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-20 bg-muted rounded" />
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Card key={i} className="simple-card animate-pulse">
+          <CardContent className="p-6">
+            <div className="h-24 bg-muted rounded" />
             </CardContent>
           </Card>
         ))}
@@ -104,26 +104,26 @@ export default function EnhancedMetricsGrid({ metrics, isLoading }: EnhancedMetr
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {metricCards.map((metric, index) => (
         <Card key={index} className="simple-card hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
+          <CardContent className="p-6 space-y-3">
+            <div className="flex items-start gap-4">
               <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
                 {React.cloneElement(metric.icon, { className: "w-5 h-5 text-foreground" })}
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-muted-foreground">{metric.title}</p>
-                <p className="text-xl font-bold text-foreground truncate">
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-sm font-medium text-muted-foreground leading-tight">{metric.title}</p>
+                <p className="text-xl font-bold text-foreground truncate leading-tight">
                   {metric.value}
                 </p>
                 {metric.description && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground leading-tight">
                     {metric.description}
                   </p>
                 )}
                 {metric.trend && (
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-2 pt-1">
                     {metric.trend.value >= 0 ? (
                       <TrendingUp className="w-3 h-3 text-green-500" />
                     ) : (
