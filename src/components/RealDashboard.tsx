@@ -6,9 +6,6 @@ import { useRealDashboardMetrics } from '@/hooks/useRealDashboardMetrics';
 import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
 import { formatCurrency } from '@/utils/currencyUtils';
-import SalesTrendChart from '@/components/SalesTrendChart';
-import TopSellingChart from '@/components/TopSellingChart';
-import { useEnhancedDashboardMetrics } from '@/hooks/useEnhancedDashboardMetrics';
 import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
 import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,10 +23,6 @@ export default function RealDashboard() {
   const {
     data: stores = []
   } = useStores();
-  const {
-    data: dashboardMetrics,
-    refetch: refetchDashboardMetrics
-  } = useEnhancedDashboardMetrics('month');
 
   // Update time every minute
   useEffect(() => {
@@ -52,7 +45,6 @@ export default function RealDashboard() {
       console.log('Sales data changed, refreshing dashboard...');
       refetchMetrics();
       refetchSalePaymentStatus();
-      refetchDashboardMetrics();
     }).subscribe();
     channels.push(salesChannel);
 
@@ -64,7 +56,6 @@ export default function RealDashboard() {
     }, () => {
       console.log('Purchases data changed, refreshing dashboard...');
       refetchMetrics();
-      refetchDashboardMetrics();
     }).subscribe();
     channels.push(purchasesChannel);
 
@@ -76,7 +67,6 @@ export default function RealDashboard() {
     }, () => {
       console.log('Items data changed, refreshing dashboard...');
       refetchMetrics();
-      refetchDashboardMetrics();
     }).subscribe();
     channels.push(itemsChannel);
 
@@ -89,7 +79,6 @@ export default function RealDashboard() {
       console.log('Payments data changed, refreshing dashboard...');
       refetchMetrics();
       refetchSalePaymentStatus();
-      refetchDashboardMetrics();
     }).subscribe();
     channels.push(paymentsChannel);
     return () => {
@@ -97,7 +86,7 @@ export default function RealDashboard() {
         supabase.removeChannel(channel);
       });
     };
-  }, [refetchMetrics, refetchSalePaymentStatus, refetchDashboardMetrics]);
+  }, [refetchMetrics, refetchSalePaymentStatus]);
 
   // Calculate overdue deliveries
   const overdueDeliveries = salePaymentStatus.filter(sale => {
@@ -263,11 +252,6 @@ export default function RealDashboard() {
         <EnhancedMetricsGrid metrics={metrics} isLoading={metricsLoading} />
       </div>
 
-      {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SalesTrendChart data={dashboardMetrics?.salesTrend || []} />
-        <TopSellingChart data={dashboardMetrics?.topSellingItems || []} />
-      </div>
 
       {/* Advanced Analytics Section */}
       <div className="space-y-6">
