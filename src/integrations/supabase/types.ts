@@ -967,6 +967,7 @@ export type Database = {
           date: string
           delivery_date: string | null
           delivery_status: string
+          description: string | null
           id: string
           order_number: string
           store_id: string | null
@@ -984,6 +985,7 @@ export type Database = {
           date: string
           delivery_date?: string | null
           delivery_status?: string
+          description?: string | null
           id?: string
           order_number: string
           store_id?: string | null
@@ -1001,6 +1003,7 @@ export type Database = {
           date?: string
           delivery_date?: string | null
           delivery_status?: string
+          description?: string | null
           id?: string
           order_number?: string
           store_id?: string | null
