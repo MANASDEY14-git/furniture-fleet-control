@@ -6,8 +6,6 @@ import { useRealDashboardMetrics } from '@/hooks/useRealDashboardMetrics';
 import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
 import { formatCurrency } from '@/utils/currencyUtils';
-import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
-import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function RealDashboard() {
@@ -143,17 +141,17 @@ export default function RealDashboard() {
         </CardContent>
       </Card>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Core Metrics - 2x2 Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="simple-card">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
-                <TrendingUp className="w-6 h-6 text-foreground" />
+          <CardContent className="p-8">
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-secondary rounded-lg flex-shrink-0">
+                <TrendingUp className="w-8 h-8 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                <p className="text-xl md:text-2xl font-bold text-foreground truncate">
+                <p className="text-base font-medium text-muted-foreground mb-2">Total Sales</p>
+                <p className="text-3xl font-bold text-foreground">
                   {formatCurrency(metrics?.totalSales || 0)}
                 </p>
               </div>
@@ -162,14 +160,14 @@ export default function RealDashboard() {
         </Card>
 
         <Card className="simple-card">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
-                <ShoppingCart className="w-6 h-6 text-foreground" />
+          <CardContent className="p-8">
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-secondary rounded-lg flex-shrink-0">
+                <ShoppingCart className="w-8 h-8 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-muted-foreground">Total Purchases</p>
-                <p className="text-xl md:text-2xl font-bold text-foreground truncate">
+                <p className="text-base font-medium text-muted-foreground mb-2">Total Purchases</p>
+                <p className="text-3xl font-bold text-foreground">
                   {formatCurrency(metrics?.totalPurchases || 0)}
                 </p>
               </div>
@@ -178,14 +176,14 @@ export default function RealDashboard() {
         </Card>
 
         <Card className="simple-card">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
-                <DollarSign className="w-6 h-6 text-foreground" />
+          <CardContent className="p-8">
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-secondary rounded-lg flex-shrink-0">
+                <DollarSign className="w-8 h-8 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-muted-foreground font-medium">Gross Profit</p>
-                <p className={`text-xl md:text-2xl font-bold truncate ${(metrics?.grossProfit || 0) >= 0 ? 'text-foreground' : 'text-destructive'}`}>
+                <p className="text-base font-medium text-muted-foreground mb-2">Gross Profit</p>
+                <p className={`text-3xl font-bold ${(metrics?.grossProfit || 0) >= 0 ? 'text-foreground' : 'text-destructive'}`}>
                   {formatCurrency(metrics?.grossProfit || 0)}
                 </p>
               </div>
@@ -194,14 +192,14 @@ export default function RealDashboard() {
         </Card>
 
         <Card className="simple-card">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
-                <AlertTriangle className="w-6 h-6 text-foreground" />
+          <CardContent className="p-8">
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-secondary rounded-lg flex-shrink-0">
+                <AlertTriangle className="w-8 h-8 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-muted-foreground font-medium">Low Stock Items</p>
-                <p className="text-xl md:text-2xl font-bold text-foreground">
+                <p className="text-base font-medium text-muted-foreground mb-2">Low Stock Items</p>
+                <p className="text-3xl font-bold text-foreground">
                   {metrics?.lowStockCount || 0}
                 </p>
               </div>
@@ -210,118 +208,22 @@ export default function RealDashboard() {
         </Card>
       </div>
 
-      {/* Financial Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="simple-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
-                <Users className="w-6 h-6 text-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-muted-foreground">Outstanding from Customers</p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
-                  {formatCurrency(metrics?.outstandingBalance || 0)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary">{customersWithBalance} customers</Badge>
-              <span className="text-sm text-muted-foreground">have pending payments</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="simple-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-secondary rounded-lg flex-shrink-0">
-                <TrendingDown className="w-6 h-6 text-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm text-muted-foreground">Payable to Suppliers</p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground truncate">
-                  {formatCurrency(metrics?.supplierPayable || 0)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="destructive">{overdueDeliveries} overdue</Badge>
-              <span className="text-sm text-muted-foreground">deliveries pending</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Enhanced Metrics Grid */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-foreground">Business Analytics</h2>
-        <EnhancedMetricsGrid metrics={metrics} isLoading={metricsLoading} />
-      </div>
-
-      {/* Advanced Analytics Section */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-foreground">Advanced Analytics</h2>
-        <BusinessAnalyticsSection metrics={metrics} isLoading={metricsLoading} />
-      </div>
-
-      {/* Alerts and Notifications */}
+      {/* Outstanding Payments - Full Width */}
       <Card className="simple-card">
-        <CardHeader>
-          <CardTitle className="text-foreground flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
-            Business Alerts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {(metrics?.lowStockCount || 0) > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
-                <Package className="w-5 h-5 text-foreground" />
-                <div>
-                  <p className="text-foreground font-semibold">Low Stock Alert</p>
-                  <p className="text-muted-foreground text-sm">
-                    {metrics?.lowStockCount} items are running low on stock
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {overdueDeliveries > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
-                <Truck className="w-5 h-5 text-foreground" />
-                <div>
-                  <p className="text-foreground font-semibold">Overdue Deliveries</p>
-                  <p className="text-muted-foreground text-sm">
-                    {overdueDeliveries} deliveries are past their due date
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {customersWithBalance > 0 && (
-              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
-                <DollarSign className="w-5 h-5 text-foreground" />
-                <div>
-                  <p className="text-foreground font-semibold">Outstanding Payments</p>
-                  <p className="text-muted-foreground text-sm">
-                    {customersWithBalance} customers have outstanding balances totaling {formatCurrency(metrics?.outstandingBalance || 0)}
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {(metrics?.lowStockCount || 0) === 0 && overdueDeliveries === 0 && customersWithBalance === 0 && (
-              <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg border border-border">
-                <TrendingUp className="w-5 h-5 text-foreground" />
-                <div>
-                  <p className="text-foreground font-semibold">All Systems Normal</p>
-                  <p className="text-muted-foreground text-sm">
-                    Your business is running smoothly with no critical alerts
-                  </p>
-                </div>
-              </div>
-            )}
+        <CardContent className="p-8">
+          <div className="flex items-center gap-6">
+            <div className="p-4 bg-secondary rounded-lg flex-shrink-0">
+              <Users className="w-8 h-8 text-foreground" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-medium text-muted-foreground mb-2">Outstanding from Customers</p>
+              <p className="text-3xl font-bold text-foreground mb-4">
+                {formatCurrency(metrics?.outstandingBalance || 0)}
+              </p>
+              <p className="text-muted-foreground">
+                <span className="font-semibold text-foreground">{customersWithBalance} customers</span> have pending payments
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
