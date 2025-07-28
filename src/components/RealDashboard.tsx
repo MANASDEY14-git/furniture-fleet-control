@@ -6,6 +6,8 @@ import { useRealDashboardMetrics } from '@/hooks/useRealDashboardMetrics';
 import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
 import { formatCurrency } from '@/utils/currencyUtils';
+import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
+import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function RealDashboard() {
@@ -227,6 +229,18 @@ export default function RealDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Business Metrics */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-foreground">Business Analytics</h2>
+        <EnhancedMetricsGrid metrics={metrics} isLoading={metricsLoading} />
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-foreground">Advanced Analytics</h2>
+        <BusinessAnalyticsSection metrics={metrics} isLoading={metricsLoading} />
+      </div>
     </div>
   );
 }
