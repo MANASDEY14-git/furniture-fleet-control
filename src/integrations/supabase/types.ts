@@ -44,6 +44,13 @@ export type Database = {
             referencedRelation: "attributes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_attribute_values_attribute_id"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "attributes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       attributes: {
@@ -264,6 +271,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_item_variant_attributes_attribute_value_id"
+            columns: ["attribute_value_id"]
+            isOneToOne: false
+            referencedRelation: "attribute_values"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_item_variant_attributes_variant_id"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_item_variant_attributes_variant_id"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "item_variant_attributes_attribute_value_id_fkey"
             columns: ["attribute_value_id"]
             isOneToOne: false
@@ -318,6 +346,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_item_variants_item_id"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "item_variants_item_id_fkey"
             columns: ["item_id"]
@@ -1298,6 +1333,13 @@ export type Database = {
           variant_display_name: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_item_variants_item_id"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "item_variants_item_id_fkey"
             columns: ["item_id"]
