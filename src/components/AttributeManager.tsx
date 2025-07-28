@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAttributes, useCreateAttribute, useCreateAttributeValue } from '@/hooks/useAttributes';
 
 export default function AttributeManager() {
@@ -56,6 +56,9 @@ export default function AttributeManager() {
       <DialogContent className="max-w-4xl futuristic-card">
         <DialogHeader>
           <DialogTitle className="text-cyan-300 glow-text">Manage Product Attributes</DialogTitle>
+          <DialogDescription className="text-blue-300">
+            Create and manage product attributes and their values for item variants.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">

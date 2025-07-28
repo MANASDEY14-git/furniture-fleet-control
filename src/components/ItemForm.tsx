@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Package, Settings } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useItems';
@@ -58,6 +58,9 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
             <Package className="w-5 h-5" />
             {item ? 'Edit Item' : 'Add New Item'}
           </DialogTitle>
+          <DialogDescription className="text-blue-300">
+            {item ? 'Update item details and manage variants.' : 'Create a new item with basic information and variants.'}
+          </DialogDescription>
         </DialogHeader>
         
         <ScrollArea className="max-h-[calc(90vh-120px)] overflow-y-auto">

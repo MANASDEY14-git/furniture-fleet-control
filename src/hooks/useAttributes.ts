@@ -62,10 +62,15 @@ export const useCreateAttribute = () => {
         description: "Attribute created successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error creating attribute:', error);
+      const message = error.code === '23505' 
+        ? 'An attribute with this name already exists. Please choose a different name.'
+        : `Failed to create attribute: ${error.message}`;
+      
       toast({
         title: "Error",
-        description: `Failed to create attribute: ${error.message}`,
+        description: message,
         variant: "destructive",
       });
     },
