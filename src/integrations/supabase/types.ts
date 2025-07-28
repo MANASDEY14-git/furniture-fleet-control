@@ -1320,6 +1320,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      search_items_enhanced: {
+        Args: {
+          search_term: string
+          store_id_filter?: string
+          category_id_filter?: string
+          show_low_stock_only?: boolean
+          page_size?: number
+          page_offset?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          category_id: string
+          store_id: string
+          quantity_available: number
+          cost_price: number
+          selling_price: number
+          created_at: string
+          updated_at: string
+          supplier_id: string
+          stock_receive_date: string
+          last_restocked_date: string
+          total_count: number
+        }[]
+      }
       user_has_store_access: {
         Args: { _store_id: string }
         Returns: boolean
