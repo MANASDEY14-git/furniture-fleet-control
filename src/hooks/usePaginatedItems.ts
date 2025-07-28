@@ -30,44 +30,26 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
   } = useQuery({
     queryKey: ['items-paginated', currentPage, pageSize, searchTerm, storeId, categoryId, showLowStockOnly],
     queryFn: async () => {
-      let query = supabase
-        .from('items')
-        .select('*', { count: 'exact' });
-
-      // Apply filters
-      if (searchTerm) {
-        // For now, search in item name only - enhanced search requires a database view or function
-        query = query.ilike('name', `%${searchTerm}%`);
-      }
-      
-      if (storeId && storeId !== 'all') {
-        query = query.eq('store_id', storeId);
-      }
-      
-      if (categoryId && categoryId !== 'all') {
-        query = query.eq('category_id', categoryId);
-      }
-      
-      if (showLowStockOnly) {
-        query = query.lt('quantity_available', 10);
-      }
-
-      // Apply pagination
-      const from = (currentPage - 1) * pageSize;
-      const to = from + pageSize - 1;
-
-      const { data, count, error } = await query
-        .range(from, to)
-        .order('created_at', { ascending: false });
+      // Use the enhanced search function
+      const { data, error } = await supabase.rpc('search_items_enhanced', {
+        search_term: searchTerm || null,
+        store_id_filter: storeId && storeId !== 'all' ? storeId : null,
+        category_id_filter: categoryId && categoryId !== 'all' ? categoryId : null,
+        show_low_stock_only: showLowStockOnly,
+        page_size: pageSize,
+        page_offset: (currentPage - 1) * pageSize
+      });
 
       if (error) throw error;
 
+      const totalCount = data && data.length > 0 ? data[0].total_count : 0;
+
       return {
         items: data as Item[],
-        totalCount: count || 0,
-        hasMore: (count || 0) > currentPage * pageSize,
+        totalCount: totalCount,
+        hasMore: totalCount > currentPage * pageSize,
         currentPage,
-        totalPages: Math.ceil((count || 0) / pageSize)
+        totalPages: Math.ceil(totalCount / pageSize)
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
