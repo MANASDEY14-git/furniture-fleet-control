@@ -9,6 +9,8 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import SalesTrendChart from '@/components/SalesTrendChart';
 import TopSellingChart from '@/components/TopSellingChart';
 import { useEnhancedDashboardMetrics } from '@/hooks/useEnhancedDashboardMetrics';
+import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
+import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
 import { supabase } from '@/integrations/supabase/client';
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -255,10 +257,22 @@ export default function RealDashboard() {
         </Card>
       </div>
 
+      {/* Enhanced Metrics Grid */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold text-foreground">Business Analytics</h2>
+        <EnhancedMetricsGrid metrics={metrics} isLoading={metricsLoading} />
+      </div>
+
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
         <SalesTrendChart data={dashboardMetrics?.salesTrend || []} />
         <TopSellingChart data={dashboardMetrics?.topSellingItems || []} />
+      </div>
+
+      {/* Advanced Analytics Section */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold text-foreground">Advanced Analytics</h2>
+        <BusinessAnalyticsSection metrics={metrics} isLoading={metricsLoading} />
       </div>
 
       {/* Alerts and Notifications */}
