@@ -45,6 +45,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
     customerAddress: '',
     deliveryDate: '',
     advancePaid: 0,
+    description: '',
   });
 
   const [items, setItems] = useState<OrderItem[]>([
@@ -176,6 +177,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       customerAddress: '',
       deliveryDate: '',
       advancePaid: 0,
+      description: '',
     });
     setItems([{ id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
     setIsWalkInCustomer(false);
@@ -306,6 +308,18 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                     className="neon-border bg-slate-800/50 text-blue-100"
                     placeholder="Full delivery address"
                     rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-blue-200">Order Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    className="neon-border bg-slate-800/50 text-blue-100 resize-none"
+                    placeholder="Enter order description or special instructions (optional)"
+                    rows={3}
                   />
                 </div>
               </div>
