@@ -36,7 +36,21 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
 
       // Apply filters
       if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
+        // Enhanced search: search in item name, variant names, and attribute values
+        query = query.or(`
+          name.ilike.%${searchTerm}%,
+          id.in.(
+            select item_id from item_variants 
+            where sku.ilike.%${searchTerm}% 
+            or id.in.(
+              select variant_id from item_variant_attributes 
+              where attribute_value_id.in.(
+                select id from attribute_values 
+                where value.ilike.%${searchTerm}%
+              )
+            )
+          )
+        `);
       }
       
       if (storeId && storeId !== 'all') {
