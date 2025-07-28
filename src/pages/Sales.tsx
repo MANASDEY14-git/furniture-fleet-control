@@ -20,6 +20,7 @@ export default function Sales() {
   const [viewingOrder, setViewingOrder] = useState<any>(null);
   const [recordingPayment, setRecordingPayment] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDescription, setPaymentDescription] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
@@ -143,16 +144,19 @@ export default function Sales() {
   const handleRecordPayment = async () => {
     if (!recordingPayment || !paymentAmount) return;
     
+    const description = paymentDescription.trim() || `Payment for order ${recordingPayment.order_number}`;
+    
     await recordPayment.mutateAsync({
       sale_id: recordingPayment.sale_id,
       amount: parseFloat(paymentAmount),
       date: new Date().toISOString().split('T')[0],
-      description: `Payment for order ${recordingPayment.order_number}`,
+      description: description,
       store_id: recordingPayment.store_id,
     });
     
     setRecordingPayment(null);
     setPaymentAmount('');
+    setPaymentDescription('');
   };
 
   if (ordersLoading) {
@@ -209,6 +213,8 @@ export default function Sales() {
         setRecordingPayment={setRecordingPayment}
         paymentAmount={paymentAmount}
         setPaymentAmount={setPaymentAmount}
+        paymentDescription={paymentDescription}
+        setPaymentDescription={setPaymentDescription}
         handleRecordPayment={handleRecordPayment}
         isRecordingPayment={recordPayment.isPending}
       />
