@@ -36,9 +36,8 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
 
       // Apply filters
       if (searchTerm) {
-        // Enhanced search: search in item name, variant SKU, and attribute values
-        // Using PostgREST's or syntax with proper formatting
-        query = query.or(`name.ilike.%${searchTerm}%,id.in.(select item_id from item_variants where sku.ilike.%${searchTerm}%),id.in.(select item_id from item_variants where id.in.(select variant_id from item_variant_attributes where attribute_value_id.in.(select id from attribute_values where value.ilike.%${searchTerm}%)))`);
+        // For now, search in item name only - enhanced search requires a database view or function
+        query = query.ilike('name', `%${searchTerm}%`);
       }
       
       if (storeId && storeId !== 'all') {
