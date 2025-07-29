@@ -13,9 +13,14 @@ export default function AttributeManager() {
   const [newAttributeName, setNewAttributeName] = useState('');
   const [newAttributeValues, setNewAttributeValues] = useState<{ [key: string]: string }>({});
 
-  const { data: attributes = [], isLoading } = useAttributes();
+  const { data: attributes = [], isLoading, error } = useAttributes();
   const createAttribute = useCreateAttribute();
   const createAttributeValue = useCreateAttributeValue();
+
+  // Debug logging
+  console.log('AttributeManager - attributes:', attributes);
+  console.log('AttributeManager - isLoading:', isLoading);
+  console.log('AttributeManager - error:', error);
 
   const handleCreateAttribute = async (e: React.FormEvent) => {
     e.preventDefault();
