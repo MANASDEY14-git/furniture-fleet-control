@@ -1367,7 +1367,7 @@ export type Database = {
       }
       search_items_enhanced: {
         Args: {
-          search_term: string
+          search_term?: string
           store_id_filter?: string
           category_id_filter?: string
           show_low_stock_only?: boolean
