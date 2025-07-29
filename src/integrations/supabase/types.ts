@@ -250,111 +250,6 @@ export type Database = {
         }
         Relationships: []
       }
-      item_variant_attributes: {
-        Row: {
-          attribute_value_id: string | null
-          created_at: string | null
-          id: string
-          variant_id: string | null
-        }
-        Insert: {
-          attribute_value_id?: string | null
-          created_at?: string | null
-          id?: string
-          variant_id?: string | null
-        }
-        Update: {
-          attribute_value_id?: string | null
-          created_at?: string | null
-          id?: string
-          variant_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_item_variant_attributes_attribute_value_id"
-            columns: ["attribute_value_id"]
-            isOneToOne: false
-            referencedRelation: "attribute_values"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_item_variant_attributes_variant_id"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "item_variants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_item_variant_attributes_variant_id"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_details"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_variant_attributes_attribute_value_id_fkey"
-            columns: ["attribute_value_id"]
-            isOneToOne: false
-            referencedRelation: "attribute_values"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_variant_attributes_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "item_variants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_variant_attributes_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_details"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      item_variants: {
-        Row: {
-          cost_price: number
-          created_at: string | null
-          id: string
-          item_id: string
-          quantity_available: number | null
-          selling_price: number
-          sku: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          cost_price: number
-          created_at?: string | null
-          id?: string
-          item_id: string
-          quantity_available?: number | null
-          selling_price: number
-          sku?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          cost_price?: number
-          created_at?: string | null
-          id?: string
-          item_id?: string
-          quantity_available?: number | null
-          selling_price?: number
-          sku?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "item_variants_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       items: {
         Row: {
           category_id: string | null
@@ -908,7 +803,6 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
-          variant_id: string | null
         }
         Insert: {
           created_at?: string
@@ -919,7 +813,6 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
-          variant_id?: string | null
         }
         Update: {
           created_at?: string
@@ -930,23 +823,8 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit_price?: number
-          variant_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_variant_id"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "item_variants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_variant_id"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_details"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "sales_order_items_item_id_fkey"
             columns: ["item_id"]
@@ -966,20 +844,6 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "sales_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_order_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "item_variants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_order_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_details"
             referencedColumns: ["id"]
           },
         ]
@@ -1311,58 +1175,8 @@ export type Database = {
           },
         ]
       }
-      variant_details: {
-        Row: {
-          category_id: string | null
-          cost_price: number | null
-          created_at: string | null
-          id: string | null
-          item_id: string | null
-          item_name: string | null
-          quantity_available: number | null
-          selling_price: number | null
-          sku: string | null
-          updated_at: string | null
-          variant_display_name: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "item_variants_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "items_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Functions: {
-      create_item_variant_direct: {
-        Args: {
-          p_item_id: string
-          p_sku: string
-          p_quantity_available: number
-          p_cost_price: number
-          p_selling_price: number
-          p_attribute_value_ids?: string[]
-        }
-        Returns: Json
-      }
-      delete_item_variant_direct: {
-        Args: { p_variant_id: string }
-        Returns: boolean
-      }
-      get_item_variants_with_attributes: {
-        Args: { p_item_id?: string }
-        Returns: Json
-      }
       has_role: {
         Args: {
           _user_id: string
@@ -1398,17 +1212,6 @@ export type Database = {
           last_restocked_date: string
           total_count: number
         }[]
-      }
-      update_item_variant_direct: {
-        Args: {
-          p_variant_id: string
-          p_sku?: string
-          p_quantity_available?: number
-          p_cost_price?: number
-          p_selling_price?: number
-          p_attribute_value_ids?: string[]
-        }
-        Returns: Json
       }
       user_has_store_access: {
         Args: { _store_id: string }

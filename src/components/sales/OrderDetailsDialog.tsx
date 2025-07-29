@@ -4,8 +4,6 @@ import { useSingleSalesOrder } from '@/hooks/useSingleSalesOrder';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import StatusBadge from '@/components/StatusBadge';
 import { formatCurrency } from '@/utils/currencyUtils';
-import { useItemVariantsForOrderItems } from '@/hooks/useItemVariantsForOrderItems';
-import { getVariantDisplayName } from './OrderDetailsDialogVariantUtils';
 
 interface OrderDetailsDialogProps {
   viewingOrder: any;
@@ -23,12 +21,6 @@ export default function OrderDetailsDialog({
   );
 
   const orderItems = order?.sales_order_items || [];
-  const variantIds = orderItems
-    .map((item: any) => item.variant_id)
-    .filter(Boolean);
-
-  const { data: variantsMap, isLoading: variantsLoading } =
-    useItemVariantsForOrderItems(variantIds);
 
   if (!viewingOrder) {
     // Always return a valid React element for React 18+ strict mode
@@ -46,7 +38,7 @@ export default function OrderDetailsDialog({
     );
   }
 
-    if (isLoading || (variantIds.length > 0 && variantsLoading)) {
+    if (isLoading) {
     return (
       <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
         <DialogContent className="simple-card max-w-6xl">
@@ -131,7 +123,7 @@ export default function OrderDetailsDialog({
                 <TableHeader>
                   <TableRow className="border-border">
                     <TableHead className="text-muted-foreground">Item</TableHead>
-                    <TableHead className="text-muted-foreground">Variant</TableHead>
+                    
                     <TableHead className="text-muted-foreground">Quantity</TableHead>
                     <TableHead className="text-muted-foreground">Unit Price</TableHead>
                     <TableHead className="text-muted-foreground">Total</TableHead>
@@ -142,33 +134,18 @@ export default function OrderDetailsDialog({
                     // Use the new fetched orderItems
                     if (!orderItems || orderItems.length === 0) {
                       return (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                            No order items found
-                          </TableCell>
-                        </TableRow>
+                         <TableRow>
+                           <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                             No order items found
+                           </TableCell>
+                         </TableRow>
                       );
                     }
                     
                     return orderItems.map((item: any) => {
-                      let variantCell = null;
-                      if (item.variant_id && variantsMap && variantsMap[item.variant_id]) {
-                        const variant = variantsMap[item.variant_id];
-                        variantCell = (
-                          <div>
-                            <div className="text-xs text-muted-foreground">{getVariantDisplayName(variant)}</div>
-                            <div className="text-xs text-muted-foreground">SKU: <span className="font-mono">{variant.sku || 'N/A'}</span></div>
-                          </div>
-                        );
-                      } else if (item.variant_id && variantsLoading) {
-                        variantCell = <span className="text-xs text-muted-foreground">Loading...</span>;
-                      } else {
-                        variantCell = <span className="text-xs text-muted-foreground">-</span>;
-                      }
                       return (
                         <TableRow key={item.id} className="border-border">
                           <TableCell className="text-foreground">{item.item_name}</TableCell>
-                          <TableCell>{variantCell}</TableCell>
                           <TableCell className="text-foreground">{item.quantity}</TableCell>
                           <TableCell className="text-foreground">{formatCurrency(item.unit_price)}</TableCell>
                           <TableCell className="text-foreground font-semibold">{formatCurrency(item.total_price)}</TableCell>

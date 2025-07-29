@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -6,8 +5,6 @@ import { useToast } from '@/hooks/use-toast';
 interface PurchaseOrderItem {
   item_id: string;
   item_name: string;
-  variant_id?: string;
-  variant_name?: string;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -55,40 +52,21 @@ export const useCreatePurchaseOrder = () => {
 
       // Update inventory for each item
       for (const item of data.items) {
-        if (item.variant_id) {
-          // Update variant quantity if variant is selected
-          const { data: currentVariant, error: fetchVariantError } = await supabase
-            .from('item_variants')
-            .select('quantity_available')
-            .eq('id', item.variant_id)
-            .single();
+        // Update main item quantity
+        const { data: currentItem, error: fetchError } = await supabase
+          .from('items')
+          .select('quantity_available')
+          .eq('id', item.item_id)
+          .single();
 
-          if (!fetchVariantError) {
-            await supabase
-              .from('item_variants')
-              .update({ 
-                quantity_available: (currentVariant.quantity_available || 0) + item.quantity,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', item.variant_id);
-          }
-        } else {
-          // Update base item quantity if no variant selected
-          const { data: currentItem, error: fetchError } = await supabase
+        if (!fetchError) {
+          await supabase
             .from('items')
-            .select('quantity_available')
-            .eq('id', item.item_id)
-            .single();
-
-          if (!fetchError) {
-            await supabase
-              .from('items')
-              .update({ 
-                quantity_available: (currentItem.quantity_available || 0) + item.quantity,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', item.item_id);
-          }
+            .update({ 
+              quantity_available: (currentItem.quantity_available || 0) + item.quantity,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', item.item_id);
         }
       }
 
@@ -97,7 +75,6 @@ export const useCreatePurchaseOrder = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] });
       queryClient.invalidateQueries({ queryKey: ['items'] });
-      queryClient.invalidateQueries({ queryKey: ['item-variants'] });
       toast({
         title: "Success",
         description: "Purchase order created successfully",

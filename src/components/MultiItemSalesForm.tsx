@@ -14,12 +14,11 @@ import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCreateSale } from '@/hooks/useSales';
 import { DeliveryStatus } from '@/types';
-import ItemVariantSelector from '@/components/ItemVariantSelector';
+
 
 interface SaleItem {
   id: string;
   itemId: string;
-  variantId: string;
   itemName: string;
   quantity: number;
   unitPrice: number;
@@ -42,7 +41,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
   });
 
   const [items, setItems] = useState<SaleItem[]>([
-    { id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }
+    { id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }
   ]);
 
   const { data: availableItems = [] } = useItems();
@@ -59,7 +58,6 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
     setItems([...items, {
       id: Date.now().toString(),
       itemId: '',
-      variantId: '',
       itemName: '',
       quantity: 0,
       unitPrice: 0,
@@ -84,7 +82,6 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
           updatedItem.itemName = selectedItem?.name || '';
           updatedItem.unitPrice = selectedItem?.selling_price || 0;
           updatedItem.availableStock = selectedItem?.quantity_available || 0;
-          updatedItem.variantId = ''; // Reset variant when item changes
         }
         
         if (field === 'quantity' || field === 'unitPrice') {
@@ -137,7 +134,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
       deliveryStatus: DeliveryStatus.Pending,
       date: new Date().toISOString().split('T')[0],
     });
-    setItems([{ id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
+    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
     setIsWalkInCustomer(false);
     setOpen(false);
   };
@@ -149,7 +146,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
       deliveryStatus: DeliveryStatus.Pending,
       date: new Date().toISOString().split('T')[0],
     });
-    setItems([{ id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
+    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
     setIsWalkInCustomer(false);
   };
 
@@ -262,17 +259,16 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
 
                 <div className="overflow-x-auto">
                   <Table className="data-grid">
-                    <TableHeader>
-                      <TableRow className="border-blue-500/30">
-                        <TableHead className="text-blue-200">Item</TableHead>
-                        <TableHead className="text-blue-200">Variant</TableHead>
-                        <TableHead className="text-blue-200">Available</TableHead>
-                        <TableHead className="text-blue-200">Quantity</TableHead>
-                        <TableHead className="text-blue-200">Unit Price</TableHead>
-                        <TableHead className="text-blue-200">Total</TableHead>
-                        <TableHead className="text-blue-200">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                     <TableHeader>
+                       <TableRow className="border-blue-500/30">
+                         <TableHead className="text-blue-200">Item</TableHead>
+                         <TableHead className="text-blue-200">Available</TableHead>
+                         <TableHead className="text-blue-200">Quantity</TableHead>
+                         <TableHead className="text-blue-200">Unit Price</TableHead>
+                         <TableHead className="text-blue-200">Total</TableHead>
+                         <TableHead className="text-blue-200">Action</TableHead>
+                       </TableRow>
+                     </TableHeader>
                     <TableBody>
                       {items.map((item) => (
                         <TableRow key={item.id} className="border-blue-500/20">
@@ -292,25 +288,7 @@ export default function MultiItemSalesForm({ trigger }: MultiItemSalesFormProps)
                                 ))}
                               </SelectContent>
                             </Select>
-                          </TableCell>
-                          <TableCell>
-                            {item.itemId ? (
-                              <ItemVariantSelector
-                                itemId={item.itemId}
-                                value={item.variantId}
-                                onValueChange={(variantId, variantData) => {
-                                  updateItem(item.id, 'variantId', variantId);
-                                  if (variantData) {
-                                    updateItem(item.id, 'unitPrice', variantData.selling_price);
-                                    updateItem(item.id, 'availableStock', variantData.quantity_available);
-                                  }
-                                }}
-                                placeholder="Select variant"
-                              />
-                            ) : (
-                              <span className="text-gray-400 text-sm">Select item first</span>
-                            )}
-                          </TableCell>
+                           </TableCell>
                           <TableCell className="text-cyan-300">
                             {item.availableStock}
                           </TableCell>

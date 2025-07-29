@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useItems';
 import ItemBasicInfoForm from '@/components/ItemBasicInfoForm';
-import ItemVariantsTab from '@/components/ItemVariantsTab';
+
 import ItemAttributesTab from '@/components/ItemAttributesTab';
 import EnhancedBOMManager from '@/components/bom/EnhancedBOMManager';
 
@@ -65,12 +65,9 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
         
         <ScrollArea className="max-h-[calc(90vh-120px)] overflow-y-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pr-4">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800/50">
+            <TabsList className="grid w-full grid-cols-3 bg-slate-800/50">
               <TabsTrigger value="basic" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
                 Basic Info
-              </TabsTrigger>
-              <TabsTrigger value="variants" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
-                Variants
               </TabsTrigger>
               <TabsTrigger value="bom" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300" disabled={!item}>
                 BOM
@@ -90,9 +87,6 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
               />
             </TabsContent>
 
-            <TabsContent value="variants" className="mt-6">
-              <ItemVariantsTab item={item} />
-            </TabsContent>
 
             <TabsContent value="bom" className="mt-6">
               {item && <EnhancedBOMManager item={item} />}

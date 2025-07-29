@@ -14,12 +14,11 @@ import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
 import { DeliveryStatus } from '@/types';
-import ItemVariantSelector from '@/components/ItemVariantSelector';
+
 
 interface OrderItem {
   id: string;
   itemId: string;
-  variantId: string;
   itemName: string;
   quantity: number;
   unitPrice: number;
@@ -49,7 +48,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
   });
 
   const [items, setItems] = useState<OrderItem[]>([
-    { id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }
+    { id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }
   ]);
 
   const { data: availableItems = [] } = useItems();
@@ -66,7 +65,6 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
     setItems([...items, {
       id: Date.now().toString(),
       itemId: '',
-      variantId: '',
       itemName: '',
       quantity: 0,
       unitPrice: 0,
@@ -92,16 +90,10 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
             updatedItem.itemName = selectedItem?.name || '';
             updatedItem.unitPrice = selectedItem?.selling_price || 0;
             updatedItem.availableStock = selectedItem?.quantity_available || 0;
-            updatedItem.variantId = ''; // Reset variant when item changes
           }
           
           if (field === 'quantity' || field === 'unitPrice') {
             updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
-          }
-          
-          // Debug log for variant selection
-          if (field === 'variantId') {
-            console.log('[EnhancedSalesOrderForm] updateItem: setting variantId', value, 'for item', id, updatedItem);
           }
 
           return updatedItem;
@@ -153,7 +145,6 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       advance_paid: formData.advancePaid,
       items: validItems.map(item => ({
         item_id: item.itemId,
-        variant_id: item.variantId || null,
         item_name: item.itemName,
         quantity: item.quantity,
         unit_price: item.unitPrice,
@@ -179,7 +170,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       advancePaid: 0,
       description: '',
     });
-    setItems([{ id: '1', itemId: '', variantId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
+    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
     setIsWalkInCustomer(false);
   };
 
@@ -341,15 +332,14 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                 <div className="overflow-x-auto">
                   <Table className="data-grid">
                     <TableHeader>
-                      <TableRow className="border-blue-500/30">
-                        <TableHead className="text-blue-200">Item</TableHead>
-                        <TableHead className="text-blue-200">Variant</TableHead>
-                        <TableHead className="text-blue-200">Available</TableHead>
-                        <TableHead className="text-blue-200">Quantity</TableHead>
-                        <TableHead className="text-blue-200">Unit Price</TableHead>
-                        <TableHead className="text-blue-200">Total</TableHead>
-                        <TableHead className="text-blue-200">Action</TableHead>
-                      </TableRow>
+                       <TableRow className="border-blue-500/30">
+                         <TableHead className="text-blue-200">Item</TableHead>
+                         <TableHead className="text-blue-200">Available</TableHead>
+                         <TableHead className="text-blue-200">Quantity</TableHead>
+                         <TableHead className="text-blue-200">Unit Price</TableHead>
+                         <TableHead className="text-blue-200">Total</TableHead>
+                         <TableHead className="text-blue-200">Action</TableHead>
+                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => (
@@ -367,25 +357,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                                 </option>
                               ))}
                             </select>
-                          </TableCell>
-                          <TableCell>
-                            {item.itemId ? (
-                              <ItemVariantSelector
-                                itemId={item.itemId}
-                                value={item.variantId}
-                                onValueChange={(variantId, variantData) => {
-                                  updateItem(item.id, 'variantId', variantId);
-                                  if (variantData) {
-                                    updateItem(item.id, 'unitPrice', variantData.selling_price);
-                                    updateItem(item.id, 'availableStock', variantData.quantity_available);
-                                  }
-                                }}
-                                placeholder="Select variant"
-                              />
-                            ) : (
-                              <span className="text-gray-400 text-sm">Select item first</span>
-                            )}
-                          </TableCell>
+                           </TableCell>
                           <TableCell className="text-cyan-300">
                             {item.availableStock}
                           </TableCell>

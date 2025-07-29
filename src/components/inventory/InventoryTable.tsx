@@ -10,8 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { PaginationControls } from '@/components/ui/pagination';
 import ItemForm from '@/components/ItemForm';
-import ItemVariantManager from '@/components/ItemVariantManager';
-import ItemVariantsDisplay from './ItemVariantsDisplay';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { Item } from '@/hooks/useItems';
 import type { Store } from '@/types';
@@ -172,14 +170,11 @@ export default function InventoryTable({
                     />
                   </TableCell>
                    <TableCell className="font-medium text-blue-100 max-w-xs">
-                     <div className="space-y-2">
-                       <div className="flex items-center gap-2">
-                         <span className="truncate" title={item.name}>{item.name}</span>
-                         {isLowStock && (
-                           <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                         )}
-                       </div>
-                       <ItemVariantsDisplay itemId={item.id} itemName={item.name} />
+                     <div className="flex items-center gap-2">
+                       <span className="truncate" title={item.name}>{item.name}</span>
+                       {isLowStock && (
+                         <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                       )}
                      </div>
                    </TableCell>
                   <TableCell className="text-blue-200">{store?.name || 'Unknown'}</TableCell>
@@ -195,24 +190,16 @@ export default function InventoryTable({
                       <span className="text-xs">{stockAgeStatus.status}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <ItemVariantManager
-                        item={item}
-                        trigger={
-                          <Button variant="ghost" size="sm" className="text-green-400 hover:text-green-300 hover:bg-green-900/20">
-                            <Package className="w-4 h-4" />
-                          </Button>
-                        }
-                      />
-                      <ItemForm
-                        item={item}
-                        trigger={
-                          <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        }
-                      />
+                   <TableCell className="text-right">
+                     <div className="flex justify-end gap-2">
+                       <ItemForm
+                         item={item}
+                         trigger={
+                           <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
+                             <Pencil className="w-4 h-4" />
+                           </Button>
+                         }
+                       />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">

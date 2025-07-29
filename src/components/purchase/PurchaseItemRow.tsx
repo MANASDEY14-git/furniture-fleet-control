@@ -4,13 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableCell, TableRow } from '@/components/ui/table';
-import ItemVariantSelector from '@/components/ItemVariantSelector';
+
 import { Item } from '@/types';
 
 interface PurchaseItem {
   id: string;
   itemId: string;
-  variantId: string;
   itemName: string;
   quantity: number;
   unitPrice: number;
@@ -97,18 +96,6 @@ export default function PurchaseItemRow({
         </div>
       </TableCell>
       
-      <TableCell>
-        {!item.isNewItem && item.itemId ? (
-          <ItemVariantSelector
-            itemId={item.itemId}
-            value={item.variantId}
-            onValueChange={(variantId) => onUpdateItem(item.id, 'variantId', variantId)}
-            placeholder="Select variant"
-          />
-        ) : (
-          <span className="text-gray-400 text-sm">Select item first</span>
-        )}
-      </TableCell>
       
       <TableCell>
         <Input
