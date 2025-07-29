@@ -26,27 +26,34 @@ export const useAttributes = () => {
   return useQuery({
     queryKey: ['attributes'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('attributes')
-        .select(`
-          id,
-          name,
-          created_at,
-          updated_at,
-          attribute_values!attribute_id (
-            id,
-            value,
-            created_at,
-            updated_at
-          )
-        `)
-        .order('name');
-      
-      if (error) {
-        console.error('Error fetching attributes:', error);
-        throw error;
+      // Fetch attributes and attribute values separately to avoid relationship issues
+      const [attributesResult, valuesResult] = await Promise.all([
+        supabase
+          .from('attributes')
+          .select('id, name, created_at, updated_at')
+          .order('name'),
+        supabase
+          .from('attribute_values')
+          .select('id, attribute_id, value, created_at, updated_at')
+      ]);
+
+      if (attributesResult.error) {
+        console.error('Error fetching attributes:', attributesResult.error);
+        throw attributesResult.error;
       }
-      return data as AttributeWithValues[];
+
+      if (valuesResult.error) {
+        console.error('Error fetching attribute values:', valuesResult.error);
+        throw valuesResult.error;
+      }
+
+      // Manually combine the data
+      const attributesWithValues: AttributeWithValues[] = attributesResult.data.map(attribute => ({
+        ...attribute,
+        attribute_values: valuesResult.data.filter(value => value.attribute_id === attribute.id)
+      }));
+
+      return attributesWithValues;
     },
   });
 };
