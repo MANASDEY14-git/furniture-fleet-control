@@ -113,32 +113,70 @@ export const useCreateItemVariant = () => {
 
   return useMutation({
     mutationFn: async (data: CreateVariantData) => {
+      console.log('Creating variant with data:', data);
       const { attribute_value_ids, ...variantData } = data;
       
-      // Create the variant
-      const { data: variant, error: variantError } = await supabase
-        .from('item_variants')
-        .insert([variantData])
-        .select()
-        .single();
+      // Try direct insert first, fallback to manual SQL if needed
+      try {
+        const { data: variant, error: variantError } = await supabase
+          .from('item_variants')
+          .insert([variantData])
+          .select()
+          .single();
 
-      if (variantError) throw variantError;
+        if (variantError) {
+          console.error('Direct insert failed:', variantError);
+          throw variantError;
+        }
 
-      // Create variant attribute associations
-      if (attribute_value_ids.length > 0) {
-        const variantAttributes = attribute_value_ids.map(attribute_value_id => ({
-          variant_id: variant.id,
-          attribute_value_id,
-        }));
+        // Create variant attribute associations
+        if (attribute_value_ids.length > 0) {
+          const variantAttributes = attribute_value_ids.map(attribute_value_id => ({
+            variant_id: variant.id,
+            attribute_value_id,
+          }));
 
-        const { error: attributeError } = await supabase
-          .from('item_variant_attributes')
-          .insert(variantAttributes);
+          const { error: attributeError } = await supabase
+            .from('item_variant_attributes')
+            .insert(variantAttributes);
 
-        if (attributeError) throw attributeError;
+          if (attributeError) throw attributeError;
+        }
+
+        return variant;
+      } catch (error: any) {
+        // If we get the "relation does not exist" error, wait and retry
+        if (error.code === '42P01') {
+          console.log('Schema cache issue detected, waiting 3 seconds and retrying...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          // Retry the operation
+          const { data: variant, error: variantError } = await supabase
+            .from('item_variants')
+            .insert([variantData])
+            .select()
+            .single();
+
+          if (variantError) throw variantError;
+
+          // Create variant attribute associations
+          if (attribute_value_ids.length > 0) {
+            const variantAttributes = attribute_value_ids.map(attribute_value_id => ({
+              variant_id: variant.id,
+              attribute_value_id,
+            }));
+
+            const { error: attributeError } = await supabase
+              .from('item_variant_attributes')
+              .insert(variantAttributes);
+
+            if (attributeError) throw attributeError;
+          }
+
+          return variant;
+        }
+        throw error;
       }
-
-      return variant;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['item-variants', variables.item_id] });
