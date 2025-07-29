@@ -65,12 +65,14 @@ export default function ItemVariantSelector({
         </SelectValue>
       </SelectTrigger>
       <SelectContent className="bg-slate-800 border-blue-500/30 max-h-60 overflow-y-auto">
-        {variants.map((variant) => (
-          <SelectItem
-            key={variant.id}
-            value={variant.id}
-            className="text-blue-100 focus:bg-blue-800/30"
-          >
+        {variants
+            .filter(variant => typeof variant.id === "string" && variant.id.trim() !== "")
+            .map((variant) => (
+              <SelectItem
+                key={variant.id}
+                value={variant.id}
+                className="text-blue-100 focus:bg-blue-800/30"
+              >
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <span>{getVariantDisplayName(variant)}</span>
