@@ -29,12 +29,23 @@ export const useAttributes = () => {
       const { data, error } = await supabase
         .from('attributes')
         .select(`
-          *,
-          attribute_values (*)
+          id,
+          name,
+          created_at,
+          updated_at,
+          attribute_values!attribute_id (
+            id,
+            value,
+            created_at,
+            updated_at
+          )
         `)
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching attributes:', error);
+        throw error;
+      }
       return data as AttributeWithValues[];
     },
   });
