@@ -40,33 +40,68 @@ export const useItemVariants = (itemId?: string) => {
   return useQuery({
     queryKey: ['item-variants', itemId],
     queryFn: async () => {
-      const query = supabase
+      let query = supabase
         .from('item_variants')
-        .select(`
-          *,
-          item_variant_attributes (
-            id,
-            attribute_value_id,
-            attribute_values!item_variant_attributes_attribute_value_id_fkey (
-              id,
-              value,
-              attribute_id,
-              attributes!fk_attribute_values_attribute_id (
-                id,
-                name
-              )
-            )
-          )
-        `);
+        .select('*');
 
       if (itemId) {
-        query.eq('item_id', itemId);
+        query = query.eq('item_id', itemId);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: variants, error: variantsError } = await query.order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data as ItemVariant[];
+      if (variantsError) throw variantsError;
+
+      // Get variant attributes and attribute values separately
+      if (variants.length > 0) {
+        const variantIds = variants.map(v => v.id);
+        
+        const [variantAttributesResult, attributeValuesResult, attributesResult] = await Promise.all([
+          supabase
+            .from('item_variant_attributes')
+            .select('*')
+            .in('variant_id', variantIds),
+          supabase
+            .from('attribute_values')
+            .select('*'),
+          supabase
+            .from('attributes')
+            .select('*')
+        ]);
+
+        if (variantAttributesResult.error) throw variantAttributesResult.error;
+        if (attributeValuesResult.error) throw attributeValuesResult.error;
+        if (attributesResult.error) throw attributesResult.error;
+
+        // Manually combine the data
+        const enrichedVariants: ItemVariant[] = variants.map(variant => ({
+          ...variant,
+          item_variant_attributes: variantAttributesResult.data
+            .filter(va => va.variant_id === variant.id)
+            .map(va => {
+              const attributeValue = attributeValuesResult.data.find(av => av.id === va.attribute_value_id);
+              const attribute = attributesResult.data.find(a => a.id === attributeValue?.attribute_id);
+              
+              return {
+                id: va.id,
+                attribute_value_id: va.attribute_value_id,
+                attribute_values: {
+                  id: attributeValue?.id || '',
+                  value: attributeValue?.value || '',
+                  attribute_id: attributeValue?.attribute_id || '',
+                  attributes: {
+                    id: attribute?.id || '',
+                    name: attribute?.name || ''
+                  }
+                }
+              };
+            })
+        }));
+
+        return enrichedVariants;
+      }
+      
+      return variants as ItemVariant[];
     },
     enabled: !!itemId,
   });
@@ -113,6 +148,7 @@ export const useCreateItemVariant = () => {
       });
     },
     onError: (error) => {
+      console.error('Error saving variant:', error);
       toast({
         title: "Error",
         description: `Failed to create variant: ${error.message}`,
