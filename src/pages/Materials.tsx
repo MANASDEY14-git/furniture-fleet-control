@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Package2 } from 'lucide-react';
+import { Plus, Package2, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMaterials } from '@/hooks/useMaterials';
 import MaterialForm from '@/components/MaterialForm';
+import MaterialStockMovementsDialog from '@/components/MaterialStockMovementsDialog';
 
 export default function Materials() {
   const { data: materials = [], isLoading } = useMaterials();
@@ -84,14 +85,24 @@ export default function Materials() {
                         ₹{(material.quantity_available * material.cost_price).toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        <MaterialForm
-                          material={material}
-                          trigger={
-                            <Button variant="outline" size="sm" className="neon-border bg-slate-800/50 text-blue-100">
-                              Edit
-                            </Button>
-                          }
-                        />
+                        <div className="flex gap-2">
+                          <MaterialForm
+                            material={material}
+                            trigger={
+                              <Button variant="outline" size="sm" className="neon-border bg-slate-800/50 text-blue-100">
+                                Edit
+                              </Button>
+                            }
+                          />
+                          <MaterialStockMovementsDialog
+                            material={material}
+                            trigger={
+                              <Button variant="outline" size="sm" className="neon-border bg-slate-800/50 text-blue-100">
+                                <Activity className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

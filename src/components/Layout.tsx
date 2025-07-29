@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, DollarSign, FileText, Settings, Menu, X, Calendar, CreditCard, Users, BookOpen, LogOut, Layers } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, DollarSign, FileText, Settings, Menu, X, Calendar, CreditCard, Users, BookOpen, LogOut, Layers, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 const navigation = [{
@@ -27,6 +27,10 @@ const navigation = [{
   name: 'Materials',
   href: '/materials',
   icon: Package
+}, {
+  name: 'Material Stock Ledger',
+  href: '/material-stock-ledger',
+  icon: Activity
 }, {
   name: 'BOM Management',
   href: '/bom-management',
