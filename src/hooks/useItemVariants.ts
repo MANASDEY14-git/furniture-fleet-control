@@ -40,68 +40,44 @@ export const useItemVariants = (itemId?: string) => {
   return useQuery({
     queryKey: ['item-variants', itemId],
     queryFn: async () => {
-      let query = supabase
-        .from('item_variants')
-        .select('*');
-
-      if (itemId) {
-        query = query.eq('item_id', itemId);
-      }
-
-      const { data: variants, error: variantsError } = await query.order('created_at', { ascending: false });
+      console.log('Fetching variants using custom function for itemId:', itemId);
       
-      if (variantsError) throw variantsError;
+      try {
+        // Use the custom function to bypass PostgREST cache issues
+        const { data, error } = await supabase.rpc('get_item_variants_with_attributes', {
+          p_item_id: itemId || null
+        });
 
-      // Get variant attributes and attribute values separately
-      if (variants.length > 0) {
-        const variantIds = variants.map(v => v.id);
+        if (error) {
+          console.error('Custom function error:', error);
+          throw error;
+        }
+
+        console.log('Custom function returned:', data);
         
-        const [variantAttributesResult, attributeValuesResult, attributesResult] = await Promise.all([
-          supabase
-            .from('item_variant_attributes')
-            .select('*')
-            .in('variant_id', variantIds),
-          supabase
-            .from('attribute_values')
-            .select('*'),
-          supabase
-            .from('attributes')
-            .select('*')
-        ]);
-
-        if (variantAttributesResult.error) throw variantAttributesResult.error;
-        if (attributeValuesResult.error) throw attributeValuesResult.error;
-        if (attributesResult.error) throw attributesResult.error;
-
-        // Manually combine the data
-        const enrichedVariants: ItemVariant[] = variants.map(variant => ({
+        // Transform the response to match expected format
+        const variants = Array.isArray(data) ? data : (data ? [data] : []);
+        
+        return variants.map((variant: any) => ({
           ...variant,
-          item_variant_attributes: variantAttributesResult.data
-            .filter(va => va.variant_id === variant.id)
-            .map(va => {
-              const attributeValue = attributeValuesResult.data.find(av => av.id === va.attribute_value_id);
-              const attribute = attributesResult.data.find(a => a.id === attributeValue?.attribute_id);
-              
-              return {
-                id: va.id,
-                attribute_value_id: va.attribute_value_id,
-                attribute_values: {
-                  id: attributeValue?.id || '',
-                  value: attributeValue?.value || '',
-                  attribute_id: attributeValue?.attribute_id || '',
-                  attributes: {
-                    id: attribute?.id || '',
-                    name: attribute?.name || ''
-                  }
-                }
-              };
-            })
+          item_variant_attributes: variant.attributes?.map((attr: any) => ({
+            id: `${variant.id}_${attr.attribute_value_id}`,
+            attribute_value_id: attr.attribute_value_id,
+            attribute_values: {
+              id: attr.attribute_value_id,
+              value: attr.value,
+              attribute_id: attr.attribute_id,
+              attributes: {
+                id: attr.attribute_id,
+                name: attr.name || ''
+              }
+            }
+          })) || []
         }));
-
-        return enrichedVariants;
+      } catch (error) {
+        console.error('Error in custom variant fetch:', error);
+        throw error;
       }
-      
-      return variants as ItemVariant[];
     },
     enabled: !!itemId,
   });
@@ -113,68 +89,29 @@ export const useCreateItemVariant = () => {
 
   return useMutation({
     mutationFn: async (data: CreateVariantData) => {
-      console.log('Creating variant with data:', data);
+      console.log('Creating variant with custom function:', data);
       const { attribute_value_ids, ...variantData } = data;
       
-      // Try direct insert first, fallback to manual SQL if needed
       try {
-        const { data: variant, error: variantError } = await supabase
-          .from('item_variants')
-          .insert([variantData])
-          .select()
-          .single();
+        // Use custom function to bypass PostgREST cache issues
+        const { data: variant, error } = await supabase.rpc('create_item_variant_direct', {
+          p_item_id: variantData.item_id,
+          p_sku: variantData.sku || null,
+          p_quantity_available: variantData.quantity_available,
+          p_cost_price: variantData.cost_price,
+          p_selling_price: variantData.selling_price,
+          p_attribute_value_ids: attribute_value_ids || []
+        });
 
-        if (variantError) {
-          console.error('Direct insert failed:', variantError);
-          throw variantError;
+        if (error) {
+          console.error('Custom function error:', error);
+          throw error;
         }
 
-        // Create variant attribute associations
-        if (attribute_value_ids.length > 0) {
-          const variantAttributes = attribute_value_ids.map(attribute_value_id => ({
-            variant_id: variant.id,
-            attribute_value_id,
-          }));
-
-          const { error: attributeError } = await supabase
-            .from('item_variant_attributes')
-            .insert(variantAttributes);
-
-          if (attributeError) throw attributeError;
-        }
-
+        console.log('Variant created successfully:', variant);
         return variant;
       } catch (error: any) {
-        // If we get the "relation does not exist" error, wait and retry
-        if (error.code === '42P01') {
-          console.log('Schema cache issue detected, waiting 3 seconds and retrying...');
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          // Retry the operation
-          const { data: variant, error: variantError } = await supabase
-            .from('item_variants')
-            .insert([variantData])
-            .select()
-            .single();
-
-          if (variantError) throw variantError;
-
-          // Create variant attribute associations
-          if (attribute_value_ids.length > 0) {
-            const variantAttributes = attribute_value_ids.map(attribute_value_id => ({
-              variant_id: variant.id,
-              attribute_value_id,
-            }));
-
-            const { error: attributeError } = await supabase
-              .from('item_variant_attributes')
-              .insert(variantAttributes);
-
-            if (attributeError) throw attributeError;
-          }
-
-          return variant;
-        }
+        console.error('Error creating variant:', error);
         throw error;
       }
     },
@@ -202,42 +139,31 @@ export const useUpdateItemVariant = () => {
 
   return useMutation({
     mutationFn: async ({ id, item_id, ...data }: Partial<CreateVariantData> & { id: string; item_id: string }) => {
+      console.log('Updating variant with custom function:', { id, ...data });
       const { attribute_value_ids, ...variantData } = data;
       
-      // Update the variant
-      const { data: variant, error: variantError } = await supabase
-        .from('item_variants')
-        .update(variantData)
-        .eq('id', id)
-        .select()
-        .single();
+      try {
+        // Use custom function to bypass PostgREST cache issues
+        const { data: variant, error } = await supabase.rpc('update_item_variant_direct', {
+          p_variant_id: id,
+          p_sku: variantData.sku || null,
+          p_quantity_available: variantData.quantity_available || null,
+          p_cost_price: variantData.cost_price || null,
+          p_selling_price: variantData.selling_price || null,
+          p_attribute_value_ids: attribute_value_ids || null
+        });
 
-      if (variantError) throw variantError;
-
-      // Update variant attribute associations if provided
-      if (attribute_value_ids !== undefined) {
-        // Delete existing associations
-        await supabase
-          .from('item_variant_attributes')
-          .delete()
-          .eq('variant_id', id);
-
-        // Create new associations
-        if (attribute_value_ids.length > 0) {
-          const variantAttributes = attribute_value_ids.map(attribute_value_id => ({
-            variant_id: id,
-            attribute_value_id,
-          }));
-
-          const { error: attributeError } = await supabase
-            .from('item_variant_attributes')
-            .insert(variantAttributes);
-
-          if (attributeError) throw attributeError;
+        if (error) {
+          console.error('Custom update function error:', error);
+          throw error;
         }
-      }
 
-      return variant;
+        console.log('Variant updated successfully:', variant);
+        return variant;
+      } catch (error: any) {
+        console.error('Error updating variant:', error);
+        throw error;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['item-variants', variables.item_id] });
@@ -262,12 +188,25 @@ export const useDeleteItemVariant = () => {
 
   return useMutation({
     mutationFn: async ({ id, item_id }: { id: string; item_id: string }) => {
-      const { error } = await supabase
-        .from('item_variants')
-        .delete()
-        .eq('id', id);
+      console.log('Deleting variant with custom function:', id);
+      
+      try {
+        // Use custom function to bypass PostgREST cache issues
+        const { data: success, error } = await supabase.rpc('delete_item_variant_direct', {
+          p_variant_id: id
+        });
 
-      if (error) throw error;
+        if (error) {
+          console.error('Custom delete function error:', error);
+          throw error;
+        }
+
+        console.log('Variant deleted successfully:', success);
+        return success;
+      } catch (error: any) {
+        console.error('Error deleting variant:', error);
+        throw error;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['item-variants', variables.item_id] });

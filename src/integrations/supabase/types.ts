@@ -319,7 +319,7 @@ export type Database = {
           cost_price: number
           created_at: string | null
           id: string
-          item_id: string | null
+          item_id: string
           quantity_available: number | null
           selling_price: number
           sku: string | null
@@ -329,7 +329,7 @@ export type Database = {
           cost_price: number
           created_at?: string | null
           id?: string
-          item_id?: string | null
+          item_id: string
           quantity_available?: number | null
           selling_price: number
           sku?: string | null
@@ -339,20 +339,13 @@ export type Database = {
           cost_price?: number
           created_at?: string | null
           id?: string
-          item_id?: string | null
+          item_id?: string
           quantity_available?: number | null
           selling_price?: number
           sku?: string | null
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_item_variants_item_id"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "item_variants_item_id_fkey"
             columns: ["item_id"]
@@ -1334,13 +1327,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_item_variants_item_id"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "item_variants_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
@@ -1358,12 +1344,35 @@ export type Database = {
       }
     }
     Functions: {
+      create_item_variant_direct: {
+        Args: {
+          p_item_id: string
+          p_sku: string
+          p_quantity_available: number
+          p_cost_price: number
+          p_selling_price: number
+          p_attribute_value_ids?: string[]
+        }
+        Returns: Json
+      }
+      delete_item_variant_direct: {
+        Args: { p_variant_id: string }
+        Returns: boolean
+      }
+      get_item_variants_with_attributes: {
+        Args: { p_item_id?: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      ping: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       search_items_enhanced: {
         Args: {
@@ -1389,6 +1398,17 @@ export type Database = {
           last_restocked_date: string
           total_count: number
         }[]
+      }
+      update_item_variant_direct: {
+        Args: {
+          p_variant_id: string
+          p_sku?: string
+          p_quantity_available?: number
+          p_cost_price?: number
+          p_selling_price?: number
+          p_attribute_value_ids?: string[]
+        }
+        Returns: Json
       }
       user_has_store_access: {
         Args: { _store_id: string }
