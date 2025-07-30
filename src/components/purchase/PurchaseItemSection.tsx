@@ -2,7 +2,7 @@ import { Package } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Item } from '@/hooks/useItems';
-import ItemVariantSelector from '@/components/ItemVariantSelector';
+
 import NewItemForm from './NewItemForm';
 import ExistingItemSelector from './ExistingItemSelector';
 import PurchaseQuantitySection from './PurchaseQuantitySection';
@@ -11,7 +11,6 @@ interface PurchaseItemSectionProps {
   isNewItem: boolean;
   formData: {
     itemId: string;
-    variantId: string;
     quantity: number;
     totalCost: number;
   };
@@ -55,20 +54,6 @@ export default function PurchaseItemSection({
           />
         )}
 
-        {/* Variant Selection */}
-        {!isNewItem && formData.itemId && (
-          <div className="space-y-2">
-            <Label className="text-blue-200">Select Variant</Label>
-            <ItemVariantSelector
-              itemId={formData.itemId}
-              value={formData.variantId}
-              onValueChange={(variantId) => {
-                onFormDataChange({ variantId });
-              }}
-              placeholder="Select item variant"
-            />
-          </div>
-        )}
 
         <PurchaseQuantitySection
           quantity={formData.quantity}

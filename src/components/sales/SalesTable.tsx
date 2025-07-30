@@ -72,7 +72,7 @@ export default function SalesTable({
                   <TableCell>
                     <Select 
                       value={order.delivery_status} 
-                      onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.id, value)}
+                      onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.sale_id, value)}
                     >
                       <SelectTrigger className="w-36 neon-border bg-slate-800/50 text-blue-100">
                         <SelectValue>
@@ -99,16 +99,15 @@ export default function SalesTable({
                         <Eye className="w-4 h-4" />
                       </Button>
                       
-                      {order.balance_due > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-400 hover:text-green-300 hover:bg-green-900/20"
-                          onClick={() => setRecordingPayment(order)}
-                        >
-                          <Receipt className="w-4 h-4" />
-                        </Button>
-                      )}
+                      {/* Temporarily always show payment button for testing */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-400 hover:text-green-300 hover:bg-green-900/20"
+                        onClick={() => setRecordingPayment(order)}
+                      >
+                        <Receipt className="w-4 h-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

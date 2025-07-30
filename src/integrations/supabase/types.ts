@@ -44,6 +44,13 @@ export type Database = {
             referencedRelation: "attributes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_attribute_values_attribute_id"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "attributes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       attributes: {
@@ -242,83 +249,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      item_variant_attributes: {
-        Row: {
-          attribute_value_id: string | null
-          created_at: string | null
-          id: string
-          variant_id: string | null
-        }
-        Insert: {
-          attribute_value_id?: string | null
-          created_at?: string | null
-          id?: string
-          variant_id?: string | null
-        }
-        Update: {
-          attribute_value_id?: string | null
-          created_at?: string | null
-          id?: string
-          variant_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "item_variant_attributes_attribute_value_id_fkey"
-            columns: ["attribute_value_id"]
-            isOneToOne: false
-            referencedRelation: "attribute_values"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_variant_attributes_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "item_variants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      item_variants: {
-        Row: {
-          cost_price: number
-          created_at: string | null
-          id: string
-          item_id: string | null
-          quantity_available: number | null
-          selling_price: number
-          sku: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          cost_price: number
-          created_at?: string | null
-          id?: string
-          item_id?: string | null
-          quantity_available?: number | null
-          selling_price: number
-          sku?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          cost_price?: number
-          created_at?: string | null
-          id?: string
-          item_id?: string | null
-          quantity_available?: number | null
-          selling_price?: number
-          sku?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "item_variants_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       items: {
         Row: {
@@ -647,6 +577,42 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          onboarding_completed: boolean
+          onboarding_step: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          onboarding_completed?: boolean
+          onboarding_step?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          onboarding_completed?: boolean
+          onboarding_step?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       purchases: {
         Row: {
           created_at: string | null
@@ -656,6 +622,7 @@ export type Database = {
           invoice_number: string | null
           item_id: string | null
           item_name: string
+          items: Json | null
           quantity: number
           store_id: string | null
           supplier_id: string | null
@@ -669,6 +636,7 @@ export type Database = {
           invoice_number?: string | null
           item_id?: string | null
           item_name: string
+          items?: Json | null
           quantity: number
           store_id?: string | null
           supplier_id?: string | null
@@ -682,6 +650,7 @@ export type Database = {
           invoice_number?: string | null
           item_id?: string | null
           item_name?: string
+          items?: Json | null
           quantity?: number
           store_id?: string | null
           supplier_id?: string | null
@@ -890,6 +859,7 @@ export type Database = {
           date: string
           delivery_date: string | null
           delivery_status: string
+          description: string | null
           id: string
           order_number: string
           store_id: string | null
@@ -907,6 +877,7 @@ export type Database = {
           date: string
           delivery_date?: string | null
           delivery_status?: string
+          description?: string | null
           id?: string
           order_number: string
           store_id?: string | null
@@ -924,6 +895,7 @@ export type Database = {
           date?: string
           delivery_date?: string | null
           delivery_status?: string
+          description?: string | null
           id?: string
           order_number?: string
           store_id?: string | null
@@ -947,6 +919,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       stores: {
         Row: {
@@ -1068,6 +1073,56 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_store_access: {
+        Row: {
+          created_at: string | null
+          id: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_store_access_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       payment_summary: {
@@ -1122,10 +1177,49 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      ping: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      search_items_enhanced: {
+        Args: {
+          search_term?: string
+          store_id_filter?: string
+          category_id_filter?: string
+          show_low_stock_only?: boolean
+          page_size?: number
+          page_offset?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          category_id: string
+          store_id: string
+          quantity_available: number
+          cost_price: number
+          selling_price: number
+          created_at: string
+          updated_at: string
+          supplier_id: string
+          stock_receive_date: string
+          last_restocked_date: string
+          total_count: number
+        }[]
+      }
+      user_has_store_access: {
+        Args: { _store_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "manager" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1252,6 +1346,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "manager", "employee"],
+    },
   },
 } as const

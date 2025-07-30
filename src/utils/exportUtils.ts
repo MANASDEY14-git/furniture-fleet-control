@@ -59,14 +59,15 @@ export const formatDataForExport = (data: any[], type: 'sales' | 'purchases' | '
   switch (type) {
     case 'sales':
       return data.map(item => ({
-        Date: item.sale_date ? new Date(item.sale_date).toLocaleDateString() : new Date(item.date).toLocaleDateString(),
-        'Order Number': item.order_number || 'N/A',
-        'Customer': item.customer_name || 'Walk-in Customer',
-        'Total Price': item.total_price,
-        'Paid Amount': item.total_paid || 0,
-        'Balance Due': item.balance_due || 0,
-        'Delivery Status': item.delivery_status,
-        'Delivery Date': item.delivery_date ? new Date(item.delivery_date).toLocaleDateString() : 'Not Set'
+        Date: item['Date'],
+        'Order Number': item['Order Number'],
+        Store: item['Store'],
+        Customer: item['Customer'],
+        'Total Amount': item['Total Amount'],
+        'Total Paid': item['Total Paid'],
+        'Balance Due': item['Balance Due'],
+        Status: item['Status'],
+        'Delivery Date': item['Delivery Date']
       }));
     
     case 'purchases':

@@ -1,6 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency } from '@/utils/currencyUtils';
 
@@ -9,6 +10,8 @@ interface PaymentRecordDialogProps {
   setRecordingPayment: (payment: any) => void;
   paymentAmount: string;
   setPaymentAmount: (amount: string) => void;
+  paymentDescription: string;
+  setPaymentDescription: (description: string) => void;
   handleRecordPayment: () => void;
   isRecordingPayment: boolean;
 }
@@ -18,6 +21,8 @@ export default function PaymentRecordDialog({
   setRecordingPayment,
   paymentAmount,
   setPaymentAmount,
+  paymentDescription,
+  setPaymentDescription,
   handleRecordPayment,
   isRecordingPayment
 }: PaymentRecordDialogProps) {
@@ -45,6 +50,17 @@ export default function PaymentRecordDialog({
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 className="neon-border bg-slate-800/50 text-blue-100"
                 placeholder="Enter payment amount"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-blue-200 font-semibold">Description</label>
+              <Textarea
+                value={paymentDescription}
+                onChange={(e) => setPaymentDescription(e.target.value)}
+                className="neon-border bg-slate-800/50 text-blue-100 resize-none"
+                placeholder="Enter payment description (optional)"
+                rows={3}
               />
             </div>
             

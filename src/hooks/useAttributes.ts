@@ -26,16 +26,34 @@ export const useAttributes = () => {
   return useQuery({
     queryKey: ['attributes'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('attributes')
-        .select(`
-          *,
-          attribute_values (*)
-        `)
-        .order('name');
-      
-      if (error) throw error;
-      return data as AttributeWithValues[];
+      // Fetch attributes and attribute values separately to avoid relationship issues
+      const [attributesResult, valuesResult] = await Promise.all([
+        supabase
+          .from('attributes')
+          .select('id, name, created_at, updated_at')
+          .order('name'),
+        supabase
+          .from('attribute_values')
+          .select('id, attribute_id, value, created_at, updated_at')
+      ]);
+
+      if (attributesResult.error) {
+        console.error('Error fetching attributes:', attributesResult.error);
+        throw attributesResult.error;
+      }
+
+      if (valuesResult.error) {
+        console.error('Error fetching attribute values:', valuesResult.error);
+        throw valuesResult.error;
+      }
+
+      // Manually combine the data
+      const attributesWithValues: AttributeWithValues[] = attributesResult.data.map(attribute => ({
+        ...attribute,
+        attribute_values: valuesResult.data.filter(value => value.attribute_id === attribute.id)
+      }));
+
+      return attributesWithValues;
     },
   });
 };
@@ -62,10 +80,15 @@ export const useCreateAttribute = () => {
         description: "Attribute created successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error creating attribute:', error);
+      const message = error.code === '23505' 
+        ? 'An attribute with this name already exists. Please choose a different name.'
+        : `Failed to create attribute: ${error.message}`;
+      
       toast({
         title: "Error",
-        description: `Failed to create attribute: ${error.message}`,
+        description: message,
         variant: "destructive",
       });
     },

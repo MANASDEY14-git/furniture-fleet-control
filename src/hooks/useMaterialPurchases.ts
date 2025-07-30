@@ -71,6 +71,7 @@ export const useCreateMaterialPurchase = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['material-purchases'] });
       queryClient.invalidateQueries({ queryKey: ['materials'] });
+      queryClient.invalidateQueries({ queryKey: ['material-stock-movements'] });
       toast({
         title: "Success",
         description: "Material purchase recorded successfully",

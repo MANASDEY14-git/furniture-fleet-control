@@ -20,6 +20,7 @@ export default function Sales() {
   const [viewingOrder, setViewingOrder] = useState<any>(null);
   const [recordingPayment, setRecordingPayment] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDescription, setPaymentDescription] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
@@ -118,6 +119,13 @@ export default function Sales() {
       });
     }
 
+    // Sort by date and time (most recent first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.sale_date);
+      const dateB = new Date(b.sale_date);
+      return dateB.getTime() - dateA.getTime();
+    });
+
     return filtered;
   }, [salePaymentStatus, selectedStore, selectedSupplier, searchTerm, dateFilter, customDateRange]);
 
@@ -136,21 +144,19 @@ export default function Sales() {
   const handleRecordPayment = async () => {
     if (!recordingPayment || !paymentAmount) return;
     
+    const description = paymentDescription.trim() || `Payment for order ${recordingPayment.order_number}`;
+    
     await recordPayment.mutateAsync({
       sale_id: recordingPayment.sale_id,
       amount: parseFloat(paymentAmount),
       date: new Date().toISOString().split('T')[0],
-      description: `Payment for order ${recordingPayment.order_number}`,
+      description: description,
       store_id: recordingPayment.store_id,
     });
     
     setRecordingPayment(null);
     setPaymentAmount('');
-  };
-
-  const getOrderItems = (saleId: string) => {
-    const salesOrder = salesOrders.find(order => order.id === saleId);
-    return salesOrder?.sales_order_items || [];
+    setPaymentDescription('');
   };
 
   if (ordersLoading) {
@@ -200,7 +206,6 @@ export default function Sales() {
         viewingOrder={viewingOrder}
         setViewingOrder={setViewingOrder}
         getStoreName={getStoreName}
-        getOrderItems={getOrderItems}
       />
 
       <PaymentRecordDialog
@@ -208,6 +213,8 @@ export default function Sales() {
         setRecordingPayment={setRecordingPayment}
         paymentAmount={paymentAmount}
         setPaymentAmount={setPaymentAmount}
+        paymentDescription={paymentDescription}
+        setPaymentDescription={setPaymentDescription}
         handleRecordPayment={handleRecordPayment}
         isRecordingPayment={recordPayment.isPending}
       />

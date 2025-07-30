@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { PaginationControls } from '@/components/ui/pagination';
 import ItemForm from '@/components/ItemForm';
-import ItemVariantManager from '@/components/ItemVariantManager';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { Item } from '@/hooks/useItems';
 import type { Store } from '@/types';
@@ -20,8 +19,6 @@ interface InventoryTableProps {
   items: Item[];
   stores: Store[];
   categories: Category[];
-  searchTerm: string;
-  onSearchTermChange: (value: string) => void;
   selectedItems: string[];
   onItemSelection: (itemId: string, checked: boolean) => void;
   onDeleteItem: (id: string) => void;
@@ -56,8 +53,6 @@ export default function InventoryTable({
   items,
   stores,
   categories,
-  searchTerm,
-  onSearchTermChange,
   selectedItems,
   onItemSelection,
   onDeleteItem,
@@ -67,25 +62,11 @@ export default function InventoryTable({
 }: InventoryTableProps) {
   const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price' | 'age'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [filterByStore, setFilterByStore] = useState<string>('all');
-  const [filterByCategory, setFilterByCategory] = useState<string>('all');
-  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
-
-  const filteredAndSortedItems = useMemo(() => {
-    let filtered = items.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        stores.find(store => store.id === item.store_id)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        categories.find(cat => cat.id === item.category_id)?.name.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStore = filterByStore === 'all' || item.store_id === filterByStore;
-      const matchesCategory = filterByCategory === 'all' || item.category_id === filterByCategory;
-      const matchesLowStock = !showLowStockOnly || item.quantity_available < 10;
-
-      return matchesSearch && matchesStore && matchesCategory && matchesLowStock;
-    });
-
-    // Sort items
-    filtered.sort((a, b) => {
+  const sortedItems = useMemo(() => {
+    // Since filtering is handled by usePaginatedItems hook, we only need to sort
+    const sorted = [...items];
+    
+    sorted.sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
         case 'name':
@@ -106,8 +87,8 @@ export default function InventoryTable({
       return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-    return filtered;
-  }, [items, searchTerm, stores, categories, sortBy, sortOrder, filterByStore, filterByCategory, showLowStockOnly]);
+    return sorted;
+  }, [items, sortBy, sortOrder]);
 
   if (isLoading) {
     return <LoadingSkeleton type="table" rows={10} cols={8} />;
@@ -115,18 +96,8 @@ export default function InventoryTable({
 
   return (
     <>
-      <div className="flex flex-col gap-4 mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
-            <Input
-              placeholder="Search items, stores, categories..."
-              value={searchTerm}
-              onChange={(e) => onSearchTermChange(e.target.value)}
-              className="pl-10 neon-border bg-slate-800/50 text-blue-100"
-            />
-          </div>
-          
           <Select value={sortBy} onValueChange={(value: 'name' | 'quantity' | 'price' | 'age') => setSortBy(value)}>
             <SelectTrigger className="w-32 neon-border bg-slate-800/50 text-blue-100">
               <SelectValue />
@@ -148,47 +119,6 @@ export default function InventoryTable({
             {sortOrder === 'asc' ? '↑' : '↓'}
           </Button>
         </div>
-
-        <div className="flex gap-4">
-          <Select value={filterByStore} onValueChange={setFilterByStore}>
-            <SelectTrigger className="w-48 neon-border bg-slate-800/50 text-blue-100">
-              <SelectValue placeholder="All stores" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-500/30">
-              <SelectItem value="all" className="text-blue-100">All Stores</SelectItem>
-              {stores.map((store) => (
-                <SelectItem key={store.id} value={store.id} className="text-blue-100">
-                  {store.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={filterByCategory} onValueChange={setFilterByCategory}>
-            <SelectTrigger className="w-48 neon-border bg-slate-800/50 text-blue-100">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-500/30">
-              <SelectItem value="all" className="text-blue-100">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id} className="text-blue-100">
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="lowStock"
-              checked={showLowStockOnly}
-              onCheckedChange={(checked) => setShowLowStockOnly(checked as boolean)}
-            />
-            <label htmlFor="lowStock" className="text-sm text-blue-200 cursor-pointer">
-              Low stock only
-            </label>
-          </div>
-        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -197,10 +127,10 @@ export default function InventoryTable({
             <TableRow className="border-blue-500/30">
               <TableHead className="text-blue-200 w-12">
                 <Checkbox
-                  checked={selectedItems.length === filteredAndSortedItems.length && filteredAndSortedItems.length > 0}
+                  checked={selectedItems.length === sortedItems.length && sortedItems.length > 0}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      const allItemIds = filteredAndSortedItems.map(item => item.id);
+                      const allItemIds = sortedItems.map(item => item.id);
                       allItemIds.forEach(id => onItemSelection(id, true));
                     } else {
                       selectedItems.forEach(id => onItemSelection(id, false));
@@ -219,7 +149,7 @@ export default function InventoryTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedItems.map((item) => {
+            {sortedItems.map((item) => {
               const store = stores.find(s => s.id === item.store_id);
               const category = categories.find(c => c.id === item.category_id);
               const isLowStock = item.quantity_available < 10;
@@ -239,14 +169,14 @@ export default function InventoryTable({
                       onCheckedChange={(checked) => onItemSelection(item.id, checked as boolean)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium text-blue-100 max-w-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate" title={item.name}>{item.name}</span>
-                      {isLowStock && (
-                        <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                      )}
-                    </div>
-                  </TableCell>
+                   <TableCell className="font-medium text-blue-100 max-w-xs">
+                     <div className="flex items-center gap-2">
+                       <span className="truncate" title={item.name}>{item.name}</span>
+                       {isLowStock && (
+                         <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
+                       )}
+                     </div>
+                   </TableCell>
                   <TableCell className="text-blue-200">{store?.name || 'Unknown'}</TableCell>
                   <TableCell className="text-blue-200">{category?.name || 'Unknown'}</TableCell>
                   <TableCell className={`${isLowStock ? 'text-orange-300 font-semibold' : 'text-blue-200'}`}>
@@ -260,24 +190,16 @@ export default function InventoryTable({
                       <span className="text-xs">{stockAgeStatus.status}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <ItemVariantManager
-                        item={item}
-                        trigger={
-                          <Button variant="ghost" size="sm" className="text-green-400 hover:text-green-300 hover:bg-green-900/20">
-                            <Package className="w-4 h-4" />
-                          </Button>
-                        }
-                      />
-                      <ItemForm
-                        item={item}
-                        trigger={
-                          <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        }
-                      />
+                   <TableCell className="text-right">
+                     <div className="flex justify-end gap-2">
+                       <ItemForm
+                         item={item}
+                         trigger={
+                           <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20">
+                             <Pencil className="w-4 h-4" />
+                           </Button>
+                         }
+                       />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
@@ -308,7 +230,7 @@ export default function InventoryTable({
         </Table>
       </div>
 
-      {filteredAndSortedItems.length === 0 && !isLoading && (
+      {sortedItems.length === 0 && !isLoading && (
         <div className="text-center py-8">
           <p className="text-blue-300">No items found matching your criteria</p>
         </div>
@@ -327,8 +249,7 @@ export default function InventoryTable({
 
       {!pagination && (
         <div className="mt-4 text-sm text-blue-300">
-          Showing {filteredAndSortedItems.length} of {items.length} items
-          {showLowStockOnly && ` (low stock only)`}
+          Showing {sortedItems.length} of {items.length} items
         </div>
       )}
     </>
