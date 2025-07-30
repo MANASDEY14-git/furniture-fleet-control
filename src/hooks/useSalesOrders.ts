@@ -12,7 +12,7 @@ export const useSalesOrders = () => {
         .from('sales_orders')
         .select(`
           id,
-          sales_order_items(id, item_id, item_name, quantity, unit_price, total_price, variant_id)
+          sales_order_items(id, item_id, item_name, quantity, unit_price, total_price)
         `)
         .order('created_at', { ascending: false });
       
@@ -53,7 +53,6 @@ export const useCreateSalesOrder = () => {
       const orderItems = data.items.map(item => ({
         order_id: order.id,
         item_id: item.item_id,
-        variant_id: item.variant_id || null,
         item_name: item.item_name,
         quantity: item.quantity,
         unit_price: item.unit_price,
