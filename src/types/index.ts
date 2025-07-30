@@ -82,7 +82,7 @@ export interface SalesOrder {
 
 export interface SalesOrderItem {
   id: string;
-  order_id: string;
+  sales_order_id: string;
   item_id: string;
   item_name: string;
   quantity: number;

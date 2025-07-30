@@ -51,7 +51,7 @@ export const useCreateSalesOrder = () => {
 
       // Create order items
       const orderItems = data.items.map(item => ({
-        order_id: order.id,
+        sales_order_id: order.id,
         item_id: item.item_id,
         item_name: item.item_name,
         quantity: item.quantity,
