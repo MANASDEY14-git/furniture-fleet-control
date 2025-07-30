@@ -10,16 +10,16 @@ import { useMaterials } from '@/hooks/useMaterials';
 
 export default function MaterialStockLedgerPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMaterial, setSelectedMaterial] = useState<string>('');
-  const [movementTypeFilter, setMovementTypeFilter] = useState<string>('');
+  const [selectedMaterial, setSelectedMaterial] = useState<string>('all');
+  const [movementTypeFilter, setMovementTypeFilter] = useState<string>('all');
 
   const { data: materials = [] } = useMaterials();
-  const { data: movements = [], isLoading } = useMaterialStockMovements(selectedMaterial || undefined);
+  const { data: movements = [], isLoading } = useMaterialStockMovements(selectedMaterial === 'all' ? undefined : selectedMaterial);
 
   const filteredMovements = movements.filter(movement => {
     const matchesSearch = movement.materials.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (movement.notes && movement.notes.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesType = !movementTypeFilter || movement.movement_type === movementTypeFilter;
+    const matchesType = movementTypeFilter === 'all' || movement.movement_type === movementTypeFilter;
     return matchesSearch && matchesType;
   });
 
@@ -137,7 +137,7 @@ export default function MaterialStockLedgerPage() {
                 <SelectValue placeholder="Filter by material" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-blue-500/30">
-                <SelectItem value="" className="text-blue-100 focus:bg-blue-800/30">
+                <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">
                   All Materials
                 </SelectItem>
                 {materials.map((material) => (
@@ -153,7 +153,7 @@ export default function MaterialStockLedgerPage() {
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-blue-500/30">
-                <SelectItem value="" className="text-blue-100 focus:bg-blue-800/30">
+                <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">
                   All Types
                 </SelectItem>
                 <SelectItem value="IN" className="text-blue-100 focus:bg-blue-800/30">
