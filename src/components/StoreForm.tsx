@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCreateStore, useUpdateStore, Store } from '@/hooks/useStores';
 
 interface StoreFormProps {
@@ -45,6 +45,9 @@ export default function StoreForm({ store, trigger }: StoreFormProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Store' : 'Add New Store'}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Update the store information below.' : 'Add a new store to your inventory system.'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import SupplierSelector from '@/components/SupplierSelector';
@@ -100,7 +100,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
         }
         return item;
       });
-      console.log('[EnhancedSalesOrderForm] items after updateItem', newItems);
+      // Removed console.log for production
       return newItems;
     });
   };
@@ -185,6 +185,9 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto futuristic-card" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-cyan-300 glow-text">Create Sales Order</DialogTitle>
+          <DialogDescription className="text-blue-300">
+            Create a new sales order with customer details, items, and payment information.
+          </DialogDescription>
         </DialogHeader>
         <Card className="border-none shadow-none">
           <CardContent className="pt-6">

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCreateCategory, useUpdateCategory, Category } from '@/hooks/useCategories';
 
 interface CategoryFormProps {
@@ -43,6 +43,9 @@ export default function CategoryForm({ category, trigger }: CategoryFormProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Update the category information below.' : 'Add a new category to organize your inventory items.'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

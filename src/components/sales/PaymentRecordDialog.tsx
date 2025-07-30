@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency } from '@/utils/currencyUtils';
 
 interface PaymentRecordDialogProps {
@@ -31,6 +31,9 @@ export default function PaymentRecordDialog({
       <DialogContent className="futuristic-card">
         <DialogHeader>
           <DialogTitle className="text-cyan-300">Record Payment</DialogTitle>
+          <DialogDescription className="text-blue-300">
+            Record a payment for this sales order to update the balance due.
+          </DialogDescription>
         </DialogHeader>
         {recordingPayment && (
           <div className="space-y-4">
