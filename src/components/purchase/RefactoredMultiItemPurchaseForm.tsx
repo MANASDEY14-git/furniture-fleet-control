@@ -14,7 +14,6 @@ import PurchaseItemsTable from './PurchaseItemsTable';
 interface PurchaseItem {
   id: string;
   itemId: string;
-  variantId: string;
   itemName: string;
   quantity: number;
   unitPrice: number;
@@ -43,7 +42,6 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
     {
       id: '1',
       itemId: '',
-      variantId: '',
       itemName: '',
       quantity: 0,
       unitPrice: 0,
@@ -65,7 +63,6 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
     setItems([...items, {
       id: Date.now().toString(),
       itemId: '',
-      variantId: '',
       itemName: '',
       quantity: 0,
       unitPrice: 0,
@@ -92,7 +89,6 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
         if (field === 'itemId') {
           const selectedItem = availableItems.find(i => i.id === value);
           updatedItem.itemName = selectedItem?.name || '';
-          updatedItem.variantId = ''; // Reset variant when item changes
         }
         
         if (field === 'quantity' || field === 'unitPrice') {
@@ -164,7 +160,6 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
       items: validItems.map(item => ({
         item_id: item.itemId,
         item_name: item.itemName,
-        variant_id: item.variantId || undefined,
         quantity: item.quantity,
         unit_price: item.unitPrice,
         total_price: item.totalPrice
@@ -187,7 +182,6 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
     setItems([{
       id: '1',
       itemId: '',
-      variantId: '',
       itemName: '',
       quantity: 0,
       unitPrice: 0,

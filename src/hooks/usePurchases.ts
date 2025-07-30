@@ -49,14 +49,6 @@ export const useCreatePurchase = () => {
         data.item_name = newItem.name;
       }
 
-      // Create items array for the database function to handle variants properly
-      const itemsArray = [{
-        item_id: data.item_id,
-        variant_id: data.variantId || null,
-        quantity: data.quantity,
-        unit_price: data.total_cost / data.quantity
-      }];
-
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert([{
@@ -67,8 +59,7 @@ export const useCreatePurchase = () => {
           invoice_number: data.invoice_number,
           quantity: data.quantity,
           total_cost: data.total_cost,
-          date: data.date,
-          items: itemsArray // Add items JSON for variant handling
+          date: data.date
         }])
         .select()
         .single();

@@ -8,7 +8,6 @@ import { Item } from '@/types';
 interface PurchaseItem {
   id: string;
   itemId: string;
-  variantId: string;
   itemName: string;
   quantity: number;
   unitPrice: number;
@@ -60,7 +59,6 @@ export default function PurchaseItemsTable({
           <TableHeader>
             <TableRow className="border-blue-500/30">
               <TableHead className="text-blue-200">Item</TableHead>
-              <TableHead className="text-blue-200">Variant</TableHead>
               <TableHead className="text-blue-200">Quantity</TableHead>
               <TableHead className="text-blue-200">Unit Price (Cost)</TableHead>
               {hasNewItems && (
