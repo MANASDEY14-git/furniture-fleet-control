@@ -94,7 +94,7 @@ export const useBOMByItem = (itemId: string) => {
         .maybeSingle();
       
       if (error) throw error;
-      return data as BOM | null;
+      return data as any;
     },
     enabled: !!itemId,
   });

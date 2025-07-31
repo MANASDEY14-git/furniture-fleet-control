@@ -110,31 +110,56 @@ export type Database = {
       bom: {
         Row: {
           created_at: string | null
+          created_by: string | null
+          estimated_cost: number | null
           id: string
           is_active: boolean | null
           item_id: string | null
+          last_cost_calculation: string | null
           name: string | null
           updated_at: string | null
+          updated_by: string | null
+          version: number | null
+          version_notes: string | null
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
+          estimated_cost?: number | null
           id?: string
           is_active?: boolean | null
           item_id?: string | null
+          last_cost_calculation?: string | null
           name?: string | null
           updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+          version_notes?: string | null
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
+          estimated_cost?: number | null
           id?: string
           is_active?: boolean | null
           item_id?: string | null
+          last_cost_calculation?: string | null
           name?: string | null
           updated_at?: string | null
+          updated_by?: string | null
+          version?: number | null
+          version_notes?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "bom_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bom_item_id"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
@@ -179,6 +204,20 @@ export type Database = {
             referencedRelation: "materials"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_bom_component_options_bom_component_id"
+            columns: ["bom_component_id"]
+            isOneToOne: false
+            referencedRelation: "bom_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bom_component_options_material_id"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bom_components: {
@@ -186,31 +225,37 @@ export type Database = {
           bom_id: string | null
           component_name: string | null
           created_at: string | null
+          created_by: string | null
           id: string
           is_customizable: boolean | null
           material_id: string | null
           notes: string | null
           quantity_required: number
+          updated_by: string | null
         }
         Insert: {
           bom_id?: string | null
           component_name?: string | null
           created_at?: string | null
+          created_by?: string | null
           id?: string
           is_customizable?: boolean | null
           material_id?: string | null
           notes?: string | null
           quantity_required: number
+          updated_by?: string | null
         }
         Update: {
           bom_id?: string | null
           component_name?: string | null
           created_at?: string | null
+          created_by?: string | null
           id?: string
           is_customizable?: boolean | null
           material_id?: string | null
           notes?: string | null
           quantity_required?: number
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -222,6 +267,20 @@ export type Database = {
           },
           {
             foreignKeyName: "bom_components_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bom_components_bom_id"
+            columns: ["bom_id"]
+            isOneToOne: false
+            referencedRelation: "bom"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bom_components_material_id"
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materials"
@@ -770,6 +829,34 @@ export type Database = {
           selected_option_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_sales_customizations_bom_component_id"
+            columns: ["bom_component_id"]
+            isOneToOne: false
+            referencedRelation: "bom_components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_sales_customizations_sale_id"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sale_payment_status"
+            referencedColumns: ["sale_id"]
+          },
+          {
+            foreignKeyName: "fk_sales_customizations_sale_id"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_sales_customizations_selected_material_id"
+            columns: ["selected_material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_customizations_bom_component_id_fkey"
             columns: ["bom_component_id"]

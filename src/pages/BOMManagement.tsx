@@ -1,129 +1,57 @@
 import { useState } from 'react';
-import { Plus, Package2, Search, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search, Filter, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ItemForm from '@/components/ItemForm';
-import { BOMList } from '@/components/bom/BOMList';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { BOMHeader } from '@/components/bom/enhanced/BOMHeader';
+import { EnhancedBOMTable } from '@/components/bom/enhanced/EnhancedBOMTable';
+import { BOMFormWizard } from '@/components/bom/enhanced/BOMFormWizard';
 import { BOMCostAnalytics } from '@/components/bom/BOMCostAnalytics';
 import { BOMTemplates } from '@/components/bom/BOMTemplates';
 import { useItems } from '@/hooks/useItems';
+import { useEnhancedBOMList, useCreateEnhancedBOM } from '@/hooks/useEnhancedBOM';
 
 export default function BOMManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'list' | 'analytics' | 'templates'>('list');
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [selectedItemForBOM, setSelectedItemForBOM] = useState<{ id: string; name: string } | null>(null);
   
   const { data: items = [] } = useItems();
+  const { data: bomList = [] } = useEnhancedBOMList();
+  const createBOM = useCreateEnhancedBOM();
 
-  const tabs = [
-    { id: 'list', label: 'BOM List', icon: Package2 },
-    { id: 'analytics', label: 'Cost Analytics', icon: Filter },
-    { id: 'templates', label: 'Templates', icon: Plus },
-  ];
+  const itemsWithBOM = bomList.length;
+  const activeBOMs = bomList.filter(bom => bom.is_active).length;
+  const avgComponents = bomList.length > 0 
+    ? (bomList.reduce((sum, bom) => sum + bom.component_count, 0) / bomList.length).toFixed(1) 
+    : '0';
+
+  const handleCreateBOM = () => {
+    setShowCreateWizard(true);
+  };
+
+  const handleBOMSubmit = async (data: any) => {
+    await createBOM.mutateAsync(data);
+    setShowCreateWizard(false);
+    setSelectedItemForBOM(null);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-100">
-            Bill of Materials Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage product components, materials, and cost analysis
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <ItemForm
-            trigger={
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Create New Item with BOM
-              </Button>
-            }
-          />
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-slate-800/50 border-blue-500/30">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-200">Total Items</p>
-                <p className="text-2xl font-bold text-cyan-300">{items.length}</p>
-              </div>
-              <Package2 className="h-8 w-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-blue-500/30">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-200">Items with BOM</p>
-                <p className="text-2xl font-bold text-cyan-300">
-                  {items.filter(item => item.id).length}
-                </p>
-              </div>
-              <Package2 className="h-8 w-8 text-green-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-blue-500/30">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-200">Active BOMs</p>
-                <p className="text-2xl font-bold text-cyan-300">
-                  {items.length}
-                </p>
-              </div>
-              <Badge variant="secondary" className="bg-green-600/20 text-green-300">
-                Active
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-blue-500/30">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-200">Avg. Components</p>
-                <p className="text-2xl font-bold text-cyan-300">3.2</p>
-              </div>
-              <Package2 className="h-8 w-8 text-yellow-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-slate-800/50 p-1 rounded-lg border border-blue-500/30">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              activeTab === tab.id
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-blue-200 hover:text-white hover:bg-slate-700'
-            }`}
-          >
-            <tab.icon className="h-4 w-4 mr-2" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Enhanced Header with Stats */}
+      <BOMHeader
+        totalItems={items.length}
+        itemsWithBOM={itemsWithBOM}
+        activeBOMs={activeBOMs}
+        avgComponents={parseFloat(avgComponents)}
+        onCreateNew={handleCreateBOM}
+        onViewAnalytics={() => setActiveTab('analytics')}
+        onViewTemplates={() => setActiveTab('templates')}
+      />
 
       {/* Search and Filter Bar */}
       <Card className="bg-slate-800/50 border-blue-500/30">
@@ -162,7 +90,7 @@ export default function BOMManagement() {
       {/* Tab Content */}
       <div className="space-y-6">
         {activeTab === 'list' && (
-          <BOMList 
+          <EnhancedBOMTable 
             searchTerm={searchTerm}
             selectedCategory={selectedCategory}
           />
@@ -176,6 +104,23 @@ export default function BOMManagement() {
           <BOMTemplates />
         )}
       </div>
+
+      {/* Create BOM Wizard Dialog */}
+      <Dialog open={showCreateWizard} onOpenChange={setShowCreateWizard}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New BOM</DialogTitle>
+          </DialogHeader>
+          {showCreateWizard && (
+            <div className="space-y-4">
+              <div className="text-center text-muted-foreground">
+                Select an item to create a BOM for, or create a new item first.
+              </div>
+              {/* Item selection would go here */}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
