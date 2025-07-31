@@ -67,6 +67,43 @@ export const useRecordPayment = () => {
   });
 };
 
+export const useUpdateDeliveryStatus = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ saleId }: { saleId: string }) => {
+      const { data, error } = await supabase
+        .from('sales_orders')
+        .update({ 
+          status: 'delivered',
+          delivered_at: new Date().toISOString()
+        })
+        .eq('id', saleId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sale-payment-status'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      toast({
+        title: "Success",
+        description: "Order marked as delivered successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update delivery status: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 export const useUpdateDeliveryDate = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();

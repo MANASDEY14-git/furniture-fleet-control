@@ -4,10 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Phone, MapPin, Package } from 'lucide-react';
+import { Phone, MapPin, Package, CheckCircle } from 'lucide-react';
 import moment from 'moment';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { DeliveryEvent } from '@/types/erp';
+import { useUpdateDeliveryStatus } from '@/hooks/useSalePaymentStatus';
+import { useMemo } from 'react';
 
 interface EventDetailsDialogProps {
   selectedEvent: DeliveryEvent | null;
@@ -26,16 +28,32 @@ export default function EventDetailsDialog({
   onUpdateDeliveryDate,
   isUpdating,
 }: EventDetailsDialogProps) {
+  const updateDeliveryStatus = useUpdateDeliveryStatus();
+  const isDeliveryToday = useMemo(() => {
+    if (!selectedEvent) return false;
+    const today = new Date();
+    const deliveryDate = new Date(selectedEvent.start);
+    return (
+      deliveryDate.getDate() === today.getDate() &&
+      deliveryDate.getMonth() === today.getMonth() &&
+      deliveryDate.getFullYear() === today.getFullYear()
+    );
+  }, [selectedEvent]);
+
   const getStatusBadge = (status: string) => {
     const variants = {
       overdue: 'destructive',
       today: 'default',
       upcoming: 'secondary',
+      delivered: 'outline',
     } as const;
 
     return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
-        {status === 'overdue' ? 'Overdue' : status === 'today' ? 'Today' : 'Upcoming'}
+      <Badge variant={variants[status as keyof typeof variants] || 'secondary'} className="gap-1">
+        {status === 'overdue' ? 'Overdue' : 
+         status === 'today' ? 'Today' : 
+         status === 'delivered' ? 'Delivered' : 'Upcoming'}
+        {status === 'delivered' && <CheckCircle className="w-3 h-3" />}
       </Badge>
     );
   };
@@ -123,24 +141,47 @@ export default function EventDetailsDialog({
               </div>
             )}
 
-            <div className="border-t border-border pt-4">
-              <h4 className="text-foreground font-semibold mb-2">Update Delivery Date</h4>
-              <div className="flex gap-2">
-                <Input
-                  type="date"
-                  value={newDeliveryDate}
-                  onChange={(e) => onDeliveryDateChange(e.target.value)}
-                  className="border-border bg-background text-foreground"
-                />
-                <Button
-                  onClick={onUpdateDeliveryDate}
-                  disabled={isUpdating}
-                  className="bg-primary text-primary-foreground hover:bg-primary/80"
-                >
-                  {isUpdating ? 'Updating...' : 'Update'}
-                </Button>
+            {!selectedEvent.is_delivered && (
+              <div className="border-t border-border pt-4 space-y-4">
+                <div>
+                  <h4 className="text-foreground font-semibold mb-2">Update Delivery Date</h4>
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      value={newDeliveryDate}
+                      onChange={(e) => onDeliveryDateChange(e.target.value)}
+                      className="border-border bg-background text-foreground"
+                    />
+                    <Button
+                      onClick={onUpdateDeliveryDate}
+                      disabled={isUpdating}
+                      className="bg-primary text-primary-foreground hover:bg-primary/80"
+                    >
+                      {isUpdating ? 'Updating...' : 'Update'}
+                    </Button>
+                  </div>
+                </div>
+
+                {isDeliveryToday && (
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => updateDeliveryStatus.mutate({ saleId: selectedEvent.id })}
+                      disabled={updateDeliveryStatus.isPending}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {updateDeliveryStatus.isPending ? (
+                        'Marking as Delivered...'
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Mark as Delivered
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
           </div>
         )}
       </DialogContent>

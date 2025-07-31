@@ -9,18 +9,21 @@ export const eventStyleGetter = (event: DeliveryEvent) => {
     backgroundColor = '#ef4444'; // red for overdue
   } else if (event.status === 'today') {
     backgroundColor = '#f59e0b'; // yellow for today
+  } else if (event.status === 'delivered') {
+    backgroundColor = '#3b82f6'; // blue for delivered
   }
 
   return {
     style: {
       backgroundColor,
       borderRadius: '6px',
-      opacity: 0.8,
+      opacity: event.status === 'delivered' ? 0.6 : 0.8,
       color: 'white',
       border: '0px',
       display: 'block',
       fontSize: '12px',
       padding: '2px 4px',
+      textDecoration: event.status === 'delivered' ? 'line-through' : 'none',
     },
   };
 };
@@ -36,6 +39,27 @@ export const transformSalesDataToEvents = (
       const deliveryDate = new Date(sale.delivery_date!);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      
+      // Check if the order is already marked as delivered
+      const foundSalesOrder = salesOrders.find(order => order.id === sale.sale_id);
+      if (foundSalesOrder?.status === 'delivered') {
+        return {
+          id: sale.sale_id,
+          title: `${sale.order_number} (Delivered)`,
+          start: deliveryDate,
+          end: deliveryDate,
+          customer_name: sale.customer_name || 'Walk-in Customer',
+          customer_phone: sale.customer_phone || 'N/A',
+          customer_address: sale.customer_address || 'N/A',
+          items: foundSalesOrder?.sales_order_items || [],
+          store_name: stores.find(s => s.id === sale.store_id)?.name || 'Unknown Store',
+          balance_due: sale.balance_due,
+          status: 'delivered',
+          order_number: sale.order_number,
+          is_delivered: true,
+          delivered_at: foundSalesOrder.delivered_at || null
+        } as DeliveryEvent;
+      }
       
       let status: 'overdue' | 'today' | 'upcoming' = 'upcoming';
       if (deliveryDate < today) {

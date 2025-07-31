@@ -16,8 +16,10 @@ export interface DeliveryEvent {
   }>;
   store_name: string;
   balance_due: number;
-  status: 'overdue' | 'today' | 'upcoming';
+  status: 'overdue' | 'today' | 'upcoming' | 'delivered';
   order_number: string;
+  is_delivered?: boolean;
+  delivered_at?: string | null;
 }
 
 export interface PaymentSummary {
