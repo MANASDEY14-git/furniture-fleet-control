@@ -105,7 +105,15 @@ export type Database = {
           table_name?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "audit_trails_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bom: {
         Row: {
@@ -944,11 +952,13 @@ export type Database = {
           customer_name: string | null
           customer_phone: string | null
           date: string
+          delivered_at: string | null
           delivery_date: string | null
           delivery_status: string
           description: string | null
           id: string
           order_number: string
+          status: string | null
           store_id: string | null
           supplier_id: string | null
           total_amount: number
@@ -962,11 +972,13 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           date: string
+          delivered_at?: string | null
           delivery_date?: string | null
           delivery_status?: string
           description?: string | null
           id?: string
           order_number: string
+          status?: string | null
           store_id?: string | null
           supplier_id?: string | null
           total_amount?: number
@@ -980,11 +992,13 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           date?: string
+          delivered_at?: string | null
           delivery_date?: string | null
           delivery_status?: string
           description?: string | null
           id?: string
           order_number?: string
+          status?: string | null
           store_id?: string | null
           supplier_id?: string | null
           total_amount?: number
