@@ -76,7 +76,7 @@ export const useUpdateDeliveryStatus = () => {
       const { data, error } = await supabase
         .from('sales_orders')
         .update({ 
-          status: 'delivered',
+          delivery_status: 'delivered',
           delivered_at: new Date().toISOString()
         })
         .eq('id', saleId)
