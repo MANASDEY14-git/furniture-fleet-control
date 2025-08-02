@@ -31,6 +31,12 @@ export const useEnhancedBOMByItem = (itemId: string) => {
               quantity_available,
               cost_price
             ),
+            labor_categories (
+              id,
+              name,
+              description,
+              default_hourly_rate
+            ),
             bom_component_options (
               *,
               materials (
@@ -125,14 +131,20 @@ export const useCreateEnhancedBOM = () => {
 
       // Create BOM components
       const components = validatedData.components
-        .filter(comp => comp.is_customizable || comp.material_id)
+        .filter(comp => comp.is_customizable || comp.material_id || comp.component_type !== 'material')
         .map(comp => ({
           bom_id: bom.id,
-          material_id: comp.material_id,
+          material_id: comp.material_id || null,
           quantity_required: comp.quantity_required,
-          component_name: comp.component_name,
+          component_name: comp.component_name || null,
           is_customizable: comp.is_customizable,
-          notes: comp.notes
+          notes: comp.notes || null,
+          component_type: comp.component_type || 'material',
+          time_hours: comp.time_hours || null,
+          time_minutes: comp.time_minutes || null,
+          hourly_rate: comp.hourly_rate || null,
+          service_cost: comp.service_cost || null,
+          labor_category_id: comp.labor_category_id || null,
         }));
 
       if (components.length === 0) {
@@ -227,14 +239,20 @@ export const useUpdateEnhancedBOM = () => {
 
       // Insert new components
       const newComponents = validatedData.components
-        .filter(comp => comp.is_customizable || comp.material_id)
+        .filter(comp => comp.is_customizable || comp.material_id || comp.component_type !== 'material')
         .map(comp => ({
           bom_id: validatedData.bomId,
-          material_id: comp.material_id,
+          material_id: comp.material_id || null,
           quantity_required: comp.quantity_required,
-          component_name: comp.component_name,
+          component_name: comp.component_name || null,
           is_customizable: comp.is_customizable,
-          notes: comp.notes
+          notes: comp.notes || null,
+          component_type: comp.component_type || 'material',
+          time_hours: comp.time_hours || null,
+          time_minutes: comp.time_minutes || null,
+          hourly_rate: comp.hourly_rate || null,
+          service_cost: comp.service_cost || null,
+          labor_category_id: comp.labor_category_id || null,
         }));
 
       if (newComponents.length === 0) {

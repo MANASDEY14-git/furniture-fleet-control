@@ -18,19 +18,31 @@ export interface BOMComponentOption {
 export interface BOMComponent {
   id: string;
   bom_id: string;
-  material_id: string;
+  material_id?: string;
   quantity_required: number;
   component_name?: string;
   is_customizable: boolean;
   notes?: string;
   created_by?: string;
   updated_by?: string;
-  materials: {
+  component_type: 'material' | 'labor' | 'service';
+  time_hours?: number;
+  time_minutes?: number;
+  hourly_rate?: number;
+  service_cost?: number;
+  labor_category_id?: string;
+  materials?: {
     id: string;
     name: string;
     unit?: string;
     quantity_available: number;
     cost_price: number;
+  };
+  labor_categories?: {
+    id: string;
+    name: string;
+    description?: string;
+    default_hourly_rate: number;
   };
   bom_component_options: BOMComponentOption[];
 }
@@ -73,6 +85,12 @@ export const BOMComponentSchema = z.object({
   component_name: z.string().optional(),
   is_customizable: z.boolean(),
   notes: z.string().optional(),
+  component_type: z.enum(['material', 'labor', 'service']).default('material'),
+  time_hours: z.number().min(0).optional(),
+  time_minutes: z.number().min(0).max(59).optional(),
+  hourly_rate: z.number().min(0).optional(),
+  service_cost: z.number().min(0).optional(),
+  labor_category_id: z.string().uuid().optional(),
   options: z.array(BOMComponentOptionSchema).optional(),
 });
 
@@ -106,6 +124,12 @@ export interface CreateBOMComponentData {
   component_name?: string;
   is_customizable: boolean;
   notes?: string;
+  component_type: 'material' | 'labor' | 'service';
+  time_hours?: number;
+  time_minutes?: number;
+  hourly_rate?: number;
+  service_cost?: number;
+  labor_category_id?: string;
   options?: {
     material_id: string;
     option_name: string;
