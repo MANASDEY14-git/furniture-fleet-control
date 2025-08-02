@@ -166,13 +166,6 @@ export type Database = {
             referencedRelation: "items"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_bom_item_id"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
         ]
       }
       bom_component_options: {
@@ -212,57 +205,61 @@ export type Database = {
             referencedRelation: "materials"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_bom_component_options_bom_component_id"
-            columns: ["bom_component_id"]
-            isOneToOne: false
-            referencedRelation: "bom_components"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bom_component_options_material_id"
-            columns: ["material_id"]
-            isOneToOne: false
-            referencedRelation: "materials"
-            referencedColumns: ["id"]
-          },
         ]
       }
       bom_components: {
         Row: {
           bom_id: string | null
           component_name: string | null
+          component_type: string
           created_at: string | null
           created_by: string | null
+          hourly_rate: number | null
           id: string
           is_customizable: boolean | null
+          labor_category_id: string | null
           material_id: string | null
           notes: string | null
           quantity_required: number
+          service_cost: number | null
+          time_hours: number | null
+          time_minutes: number | null
           updated_by: string | null
         }
         Insert: {
           bom_id?: string | null
           component_name?: string | null
+          component_type?: string
           created_at?: string | null
           created_by?: string | null
+          hourly_rate?: number | null
           id?: string
           is_customizable?: boolean | null
+          labor_category_id?: string | null
           material_id?: string | null
           notes?: string | null
           quantity_required: number
+          service_cost?: number | null
+          time_hours?: number | null
+          time_minutes?: number | null
           updated_by?: string | null
         }
         Update: {
           bom_id?: string | null
           component_name?: string | null
+          component_type?: string
           created_at?: string | null
           created_by?: string | null
+          hourly_rate?: number | null
           id?: string
           is_customizable?: boolean | null
+          labor_category_id?: string | null
           material_id?: string | null
           notes?: string | null
           quantity_required?: number
+          service_cost?: number | null
+          time_hours?: number | null
+          time_minutes?: number | null
           updated_by?: string | null
         }
         Relationships: [
@@ -274,21 +271,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bom_components_labor_category_id_fkey"
+            columns: ["labor_category_id"]
+            isOneToOne: false
+            referencedRelation: "labor_categories"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bom_components_material_id_fkey"
-            columns: ["material_id"]
-            isOneToOne: false
-            referencedRelation: "materials"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bom_components_bom_id"
-            columns: ["bom_id"]
-            isOneToOne: false
-            referencedRelation: "bom"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bom_components_material_id"
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materials"
@@ -383,6 +373,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      labor_categories: {
+        Row: {
+          created_at: string | null
+          default_hourly_rate: number | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_hourly_rate?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_hourly_rate?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       low_stock_alerts: {
         Row: {
@@ -838,13 +855,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_sales_customizations_bom_component_id"
-            columns: ["bom_component_id"]
-            isOneToOne: false
-            referencedRelation: "bom_components"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_sales_customizations_sale_id"
             columns: ["sale_id"]
             isOneToOne: false
@@ -863,13 +873,6 @@ export type Database = {
             columns: ["selected_material_id"]
             isOneToOne: false
             referencedRelation: "materials"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_customizations_bom_component_id_fkey"
-            columns: ["bom_component_id"]
-            isOneToOne: false
-            referencedRelation: "bom_components"
             referencedColumns: ["id"]
           },
           {
