@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useBOMByItem } from '@/hooks/useBOM';
+import { useEnhancedBOMByItem } from '@/hooks/useEnhancedBOM';
 import { useMaterials } from '@/hooks/useMaterials';
+import { useLaborCategories } from '@/hooks/useLaborCategories';
 
 interface BOMCostCalculatorProps {
   item: any;
@@ -20,35 +21,56 @@ export function BOMCostCalculator({ item }: BOMCostCalculatorProps) {
   const [laborCost, setLaborCost] = useState(0);
   const [overheadPercentage, setOverheadPercentage] = useState(15);
   
-  const { data: bom } = useBOMByItem(item.id);
+  const { data: bom } = useEnhancedBOMByItem(item.id);
   const { data: materials = [] } = useMaterials();
+  const { data: laborCategories = [] } = useLaborCategories();
 
-  // Calculate material costs
-  const materialCosts = bom?.bom_components?.map(component => {
-    const material = materials.find(m => m.id === component.material_id);
-    const baseCost = (material?.cost_price || 0) * component.quantity_required;
-    const wasteAdjustedCost = baseCost * (1 + wastePercentage / 100);
+  // Calculate component costs
+  const componentCosts = bom?.bom_components?.map(component => {
+    let baseCost = 0;
+    let available = 0;
+    let required = 0;
+    let shortage = 0;
+    
+    if (component.component_type === 'material') {
+      const material = materials.find(m => m.id === component.material_id);
+      baseCost = (material?.cost_price || 0) * component.quantity_required;
+      available = material?.quantity_available || 0;
+      required = component.quantity_required * quantity;
+      shortage = Math.max(0, required - available);
+    } else if (component.component_type === 'labor') {
+      const laborCat = laborCategories.find(cat => cat.id === component.labor_category_id);
+      const hourlyRate = component.hourly_rate || laborCat?.default_hourly_rate || 0;
+      const totalHours = (component.time_hours || 0) + ((component.time_minutes || 0) / 60);
+      baseCost = hourlyRate * totalHours;
+    } else if (component.component_type === 'service') {
+      baseCost = component.service_cost || 0;
+    }
+    
+    const wasteAdjustedCost = component.component_type === 'material' 
+      ? baseCost * (1 + wastePercentage / 100) 
+      : baseCost;
     
     return {
       component,
-      material,
+      material: component.component_type === 'material' ? materials.find(m => m.id === component.material_id) : null,
       baseCost,
       wasteAdjustedCost,
       totalCost: wasteAdjustedCost * quantity,
-      available: material?.quantity_available || 0,
-      required: component.quantity_required * quantity,
-      shortage: Math.max(0, (component.quantity_required * quantity) - (material?.quantity_available || 0))
+      available,
+      required,
+      shortage
     };
   }) || [];
 
-  const totalMaterialCost = materialCosts.reduce((sum, cost) => sum + cost.totalCost, 0);
+  const totalComponentCost = componentCosts.reduce((sum, cost) => sum + cost.totalCost, 0);
   const totalLaborCost = laborCost * quantity;
-  const subtotal = totalMaterialCost + totalLaborCost;
+  const subtotal = totalComponentCost + totalLaborCost;
   const overheadCost = subtotal * (overheadPercentage / 100);
   const totalCost = subtotal + overheadCost;
   const unitCost = quantity > 0 ? totalCost / quantity : 0;
 
-  const hasShortages = materialCosts.some(cost => cost.shortage > 0);
+  const hasShortages = componentCosts.some(cost => cost.shortage > 0);
 
   return (
     <Dialog>
@@ -129,23 +151,23 @@ export function BOMCostCalculator({ item }: BOMCostCalculatorProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-blue-200">Material Cost:</span>
+                <span className="text-blue-200">Component Cost:</span>
                 <span className="text-green-300 font-mono">
-                  ${totalMaterialCost.toFixed(2)}
+                  ₹{totalComponentCost.toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between">
-                <span className="text-blue-200">Labor Cost:</span>
+                <span className="text-blue-200">Additional Labor:</span>
                 <span className="text-green-300 font-mono">
-                  ${totalLaborCost.toFixed(2)}
+                  ₹{totalLaborCost.toFixed(2)}
                 </span>
               </div>
 
               <div className="flex justify-between">
                 <span className="text-blue-200">Overhead Cost:</span>
                 <span className="text-green-300 font-mono">
-                  ${overheadCost.toFixed(2)}
+                  ₹{overheadCost.toFixed(2)}
                 </span>
               </div>
 
@@ -153,7 +175,7 @@ export function BOMCostCalculator({ item }: BOMCostCalculatorProps) {
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-cyan-300">Total Cost:</span>
                   <span className="text-cyan-300 font-mono">
-                    ${totalCost.toFixed(2)}
+                    ₹{totalCost.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -161,12 +183,12 @@ export function BOMCostCalculator({ item }: BOMCostCalculatorProps) {
               <div className="flex justify-between">
                 <span className="text-blue-200">Cost per Unit:</span>
                 <span className="text-yellow-300 font-mono">
-                  ${unitCost.toFixed(2)}
+                  ₹{unitCost.toFixed(2)}
                 </span>
               </div>
 
               {hasShortages && (
-                <Badge variant="destructive" className="w-full justify-center bg-red-600/20 text-red-300">
+                <Badge variant="destructive" className="w-full justify-center">
                   <AlertCircle className="h-3 w-3 mr-1" />
                   Material Shortages Detected
                 </Badge>
@@ -186,28 +208,28 @@ export function BOMCostCalculator({ item }: BOMCostCalculatorProps) {
               <div>
                 <div className="text-xs text-blue-300 mb-1">Break-even Price</div>
                 <div className="text-lg font-bold text-yellow-300 font-mono">
-                  ${unitCost.toFixed(2)}
+                  ₹{unitCost.toFixed(2)}
                 </div>
               </div>
 
               <div>
                 <div className="text-xs text-blue-300 mb-1">25% Markup</div>
                 <div className="text-lg font-bold text-green-300 font-mono">
-                  ${(unitCost * 1.25).toFixed(2)}
+                  ₹{(unitCost * 1.25).toFixed(2)}
                 </div>
               </div>
 
               <div>
                 <div className="text-xs text-blue-300 mb-1">50% Markup</div>
                 <div className="text-lg font-bold text-green-300 font-mono">
-                  ${(unitCost * 1.5).toFixed(2)}
+                  ₹{(unitCost * 1.5).toFixed(2)}
                 </div>
               </div>
 
               <div>
                 <div className="text-xs text-blue-300 mb-1">Current Selling Price</div>
                 <div className="text-lg font-bold text-cyan-300 font-mono">
-                  ${item.selling_price?.toFixed(2) || 'N/A'}
+                  ₹{item.selling_price?.toFixed(2) || 'N/A'}
                 </div>
               </div>
 
@@ -225,49 +247,71 @@ export function BOMCostCalculator({ item }: BOMCostCalculatorProps) {
           </Card>
         </div>
 
-        {/* Material Details Table */}
-        <Card className="bg-slate-700/50 border-blue-500/30">
+        {/* Component Details Table */}
+        <Card>
           <CardHeader>
-            <CardTitle className="text-blue-200 text-sm">Material Requirements & Costs</CardTitle>
+            <CardTitle className="text-base">Component Requirements & Costs</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-blue-500/30">
-                  <TableHead className="text-blue-200">Material</TableHead>
-                  <TableHead className="text-blue-200">Required</TableHead>
-                  <TableHead className="text-blue-200">Available</TableHead>
-                  <TableHead className="text-blue-200">Unit Cost</TableHead>
-                  <TableHead className="text-blue-200">Total Cost</TableHead>
-                  <TableHead className="text-blue-200">Status</TableHead>
+                <TableRow>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Required</TableHead>
+                  <TableHead>Available</TableHead>
+                  <TableHead>Unit Cost</TableHead>
+                  <TableHead>Total Cost</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {materialCosts.map((cost, index) => (
-                  <TableRow key={index} className="border-blue-500/20">
-                    <TableCell className="text-white">
-                      {cost.material?.name || 'Unknown Material'}
-                    </TableCell>
-                    <TableCell className="text-blue-200">
-                      {cost.required} {cost.material?.unit || 'units'}
-                    </TableCell>
-                    <TableCell className="text-blue-200">
-                      {cost.available} {cost.material?.unit || 'units'}
-                    </TableCell>
-                    <TableCell className="text-green-300 font-mono">
-                      ${(cost.material?.cost_price || 0).toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-green-300 font-mono">
-                      ${cost.totalCost.toFixed(2)}
+                {componentCosts.map((cost, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      {cost.component.component_name || 
+                        (cost.component.component_type === 'material' && cost.material?.name) ||
+                        (cost.component.component_type === 'labor' && 
+                          laborCategories.find(cat => cat.id === cost.component.labor_category_id)?.name) ||
+                        'Service'}
                     </TableCell>
                     <TableCell>
-                      {cost.shortage > 0 ? (
-                        <Badge variant="destructive" className="bg-red-600/20 text-red-300">
+                      <Badge variant="outline">{cost.component.component_type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {cost.component.component_type === 'material' && (
+                        `${cost.required} ${cost.material?.unit || 'units'}`
+                      )}
+                      {cost.component.component_type === 'labor' && (
+                        `${cost.component.time_hours}h ${cost.component.time_minutes}m`
+                      )}
+                      {cost.component.component_type === 'service' && '1 unit'}
+                    </TableCell>
+                    <TableCell>
+                      {cost.component.component_type === 'material' ? (
+                        `${cost.available} ${cost.material?.unit || 'units'}`
+                      ) : (
+                        <span className="text-muted-foreground">N/A</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-mono">
+                      {cost.component.component_type === 'material' && `₹${(cost.material?.cost_price || 0).toFixed(2)}`}
+                      {cost.component.component_type === 'labor' && (
+                        `₹${(cost.component.hourly_rate || laborCategories.find(cat => cat.id === cost.component.labor_category_id)?.default_hourly_rate || 0).toFixed(2)}/hr`
+                      )}
+                      {cost.component.component_type === 'service' && `₹${(cost.component.service_cost || 0).toFixed(2)}`}
+                    </TableCell>
+                    <TableCell className="font-mono">
+                      ₹{cost.totalCost.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      {cost.component.component_type === 'material' && cost.shortage > 0 ? (
+                        <Badge variant="destructive">
                           Short {cost.shortage}
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-green-600/20 text-green-300">
-                          Available
+                        <Badge variant="secondary">
+                          {cost.component.component_type === 'material' ? 'Available' : 'Ready'}
                         </Badge>
                       )}
                     </TableCell>

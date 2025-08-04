@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CreateBOMData, BOMValidationResult } from '@/types/bom';
 import { useMaterials } from '@/hooks/useMaterials';
+import { useLaborCategories } from '@/hooks/useLaborCategories';
 
 interface BOMReviewStepProps {
   data: CreateBOMData;
@@ -14,6 +15,7 @@ interface BOMReviewStepProps {
 
 export function BOMReviewStep({ data, itemName, validation }: BOMReviewStepProps) {
   const { data: materials = [] } = useMaterials();
+  const { data: laborCategories = [] } = useLaborCategories();
 
   const getMaterialName = (materialId: string) => {
     const material = materials.find(m => m.id === materialId);
@@ -27,9 +29,22 @@ export function BOMReviewStep({ data, itemName, validation }: BOMReviewStepProps
 
   const calculateTotalCost = () => {
     return data.components.reduce((total, component) => {
-      if (!component.is_customizable && component.material_id) {
-        const materialCost = getMaterialCost(component.material_id);
-        return total + (materialCost * component.quantity_required);
+      if (component.is_customizable) return total;
+      
+      switch (component.component_type) {
+        case 'material':
+          if (component.material_id) {
+            const materialCost = getMaterialCost(component.material_id);
+            return total + (materialCost * component.quantity_required);
+          }
+          break;
+        case 'labor':
+          const laborCat = laborCategories.find(cat => cat.id === component.labor_category_id);
+          const hourlyRate = component.hourly_rate || laborCat?.default_hourly_rate || 0;
+          const totalHours = (component.time_hours || 0) + ((component.time_minutes || 0) / 60);
+          return total + (hourlyRate * totalHours);
+        case 'service':
+          return total + (component.service_cost || 0);
       }
       return total;
     }, 0);
@@ -168,8 +183,8 @@ export function BOMReviewStep({ data, itemName, validation }: BOMReviewStepProps
             <TableHeader>
               <TableRow>
                 <TableHead>Component</TableHead>
-                <TableHead>Material</TableHead>
-                <TableHead>Quantity</TableHead>
+                <TableHead>Details</TableHead>
+                <TableHead>Quantity/Time</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Cost</TableHead>
               </TableRow>
@@ -186,20 +201,44 @@ export function BOMReviewStep({ data, itemName, validation }: BOMReviewStepProps
                         {component.options?.length || 0} options
                       </Badge>
                     ) : (
-                      getMaterialName(component.material_id || '')
+                      <>
+                        {component.component_type === 'material' && getMaterialName(component.material_id || '')}
+                        {component.component_type === 'labor' && (
+                          <span>{laborCategories.find(cat => cat.id === component.labor_category_id)?.name || 'Labor'}</span>
+                        )}
+                        {component.component_type === 'service' && <span>Service</span>}
+                      </>
                     )}
                   </TableCell>
-                  <TableCell>{component.quantity_required}</TableCell>
+                  <TableCell>
+                    {component.component_type === 'material' && component.quantity_required}
+                    {component.component_type === 'labor' && (
+                      <span>{component.time_hours}h {component.time_minutes}m</span>
+                    )}
+                    {component.component_type === 'service' && '1 unit'}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={component.is_customizable ? "outline" : "default"}>
-                      {component.is_customizable ? 'Customizable' : 'Fixed'}
+                      {component.is_customizable ? 'Customizable' : component.component_type}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {component.is_customizable ? (
                       <span className="text-muted-foreground text-sm">Variable</span>
                     ) : (
-                      `₹${(getMaterialCost(component.material_id || '') * component.quantity_required).toFixed(2)}`
+                      <>
+                        {component.component_type === 'material' && 
+                          `₹${(getMaterialCost(component.material_id || '') * component.quantity_required).toFixed(2)}`}
+                        {component.component_type === 'labor' && (
+                          (() => {
+                            const laborCat = laborCategories.find(cat => cat.id === component.labor_category_id);
+                            const hourlyRate = component.hourly_rate || laborCat?.default_hourly_rate || 0;
+                            const totalHours = (component.time_hours || 0) + ((component.time_minutes || 0) / 60);
+                            return `₹${(hourlyRate * totalHours).toFixed(2)}`;
+                          })()
+                        )}
+                        {component.component_type === 'service' && `₹${(component.service_cost || 0).toFixed(2)}`}
+                      </>
                     )}
                   </TableCell>
                 </TableRow>
