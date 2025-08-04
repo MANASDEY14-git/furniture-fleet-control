@@ -10,7 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useBOMByItem, useCreateBOM, useUpdateBOM, type CreateBOMComponentData } from '@/hooks/useBOM';
+import { useEnhancedBOMByItem, useCreateEnhancedBOM, useUpdateEnhancedBOM } from '@/hooks/useEnhancedBOM';
+import { CreateBOMComponentData } from '@/types/bom';
 import { useMaterials } from '@/hooks/useMaterials';
 import { type Item } from '@/hooks/useItems';
 
@@ -18,15 +19,30 @@ interface EnhancedBOMManagerProps {
   item: Item;
 }
 
-interface BOMComponentFormData extends CreateBOMComponentData {
+interface BOMComponentFormData {
   id?: string;
+  material_id?: string;
+  quantity_required: number;
+  component_name?: string;
+  is_customizable: boolean;
+  notes?: string;
+  component_type: 'material' | 'labor' | 'service';
+  time_hours?: number;
+  time_minutes?: number;
+  hourly_rate?: number;
+  service_cost?: number;
+  labor_category_id?: string;
+  options?: {
+    material_id: string;
+    option_name: string;
+  }[];
 }
 
 export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
-  const { data: bom, isLoading: bomLoading } = useBOMByItem(item.id);
+  const { data: bom, isLoading: bomLoading } = useEnhancedBOMByItem(item.id);
   const { data: materials = [] } = useMaterials();
-  const createBOM = useCreateBOM();
-  const updateBOM = useUpdateBOM();
+  const createBOM = useCreateEnhancedBOM();
+  const updateBOM = useUpdateEnhancedBOM();
   
   const [components, setComponents] = useState<BOMComponentFormData[]>([]);
   const [bomName, setBomName] = useState('');
@@ -36,26 +52,33 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
       setBomName(bom.name || '');
       setComponents(bom.bom_components.map(comp => ({
         id: comp.id,
-        material_id: comp.material_id,
+        material_id: comp.material_id || undefined,
         quantity_required: comp.quantity_required,
-        component_name: comp.component_name,
+        component_name: comp.component_name || undefined,
         is_customizable: comp.is_customizable,
-        notes: comp.notes,
-        options: comp.bom_component_options.map(opt => ({
+        notes: comp.notes || undefined,
+        component_type: comp.component_type || 'material',
+        time_hours: comp.time_hours || undefined,
+        time_minutes: comp.time_minutes || undefined,
+        hourly_rate: comp.hourly_rate || undefined,
+        service_cost: comp.service_cost || undefined,
+        labor_category_id: comp.labor_category_id || undefined,
+        options: comp.bom_component_options?.map(opt => ({
           material_id: opt.material_id,
           option_name: opt.option_name
-        }))
+        })) || []
       })));
     }
   }, [bom]);
 
   const addComponent = () => {
     setComponents([...components, { 
-      material_id: '', 
+      material_id: undefined, 
       quantity_required: 1, 
       component_name: '',
       is_customizable: false,
       notes: '',
+      component_type: 'material',
       options: []
     }]);
   };
@@ -96,7 +119,10 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
       if (comp.is_customizable) {
         return comp.options && comp.options.length > 0 && comp.options.every(opt => opt.material_id && opt.option_name);
       }
-      return comp.material_id && comp.quantity_required > 0;
+      if (comp.component_type === 'material') {
+        return comp.material_id && comp.quantity_required > 0;
+      }
+      return comp.quantity_required > 0;
     });
 
     if (validComponents.length === 0) {
@@ -104,18 +130,34 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
       return;
     }
 
+    // Convert to the format expected by the API
+    const apiComponents: CreateBOMComponentData[] = validComponents.map(comp => ({
+      material_id: comp.material_id,
+      quantity_required: comp.quantity_required,
+      component_name: comp.component_name,
+      is_customizable: comp.is_customizable,
+      notes: comp.notes,
+      component_type: comp.component_type,
+      time_hours: comp.time_hours,
+      time_minutes: comp.time_minutes,
+      hourly_rate: comp.hourly_rate,
+      service_cost: comp.service_cost,
+      labor_category_id: comp.labor_category_id,
+      options: comp.options
+    }));
+
     try {
       if (bom) {
         await updateBOM.mutateAsync({
           bomId: bom.id,
           itemId: item.id,
-          components: validComponents
+          components: apiComponents
         });
       } else {
         await createBOM.mutateAsync({
           item_id: item.id,
           name: bomName,
-          components: validComponents
+          components: apiComponents
         });
       }
     } catch (error) {
@@ -223,7 +265,7 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
                         <div className="space-y-2">
                           <Label className="text-blue-200">Fixed Material *</Label>
                           <Select 
-                            value={component.material_id} 
+                            value={component.material_id || ''} 
                             onValueChange={(value) => updateComponent(index, { material_id: value })}
                           >
                             <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
