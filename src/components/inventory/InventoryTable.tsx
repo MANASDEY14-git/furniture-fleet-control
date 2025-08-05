@@ -152,7 +152,7 @@ export default function InventoryTable({
             {sortedItems.map((item) => {
               const store = stores.find(s => s.id === item.store_id);
               const category = categories.find(c => c.id === item.category_id);
-              const isLowStock = item.quantity_available < 10;
+              const isLowStock = item.quantity_available < 1;
               const stockAge = calculateStockAge(item.stock_receive_date);
               const stockAgeStatus = getStockAgeStatus(stockAge);
               

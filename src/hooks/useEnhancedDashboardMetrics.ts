@@ -149,8 +149,8 @@ export const useEnhancedDashboardMetrics = (
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 5);
       
-      // Get low stock items (less than 10 units)
-      const lowStockItems = itemsData?.filter(item => item.quantity_available < 10)
+      // Get low stock items (less than 1 unit)
+      const lowStockItems = itemsData?.filter(item => item.quantity_available < 1)
         .map(item => ({
           name: item.name,
           quantity_available: item.quantity_available,

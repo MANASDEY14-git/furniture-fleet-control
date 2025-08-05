@@ -24,7 +24,7 @@ export default function AlertsPanel({ lowStockItems, pendingDeliveries }: Alerts
     if (items.length === 0 || alerts.length === 0) return;
 
     const newLowStockItems = items.filter(item => {
-      const isLowStock = item.quantity_available < 10;
+      const isLowStock = item.quantity_available < 1;
       const hasUnresolvedAlert = alerts.some(alert => 
         alert.item_id === item.id && !alert.is_resolved
       );
@@ -37,7 +37,7 @@ export default function AlertsPanel({ lowStockItems, pendingDeliveries }: Alerts
         item_id: item.id,
         item_name: item.name,
         current_quantity: item.quantity_available,
-        threshold_quantity: 10,
+        threshold_quantity: 1,
         store_id: item.store_id,
         is_resolved: false
       });

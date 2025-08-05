@@ -25,7 +25,7 @@ export default function InventoryHeader({ lowStockItems }: InventoryHeaderProps)
             <h3 className="text-orange-300 font-semibold">Low Stock Alert</h3>
           </div>
           <p className="text-orange-200 text-sm">
-            {lowStockItems.length} item(s) are running low on stock (less than 10 units)
+            {lowStockItems.length} item(s) are running low on stock (less than 1 unit)
           </p>
         </div>
       )}
