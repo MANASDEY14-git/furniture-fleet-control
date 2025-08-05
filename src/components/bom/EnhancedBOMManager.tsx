@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Package, AlertTriangle, Settings, Eye } from 'lucide-react';
+import { Plus, Trash2, Package, AlertTriangle, Settings, Eye, Clock, Wrench, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
 import { useEnhancedBOMByItem, useCreateEnhancedBOM, useUpdateEnhancedBOM } from '@/hooks/useEnhancedBOM';
 import { CreateBOMComponentData } from '@/types/bom';
 import { useMaterials } from '@/hooks/useMaterials';
+import { useLaborCategories } from '@/hooks/useLaborCategories';
 import { type Item } from '@/hooks/useItems';
 
 interface EnhancedBOMManagerProps {
@@ -41,6 +43,7 @@ interface BOMComponentFormData {
 export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
   const { data: bom, isLoading: bomLoading } = useEnhancedBOMByItem(item.id);
   const { data: materials = [] } = useMaterials();
+  const { data: laborCategories = [] } = useLaborCategories();
   const createBOM = useCreateEnhancedBOM();
   const updateBOM = useUpdateEnhancedBOM();
   
@@ -114,16 +117,75 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
     setComponents(updated);
   };
 
-  const handleSave = async () => {
-    const validComponents = components.filter(comp => {
+  const validateComponent = (comp: BOMComponentFormData): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    
+    // Common validations
+    if (!comp.component_name?.trim()) {
+      errors.push('Component name is required');
+    }
+    
+    if (!comp.component_type) {
+      errors.push('Component type is required');
+    }
+
+    // Type-specific validations
+    if (comp.component_type === 'material') {
       if (comp.is_customizable) {
-        return comp.options && comp.options.length > 0 && comp.options.every(opt => opt.material_id && opt.option_name);
+        if (!comp.options || comp.options.length === 0) {
+          errors.push('At least one customization option is required');
+        } else if (!comp.options.every(opt => opt.material_id && opt.option_name)) {
+          errors.push('All customization options must have material and option name');
+        }
+      } else {
+        if (!comp.material_id) {
+          errors.push('Material selection is required');
+        }
       }
-      if (comp.component_type === 'material') {
-        return comp.material_id && comp.quantity_required > 0;
+      if (!comp.quantity_required || comp.quantity_required <= 0) {
+        errors.push('Quantity required must be greater than 0');
       }
-      return comp.quantity_required > 0;
-    });
+    } else if (comp.component_type === 'labor') {
+      if (!comp.time_hours || comp.time_hours <= 0) {
+        errors.push('Time hours must be greater than 0');
+      }
+      if (!comp.hourly_rate || comp.hourly_rate <= 0) {
+        errors.push('Hourly rate must be greater than 0');
+      }
+      if (comp.time_minutes && (comp.time_minutes < 0 || comp.time_minutes > 59)) {
+        errors.push('Time minutes must be between 0 and 59');
+      }
+    } else if (comp.component_type === 'service') {
+      if (!comp.service_cost || comp.service_cost <= 0) {
+        errors.push('Service cost must be greater than 0');
+      }
+      if (!comp.quantity_required || comp.quantity_required <= 0) {
+        errors.push('Service quantity/units must be greater than 0');
+      }
+    }
+
+    return { isValid: errors.length === 0, errors };
+  };
+
+  const handleSave = async () => {
+    const componentValidations = components.map((comp, index) => ({
+      index,
+      component: comp,
+      validation: validateComponent(comp)
+    }));
+
+    const invalidComponents = componentValidations.filter(cv => !cv.validation.isValid);
+    
+    if (invalidComponents.length > 0) {
+      const errorMessage = invalidComponents.map(cv => 
+        `Component #${cv.index + 1}: ${cv.validation.errors.join(', ')}`
+      ).join('\n');
+      
+      alert(`Please fix the following errors:\n\n${errorMessage}`);
+      return;
+    }
+
+    const validComponents = componentValidations.map(cv => cv.component);
 
     if (validComponents.length === 0) {
       alert('Please add at least one valid component');
@@ -235,11 +297,59 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Component Type Selection */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-blue-200">Component Name</Label>
+                        <Label className="text-blue-200">Component Type *</Label>
+                        <Select 
+                          value={component.component_type} 
+                          onValueChange={(value: 'material' | 'labor' | 'service') => 
+                            updateComponent(index, { 
+                              component_type: value,
+                              // Clear type-specific fields when changing type
+                              material_id: value === 'material' ? component.material_id : undefined,
+                              labor_category_id: value === 'labor' ? component.labor_category_id : undefined,
+                              time_hours: value === 'labor' ? component.time_hours : undefined,
+                              time_minutes: value === 'labor' ? component.time_minutes : undefined,
+                              hourly_rate: value === 'labor' ? component.hourly_rate : undefined,
+                              service_cost: value === 'service' ? component.service_cost : undefined,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-blue-500/30">
+                            <SelectItem value="material" className="text-blue-100 focus:bg-blue-800/30">
+                              <div className="flex items-center gap-2">
+                                <ShoppingCart className="w-4 h-4" />
+                                Material
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="labor" className="text-blue-100 focus:bg-blue-800/30">
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                Labor/Time
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="service" className="text-blue-100 focus:bg-blue-800/30">
+                              <div className="flex items-center gap-2">
+                                <Wrench className="w-4 h-4" />
+                                Service
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-blue-200">Component Name *</Label>
                         <Input
-                          placeholder="e.g., Frame Material, Fabric"
+                          placeholder={
+                            component.component_type === 'material' ? 'e.g., Polish, Glass top' :
+                            component.component_type === 'labor' ? 'e.g., PU finish, Assembly' :
+                            'e.g., Delivery, Installation'
+                          }
                           value={component.component_name || ''}
                           onChange={(e) => updateComponent(index, { component_name: e.target.value })}
                           className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
@@ -253,17 +363,39 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
                           onCheckedChange={(checked) => 
                             updateComponent(index, { is_customizable: checked as boolean })
                           }
+                          disabled={component.component_type !== 'material'}
                         />
                         <Label htmlFor={`customizable-${index}`} className="text-blue-200">
-                          Customizable by customer
+                          <span className={component.component_type !== 'material' ? 'opacity-50' : ''}>
+                            Customizable
+                          </span>
                         </Label>
                       </div>
                     </div>
 
-                    {!component.is_customizable ? (
+                    {/* Component Type Badge */}
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={component.component_type === 'material' ? 'default' : 
+                                component.component_type === 'labor' ? 'secondary' : 'outline'}
+                        className={
+                          component.component_type === 'material' ? 'bg-blue-600 text-white' :
+                          component.component_type === 'labor' ? 'bg-amber-600 text-white' :
+                          'bg-purple-600 text-white'
+                        }
+                      >
+                        {component.component_type === 'material' && <ShoppingCart className="w-3 h-3 mr-1" />}
+                        {component.component_type === 'labor' && <Clock className="w-3 h-3 mr-1" />}
+                        {component.component_type === 'service' && <Wrench className="w-3 h-3 mr-1" />}
+                        {component.component_type.charAt(0).toUpperCase() + component.component_type.slice(1)} Component
+                      </Badge>
+                    </div>
+
+                    {/* Component Type Specific Fields */}
+                    {component.component_type === 'material' && !component.is_customizable && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-blue-200">Fixed Material *</Label>
+                          <Label className="text-blue-200">Material *</Label>
                           <Select 
                             value={component.material_id || ''} 
                             onValueChange={(value) => updateComponent(index, { material_id: value })}
@@ -296,7 +428,117 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
                           />
                         </div>
                       </div>
-                    ) : (
+                    )}
+
+                    {component.component_type === 'labor' && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-blue-200">Labor Category</Label>
+                            <Select 
+                              value={component.labor_category_id || ''} 
+                              onValueChange={(value) => {
+                                const category = laborCategories.find(c => c.id === value);
+                                updateComponent(index, { 
+                                  labor_category_id: value,
+                                  hourly_rate: category?.default_hourly_rate || component.hourly_rate
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-slate-800 border-blue-500/30">
+                                {laborCategories.map((category) => (
+                                  <SelectItem 
+                                    key={category.id} 
+                                    value={category.id} 
+                                    className="text-blue-100 focus:bg-blue-800/30"
+                                  >
+                                    {category.name} (₹{category.default_hourly_rate}/hr)
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-blue-200">Hourly Rate *</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Rate per hour"
+                              value={component.hourly_rate || ''}
+                              onChange={(e) => updateComponent(index, { hourly_rate: parseFloat(e.target.value) || 0 })}
+                              className="neon-border bg-slate-800/50 text-blue-100"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-blue-200">Time Hours *</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="e.g., 35"
+                              value={component.time_hours || ''}
+                              onChange={(e) => updateComponent(index, { time_hours: parseInt(e.target.value) || 0 })}
+                              className="neon-border bg-slate-800/50 text-blue-100"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-blue-200">Time Minutes</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="59"
+                              placeholder="e.g., 30"
+                              value={component.time_minutes || ''}
+                              onChange={(e) => updateComponent(index, { time_minutes: parseInt(e.target.value) || 0 })}
+                              className="neon-border bg-slate-800/50 text-blue-100"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-blue-200">Total Cost</Label>
+                            <div className="p-2 bg-slate-700/50 rounded border border-blue-500/30 text-blue-100">
+                              ₹{((component.time_hours || 0) + (component.time_minutes || 0) / 60) * (component.hourly_rate || 0)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {component.component_type === 'service' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-blue-200">Service Cost *</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="Total service cost"
+                            value={component.service_cost || ''}
+                            onChange={(e) => updateComponent(index, { service_cost: parseFloat(e.target.value) || 0 })}
+                            className="neon-border bg-slate-800/50 text-blue-100"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-blue-200">Quantity/Units *</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="Number of service units"
+                            value={component.quantity_required || ''}
+                            onChange={(e) => updateComponent(index, { quantity_required: parseFloat(e.target.value) || 0 })}
+                            className="neon-border bg-slate-800/50 text-blue-100"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {component.component_type === 'material' && component.is_customizable && (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <Label className="text-blue-200">Customization Options</Label>
