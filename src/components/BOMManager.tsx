@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBOMByItem, useCreateBOM, useUpdateBOM } from '@/hooks/useBOM';
 import { useMaterials } from '@/hooks/useMaterials';
 import { type Item } from '@/hooks/useItems';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BOMManagerProps {
   item: Item;
@@ -24,7 +25,8 @@ interface BOMComponentForm {
 }
 
 export default function BOMManager({ item }: BOMManagerProps) {
-  const { data: bom, isLoading: bomLoading } = useBOMByItem(item.id);
+  const { session } = useAuth();
+  const { data: bom, isLoading: bomLoading, error: bomError } = useBOMByItem(item.id);
   const { data: materials = [] } = useMaterials();
   const createBOM = useCreateBOM();
   const updateBOM = useUpdateBOM();
@@ -98,8 +100,38 @@ export default function BOMManager({ item }: BOMManagerProps) {
     return { available, shortage };
   };
 
+  if (!session?.user) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Please log in to manage Bill of Materials.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (bomLoading) {
     return <div className="text-blue-300">Loading BOM data...</div>;
+  }
+
+  if (bomError) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Error loading BOM data: {bomError.message}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

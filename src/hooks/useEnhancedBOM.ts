@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   BOM, 
   CreateBOMData, 
@@ -15,9 +16,14 @@ import {
 
 // Enhanced BOM queries with better error handling and data validation
 export const useEnhancedBOMByItem = (itemId: string) => {
+  const { session } = useAuth();
+  
   return useQuery({
     queryKey: ['enhanced-bom', itemId],
     queryFn: async (): Promise<BOM | null> => {
+      if (!session?.user) {
+        throw new Error('User not authenticated');
+      }
       const { data, error } = await supabase
         .from('bom')
         .select(`
@@ -56,16 +62,21 @@ export const useEnhancedBOMByItem = (itemId: string) => {
       if (error) throw error;
       return data as any;
     },
-    enabled: !!itemId,
+    enabled: !!itemId && !!session?.user,
     staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: false,
   });
 };
 
 export const useEnhancedBOMList = (filters: BOMSearchFilters = {}) => {
+  const { session } = useAuth();
+  
   return useQuery({
     queryKey: ['enhanced-bom-list', filters],
     queryFn: async (): Promise<BOMListItem[]> => {
+      if (!session?.user) {
+        throw new Error('User not authenticated');
+      }
       let query = supabase
         .from('bom')
         .select(`
@@ -102,15 +113,20 @@ export const useEnhancedBOMList = (filters: BOMSearchFilters = {}) => {
       })) as BOMListItem[];
     },
     staleTime: 60000, // 1 minute
+    enabled: !!session?.user,
   });
 };
 
 export const useCreateEnhancedBOM = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async (data: CreateBOMData): Promise<BOM> => {
+      if (!session?.user) {
+        throw new Error('User not authenticated. Please log in to create BOMs.');
+      }
       // Validate data with Zod
       const validatedData = CreateBOMSchema.parse(data);
 
@@ -199,9 +215,13 @@ export const useCreateEnhancedBOM = () => {
 export const useUpdateEnhancedBOM = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async (data: UpdateBOMData): Promise<void> => {
+      if (!session?.user) {
+        throw new Error('User not authenticated. Please log in to update BOMs.');
+      }
       // Validate data with Zod
       const validatedData = UpdateBOMSchema.parse(data);
 
@@ -303,9 +323,14 @@ export const useUpdateEnhancedBOM = () => {
 };
 
 export const useBOMCostCalculation = (bomId: string) => {
+  const { session } = useAuth();
+  
   return useQuery({
     queryKey: ['bom-cost-calculation', bomId],
     queryFn: async (): Promise<BOMCostCalculation> => {
+      if (!session?.user) {
+        throw new Error('User not authenticated');
+      }
       const { data: bom, error } = await supabase
         .from('bom')
         .select(`
@@ -354,7 +379,7 @@ export const useBOMCostCalculation = (bomId: string) => {
         unavailableMaterials,
       };
     },
-    enabled: !!bomId,
+    enabled: !!bomId && !!session?.user,
     staleTime: 30000,
   });
 };
@@ -408,9 +433,13 @@ export const useBOMValidation = () => {
 export const useDeleteBOM = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async (bomId: string): Promise<void> => {
+      if (!session?.user) {
+        throw new Error('User not authenticated. Please log in to delete BOMs.');
+      }
       // Soft delete by setting is_active to false
       const { error } = await supabase
         .from('bom')

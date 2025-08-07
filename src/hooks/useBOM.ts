@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface BOMComponentOption {
   id: string;
@@ -62,9 +63,14 @@ export interface CreateBOMData {
 }
 
 export const useBOMByItem = (itemId: string) => {
+  const { session } = useAuth();
+  
   return useQuery({
     queryKey: ['bom', itemId],
     queryFn: async () => {
+      if (!session?.user) {
+        throw new Error('User not authenticated');
+      }
       const { data, error } = await supabase
         .from('bom')
         .select(`
@@ -96,16 +102,20 @@ export const useBOMByItem = (itemId: string) => {
       if (error) throw error;
       return data as any;
     },
-    enabled: !!itemId,
+    enabled: !!itemId && !!session?.user,
   });
 };
 
 export const useCreateBOM = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async (data: CreateBOMData) => {
+      if (!session?.user) {
+        throw new Error('User not authenticated. Please log in to create BOMs.');
+      }
       // Create BOM first
       const { data: bom, error: bomError } = await supabase
         .from('bom')
@@ -176,6 +186,7 @@ export const useCreateBOM = () => {
 export const useUpdateBOM = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async ({ bomId, itemId, components }: { 
@@ -183,6 +194,9 @@ export const useUpdateBOM = () => {
       itemId: string; 
       components: CreateBOMComponentData[] 
     }) => {
+      if (!session?.user) {
+        throw new Error('User not authenticated. Please log in to update BOMs.');
+      }
       // Delete existing component options first
       const { data: existingComponents } = await supabase
         .from('bom_components')

@@ -16,6 +16,7 @@ import { CreateBOMComponentData } from '@/types/bom';
 import { useMaterials } from '@/hooks/useMaterials';
 import { useLaborCategories } from '@/hooks/useLaborCategories';
 import { type Item } from '@/hooks/useItems';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EnhancedBOMManagerProps {
   item: Item;
@@ -41,7 +42,8 @@ interface BOMComponentFormData {
 }
 
 export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
-  const { data: bom, isLoading: bomLoading } = useEnhancedBOMByItem(item.id);
+  const { session } = useAuth();
+  const { data: bom, isLoading: bomLoading, error: bomError } = useEnhancedBOMByItem(item.id);
   const { data: materials = [] } = useMaterials();
   const { data: laborCategories = [] } = useLaborCategories();
   const createBOM = useCreateEnhancedBOM();
@@ -232,8 +234,38 @@ export default function EnhancedBOMManager({ item }: EnhancedBOMManagerProps) {
     return material ? `${material.name} (Stock: ${material.quantity_available})` : 'Select material';
   };
 
+  if (!session?.user) {
+    return (
+      <Card className="futuristic-card">
+        <CardContent className="p-6">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Please log in to manage Bill of Materials.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (bomLoading) {
     return <div className="text-blue-300">Loading BOM data...</div>;
+  }
+
+  if (bomError) {
+    return (
+      <Card className="futuristic-card">
+        <CardContent className="p-6">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Error loading BOM data: {bomError.message}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
