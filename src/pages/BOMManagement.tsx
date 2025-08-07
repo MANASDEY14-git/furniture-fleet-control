@@ -31,13 +31,18 @@ export default function BOMManagement() {
     : '0';
 
   const handleCreateBOM = () => {
+    setSelectedItemForBOM(null); // Reset selection to start from item selection step
     setShowCreateWizard(true);
   };
 
   const handleBOMSubmit = async (data: any) => {
-    await createBOM.mutateAsync(data);
-    setShowCreateWizard(false);
-    setSelectedItemForBOM(null);
+    try {
+      await createBOM.mutateAsync(data);
+      setShowCreateWizard(false);
+      setSelectedItemForBOM(null);
+    } catch (error) {
+      console.error('Error creating BOM:', error);
+    }
   };
 
   return (
@@ -112,12 +117,16 @@ export default function BOMManagement() {
             <DialogTitle>Create New BOM</DialogTitle>
           </DialogHeader>
           {showCreateWizard && (
-            <div className="space-y-4">
-              <div className="text-center text-muted-foreground">
-                Select an item to create a BOM for, or create a new item first.
-              </div>
-              {/* Item selection would go here */}
-            </div>
+            <BOMFormWizard
+              itemId={selectedItemForBOM?.id}
+              itemName={selectedItemForBOM?.name}
+              onSubmit={handleBOMSubmit}
+              onCancel={() => {
+                setShowCreateWizard(false);
+                setSelectedItemForBOM(null);
+              }}
+              isLoading={createBOM.isPending}
+            />
           )}
         </DialogContent>
       </Dialog>

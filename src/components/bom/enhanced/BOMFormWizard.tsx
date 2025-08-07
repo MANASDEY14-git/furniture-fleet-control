@@ -5,23 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { CreateBOMData, CreateBOMComponentData } from '@/types/bom';
+import { ItemSelectionStep } from '../ItemSelectionStep';
 import { BOMBasicInfoStep } from './wizard/BOMBasicInfoStep';
 import { BOMComponentsStep } from './wizard/BOMComponentsStep';
 import { BOMReviewStep } from './wizard/BOMReviewStep';
 import { useBOMValidation } from '@/hooks/useEnhancedBOM';
 
 interface BOMFormWizardProps {
-  itemId: string;
-  itemName: string;
+  itemId?: string;
+  itemName?: string;
   onSubmit: (data: CreateBOMData) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
 const steps = [
-  { id: 1, name: 'Basic Info', description: 'BOM name and details' },
-  { id: 2, name: 'Components', description: 'Add materials and options' },
-  { id: 3, name: 'Review', description: 'Validate and confirm' },
+  { id: 1, name: 'Select Item', description: 'Choose item for BOM' },
+  { id: 2, name: 'Basic Info', description: 'BOM name and details' },
+  { id: 3, name: 'Components', description: 'Add materials and options' },
+  { id: 4, name: 'Review', description: 'Validate and confirm' },
 ];
 
 export function BOMFormWizard({ 
@@ -31,9 +33,12 @@ export function BOMFormWizard({
   onCancel, 
   isLoading = false 
 }: BOMFormWizardProps) {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(itemId ? 2 : 1); // Skip item selection if item already provided
+  const [selectedItem, setSelectedItem] = useState<{ id: string; name: string } | null>(
+    itemId && itemName ? { id: itemId, name: itemName } : null
+  );
   const [bomData, setBomData] = useState<CreateBOMData>({
-    item_id: itemId,
+    item_id: itemId || '',
     name: '',
     version_notes: '',
     components: [],
@@ -51,6 +56,12 @@ export function BOMFormWizard({
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleItemSelect = (item: { id: string; name: string }) => {
+    setSelectedItem(item);
+    setBomData(prev => ({ ...prev, item_id: item.id }));
+    setCurrentStep(2);
   };
 
   const handleBasicInfoChange = (updates: Partial<CreateBOMData>) => {
@@ -77,10 +88,12 @@ export function BOMFormWizard({
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return bomData.name.trim().length > 0;
+        return selectedItem !== null;
       case 2:
-        return bomData.components.length > 0;
+        return bomData.name.trim().length > 0;
       case 3:
+        return bomData.components.length > 0;
+      case 4:
         return validateBOM(bomData).isValid;
       default:
         return false;
@@ -91,24 +104,30 @@ export function BOMFormWizard({
     switch (currentStep) {
       case 1:
         return (
-          <BOMBasicInfoStep
-            data={bomData}
-            itemName={itemName}
-            onChange={handleBasicInfoChange}
+          <ItemSelectionStep
+            onItemSelect={handleItemSelect}
           />
         );
       case 2:
+        return (
+          <BOMBasicInfoStep
+            data={bomData}
+            itemName={selectedItem?.name || ''}
+            onChange={handleBasicInfoChange}
+          />
+        );
+      case 3:
         return (
           <BOMComponentsStep
             components={bomData.components}
             onChange={handleComponentsChange}
           />
         );
-      case 3:
+      case 4:
         return (
           <BOMReviewStep
             data={bomData}
-            itemName={itemName}
+            itemName={selectedItem?.name || ''}
             validation={validateBOM(bomData)}
           />
         );
@@ -122,7 +141,9 @@ export function BOMFormWizard({
       {/* Progress Header */}
       <Card className="border-primary/20">
         <CardHeader>
-          <CardTitle className="text-primary">Create BOM for {itemName}</CardTitle>
+          <CardTitle className="text-primary">
+            {currentStep === 1 ? 'Create New BOM' : `Create BOM for ${selectedItem?.name || itemName}`}
+          </CardTitle>
           <Progress value={(currentStep / steps.length) * 100} className="w-full" />
         </CardHeader>
         <CardContent>
@@ -179,7 +200,7 @@ export function BOMFormWizard({
           <Badge variant="outline">
             Step {currentStep} of {steps.length}
           </Badge>
-          {currentStep === 3 && (
+          {currentStep === 4 && (
             <Badge variant="secondary">
               {validateBOM(bomData).isValid ? 'Ready to Submit' : 'Validation Required'}
             </Badge>
