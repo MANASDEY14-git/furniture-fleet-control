@@ -9,6 +9,7 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
 import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -24,6 +25,7 @@ export default function RealDashboard() {
   const {
     data: stores = []
   } = useStores();
+  const { session } = useAuth();
 
   // Update time every minute
   useEffect(() => {
@@ -35,6 +37,7 @@ export default function RealDashboard() {
 
   // Set up real-time subscriptions
   useEffect(() => {
+    if (!session?.user) return;
     const channels: any[] = [];
 
     // Subscribe to sales changes
@@ -88,7 +91,7 @@ export default function RealDashboard() {
         supabase.removeChannel(channel);
       });
     };
-  }, [refetchMetrics, refetchSalePaymentStatus]);
+  }, [session, refetchMetrics, refetchSalePaymentStatus]);
 
   // Calculate overdue deliveries
   const overdueDeliveries = salePaymentStatus.filter(sale => {

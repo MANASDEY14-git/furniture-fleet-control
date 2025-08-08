@@ -17,12 +17,14 @@ import LowStockAlertsPanel from '@/components/LowStockAlertsPanel';
 import BulkOperationsPanel from '@/components/BulkOperationsPanel';
 import { ErrorBoundary, QueryErrorFallback } from '@/components/ui/error-boundary';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Inventory() {
   const { data: items = [], isLoading, refetch: refetchItems } = useItems();
   const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
   const deleteItem = useDeleteItem();
+  const { session } = useAuth();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -54,6 +56,7 @@ export default function Inventory() {
 
   // Set up real-time subscriptions
   useEffect(() => {
+    if (!session?.user) return;
     const channels: any[] = [];
 
     // Subscribe to items changes
@@ -118,7 +121,7 @@ export default function Inventory() {
         supabase.removeChannel(channel);
       });
     };
-  }, [refetchItems, refetchPaginated]);
+  }, [session, refetchItems, refetchPaginated]);
 
   const handleDeleteItem = (id: string) => {
     deleteItem.mutate(id);

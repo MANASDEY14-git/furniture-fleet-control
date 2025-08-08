@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { BOMHeader } from '@/components/bom/enhanced/BOMHeader';
 import { EnhancedBOMTable } from '@/components/bom/enhanced/EnhancedBOMTable';
 import { BOMFormWizard } from '@/components/bom/enhanced/BOMFormWizard';
@@ -115,6 +115,7 @@ export default function BOMManagement() {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New BOM</DialogTitle>
+            <DialogDescription>Follow the steps to create a Bill of Materials for a selected item.</DialogDescription>
           </DialogHeader>
           {showCreateWizard && (
             <BOMFormWizard

@@ -129,39 +129,56 @@ export const useCreateBOM = () => {
 
       if (bomError) throw bomError;
 
-      // Create BOM components
-      const components = data.components.map(comp => ({
-        bom_id: bom.id,
-        material_id: comp.material_id,
-        quantity_required: comp.quantity_required,
-        component_name: comp.component_name,
-        is_customizable: comp.is_customizable,
-        notes: comp.notes
-      }));
+      // Create BOM components and options with cleanup on failure
+      let createdComponents: any[] = [];
+      try {
+        const components = data.components.map(comp => ({
+          bom_id: bom.id,
+          material_id: comp.material_id,
+          quantity_required: comp.quantity_required,
+          component_name: comp.component_name,
+          is_customizable: comp.is_customizable,
+          notes: comp.notes
+        }));
 
-      const { data: createdComponents, error: componentsError } = await supabase
-        .from('bom_components')
-        .insert(components)
-        .select();
+        const { data: insertedComponents, error: componentsError } = await supabase
+          .from('bom_components')
+          .insert(components)
+          .select();
 
-      if (componentsError) throw componentsError;
+        if (componentsError) throw componentsError;
+        createdComponents = insertedComponents || [];
 
-      // Create component options for customizable components
-      for (let i = 0; i < data.components.length; i++) {
-        const comp = data.components[i];
-        if (comp.is_customizable && comp.options && comp.options.length > 0) {
-          const options = comp.options.map(opt => ({
-            bom_component_id: createdComponents[i].id,
-            material_id: opt.material_id,
-            option_name: opt.option_name
-          }));
+        // Create component options for customizable components
+        for (let i = 0; i < data.components.length; i++) {
+          const comp = data.components[i];
+          if (comp.is_customizable && comp.options && comp.options.length > 0) {
+            const options = comp.options.map(opt => ({
+              bom_component_id: createdComponents[i].id,
+              material_id: opt.material_id,
+              option_name: opt.option_name
+            }));
 
-          const { error: optionsError } = await supabase
-            .from('bom_component_options')
-            .insert(options);
+            const { error: optionsError } = await supabase
+              .from('bom_component_options')
+              .insert(options);
 
-          if (optionsError) throw optionsError;
+            if (optionsError) throw optionsError;
+          }
         }
+      } catch (err) {
+        // Attempt cleanup on partial failure
+        try {
+          if (createdComponents.length > 0) {
+            const ids = createdComponents.map((c: any) => c.id);
+            await supabase.from('bom_component_options').delete().in('bom_component_id', ids);
+          }
+          await supabase.from('bom_components').delete().eq('bom_id', bom.id);
+          await supabase.from('bom').delete().eq('id', bom.id);
+        } catch (_cleanupErr) {
+          // Swallow cleanup errors
+        }
+        throw err;
       }
 
       return bom;

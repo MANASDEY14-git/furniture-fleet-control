@@ -145,51 +145,68 @@ export const useCreateEnhancedBOM = () => {
 
       if (bomError) throw bomError;
 
-      // Create BOM components
-      const components = validatedData.components
-        .filter(comp => comp.is_customizable || comp.material_id || comp.component_type !== 'material')
-        .map(comp => ({
-          bom_id: bom.id,
-          material_id: comp.material_id || null,
-          quantity_required: comp.quantity_required,
-          component_name: comp.component_name || null,
-          is_customizable: comp.is_customizable,
-          notes: comp.notes || null,
-          component_type: comp.component_type || 'material',
-          time_hours: comp.time_hours || null,
-          time_minutes: comp.time_minutes || null,
-          hourly_rate: comp.hourly_rate || null,
-          service_cost: comp.service_cost || null,
-          labor_category_id: comp.labor_category_id || null,
-        }));
-
-      if (components.length === 0) {
-        throw new Error('No valid components to create');
-      }
-
-      const { data: createdComponents, error: componentsError } = await supabase
-        .from('bom_components')
-        .insert(components)
-        .select();
-
-      if (componentsError) throw componentsError;
-
-      // Create component options for customizable components
-      for (let i = 0; i < validatedData.components.length; i++) {
-        const comp = validatedData.components[i];
-        if (comp.is_customizable && comp.options && comp.options.length > 0) {
-          const options = comp.options.map(opt => ({
-            bom_component_id: createdComponents[i].id,
-            material_id: opt.material_id,
-            option_name: opt.option_name
+      // Create BOM components and options with cleanup on failure
+      let createdComponents: any[] = [];
+      try {
+        const components = validatedData.components
+          .filter(comp => comp.is_customizable || comp.material_id || comp.component_type !== 'material')
+          .map(comp => ({
+            bom_id: bom.id,
+            material_id: comp.material_id || null,
+            quantity_required: comp.quantity_required,
+            component_name: comp.component_name || null,
+            is_customizable: comp.is_customizable,
+            notes: comp.notes || null,
+            component_type: comp.component_type || 'material',
+            time_hours: comp.time_hours || null,
+            time_minutes: comp.time_minutes || null,
+            hourly_rate: comp.hourly_rate || null,
+            service_cost: comp.service_cost || null,
+            labor_category_id: comp.labor_category_id || null,
           }));
 
-          const { error: optionsError } = await supabase
-            .from('bom_component_options')
-            .insert(options);
-
-          if (optionsError) throw optionsError;
+        if (components.length === 0) {
+          throw new Error('No valid components to create');
         }
+
+        const { data: insertedComponents, error: componentsError } = await supabase
+          .from('bom_components')
+          .insert(components)
+          .select();
+
+        if (componentsError) throw componentsError;
+        createdComponents = insertedComponents || [];
+
+        // Create component options for customizable components
+        for (let i = 0; i < validatedData.components.length; i++) {
+          const comp = validatedData.components[i];
+          if (comp.is_customizable && comp.options && comp.options.length > 0) {
+            const options = comp.options.map(opt => ({
+              bom_component_id: createdComponents[i].id,
+              material_id: opt.material_id,
+              option_name: opt.option_name
+            }));
+
+            const { error: optionsError } = await supabase
+              .from('bom_component_options')
+              .insert(options);
+
+            if (optionsError) throw optionsError;
+          }
+        }
+      } catch (err) {
+        // Attempt cleanup on partial failure
+        try {
+          if (createdComponents.length > 0) {
+            const ids = createdComponents.map((c: any) => c.id);
+            await supabase.from('bom_component_options').delete().in('bom_component_id', ids);
+          }
+          await supabase.from('bom_components').delete().eq('bom_id', (bom as any).id);
+          await supabase.from('bom').delete().eq('id', (bom as any).id);
+        } catch (_cleanupErr) {
+          // Swallow cleanup errors
+        }
+        throw err;
       }
 
       return bom as BOM;
