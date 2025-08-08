@@ -87,7 +87,7 @@ export const useEnhancedBOMList = (filters: BOMSearchFilters = {}) => {
           is_active,
           updated_at,
           version,
-          items!inner(name),
+          items!fk_bom_item_id(name),
           bom_components(id)
         `)
         .eq('is_active', filters.isActive ?? true);
