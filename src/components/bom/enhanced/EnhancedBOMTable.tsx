@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { BOMListItem } from '@/types/bom';
 import { useEnhancedBOMList, useDeleteBOM } from '@/hooks/useEnhancedBOM';
 import { BOMFormWizard } from './BOMFormWizard';
@@ -100,7 +100,7 @@ export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTa
               <TableBody>
                 {bomList.map((bom) => (
                   <TableRow key={bom.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">{bom.item_name}</TableCell>
+                    <TableCell className="font-medium">{items.find(i => i.id === bom.item_id)?.name ?? bom.item_name}</TableCell>
                     <TableCell>{bom.name || 'Unnamed BOM'}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{bom.component_count} components</Badge>
@@ -157,6 +157,7 @@ export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTa
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>BOM Details - {selectedBOM?.item_name}</DialogTitle>
+            <DialogDescription>Detailed information about this Bill of Materials.</DialogDescription>
           </DialogHeader>
           {selectedBOM && (
             <div className="space-y-4">
@@ -191,6 +192,7 @@ export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTa
             <DialogTitle>
               {selectedItemForEdit ? `Edit BOM for ${selectedItemForEdit.name}` : 'Create New BOM'}
             </DialogTitle>
+            <DialogDescription>Use the steps below to configure components and costs.</DialogDescription>
           </DialogHeader>
           {selectedItemForEdit && (
             <BOMFormWizard
