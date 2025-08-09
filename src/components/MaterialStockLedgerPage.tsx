@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Activity, Package2, TrendingUp, TrendingDown, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useMaterialStockMovements } from '@/hooks/useMaterialStockMovements';
 import { useMaterials } from '@/hooks/useMaterials';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function MaterialStockLedgerPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,11 +17,31 @@ export default function MaterialStockLedgerPage() {
 
   const { data: materials = [] } = useMaterials();
   const { data: movements = [], isLoading } = useMaterialStockMovements(selectedMaterial === 'all' ? undefined : selectedMaterial);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('material-stock-movements-listen')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'material_stock_movements' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['material-stock-movements'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const filteredMovements = movements.filter(movement => {
     const matchesSearch = movement.materials.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (movement.notes && movement.notes.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesType = movementTypeFilter === 'all' || movement.movement_type === movementTypeFilter;
+    const type = movement.movement_type?.toLowerCase();
+    const ref = movement.reference_type?.toLowerCase();
+    const matchesType =
+      movementTypeFilter === 'all' ||
+      (movementTypeFilter === 'sale' && type === 'sale') ||
+      (movementTypeFilter === 'IN' && movement.quantity_change > 0) ||
+      (movementTypeFilter === 'purchase' && type === 'in' && ref === 'purchase');
     return matchesSearch && matchesType;
   });
 

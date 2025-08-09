@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Package2, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,10 +7,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useMaterials } from '@/hooks/useMaterials';
 import MaterialForm from '@/components/MaterialForm';
 import MaterialStockMovementsDialog from '@/components/MaterialStockMovementsDialog';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Materials() {
   const { data: materials = [], isLoading } = useMaterials();
   const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('materials-listen')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['materials'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const filteredMaterials = materials.filter(material =>
     material.name.toLowerCase().includes(searchTerm.toLowerCase())
