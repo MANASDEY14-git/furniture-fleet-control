@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1283,8 +1283,8 @@ export type Database = {
     Functions: {
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -1294,27 +1294,27 @@ export type Database = {
       }
       search_items_enhanced: {
         Args: {
-          search_term?: string
-          store_id_filter?: string
           category_id_filter?: string
-          show_low_stock_only?: boolean
-          page_size?: number
           page_offset?: number
+          page_size?: number
+          search_term?: string
+          show_low_stock_only?: boolean
+          store_id_filter?: string
         }
         Returns: {
-          id: string
-          name: string
           category_id: string
-          store_id: string
-          quantity_available: number
           cost_price: number
-          selling_price: number
           created_at: string
-          updated_at: string
-          supplier_id: string
-          stock_receive_date: string
+          id: string
           last_restocked_date: string
+          name: string
+          quantity_available: number
+          selling_price: number
+          stock_receive_date: string
+          store_id: string
+          supplier_id: string
           total_count: number
+          updated_at: string
         }[]
       }
       user_has_store_access: {
