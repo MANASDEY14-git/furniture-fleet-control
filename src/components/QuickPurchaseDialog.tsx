@@ -94,7 +94,7 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!storeId || !date || purchaseItems.some(item => !item.name || item.quantity <= 0 || item.unit_price <= 0)) {
+    if (!storeId || !date || purchaseItems.some(item => !item.name || item.quantity <= 0 || item.unit_price < 0)) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
