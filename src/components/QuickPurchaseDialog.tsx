@@ -111,24 +111,16 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
       const materialPurchases = purchaseItems.filter(item => item.type === 'material' && item.material_id);
 
       // Create item purchases
-      if (itemPurchases.length > 0) {
-        const itemsJson = itemPurchases.map(item => ({
-          item_id: item.item_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          name: item.name
-        }));
-
+      for (const itemPurchase of itemPurchases) {
         await createPurchase.mutateAsync({
           supplier_id: supplier.id,
           store_id: storeId,
           date: dateStr,
-          // invoice_date: dateStr, // Remove this line as it's not in the Purchase interface
           invoice_number: invoiceNumber,
-          total_cost: itemPurchases.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0),
-          // items: itemsJson, // Remove this line as it's not in the Purchase interface
-          item_name: itemPurchases.length === 1 ? itemPurchases[0].name : `${itemPurchases.length} items`,
-          quantity: itemPurchases.reduce((sum, item) => sum + item.quantity, 0)
+          item_id: itemPurchase.item_id!,
+          item_name: itemPurchase.name,
+          quantity: itemPurchase.quantity,
+          total_cost: itemPurchase.quantity * itemPurchase.unit_price
         });
       }
 
