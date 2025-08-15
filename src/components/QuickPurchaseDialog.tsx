@@ -54,7 +54,15 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
     itemsCount: items.length, 
     materialsCount: materials.length,
     storeId,
-    purchaseItems
+    purchaseItems: purchaseItems.map(item => ({
+      id: item.id,
+      type: item.type,
+      name: item.name,
+      item_id: item.item_id,
+      material_id: item.material_id,
+      quantity: item.quantity,
+      unit_price: item.unit_price
+    }))
   });
 
   const addPurchaseItem = () => {
@@ -135,18 +143,44 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
       return;
     }
 
-    // Validate each purchase item
-    const invalidItems = purchaseItems.filter(item => 
-      !item.name || 
-      !item.item_id && !item.material_id || 
-      item.quantity <= 0 || 
-      item.unit_price < 0
-    );
+    // Validate each purchase item with improved logic
+    const invalidItems = purchaseItems.filter(item => {
+      const hasValidSelection = (item.type === 'item' && item.item_id) || (item.type === 'material' && item.material_id);
+      const isValidItem = item.name && hasValidSelection && item.quantity > 0 && item.unit_price >= 0;
+      
+      console.log('Validation check for item:', {
+        id: item.id,
+        type: item.type,
+        name: item.name,
+        item_id: item.item_id,
+        material_id: item.material_id,
+        hasValidSelection,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        isValidItem
+      });
+      
+      return !isValidItem;
+    });
 
     if (invalidItems.length > 0) {
+      console.log('Invalid items found:', invalidItems);
+      const firstInvalidItem = invalidItems[0];
+      let errorMessage = "Please check the following:";
+      
+      if (!firstInvalidItem.name || (!firstInvalidItem.item_id && !firstInvalidItem.material_id)) {
+        errorMessage += " Select an item/material.";
+      }
+      if (firstInvalidItem.quantity <= 0) {
+        errorMessage += " Enter a positive quantity.";
+      }
+      if (firstInvalidItem.unit_price < 0) {
+        errorMessage += " Enter a valid unit price.";
+      }
+      
       toast({
         title: "Validation Error",
-        description: "Please ensure all items have a name, type selection, positive quantity, and valid unit price",
+        description: errorMessage,
         variant: "destructive",
       });
       return;
