@@ -80,6 +80,19 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
     ));
   };
 
+  const handleTypeChange = (id: string, newType: 'item' | 'material') => {
+    setPurchaseItems(purchaseItems.map(item => 
+      item.id === id ? {
+        ...item,
+        type: newType,
+        name: '',
+        item_id: undefined,
+        material_id: undefined,
+        unit_price: 0
+      } : item
+    ));
+  };
+
   const handleItemSelection = (id: string, selectedId: string, type: 'item' | 'material') => {
     let selectedItem;
     if (type === 'item') {
@@ -281,7 +294,7 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
                   <Label className="text-blue-200">Type</Label>
                   <Select 
                     value={item.type} 
-                    onValueChange={(value: 'item' | 'material') => updatePurchaseItem(item.id, 'type', value)}
+                    onValueChange={(value: 'item' | 'material') => handleTypeChange(item.id, value)}
                   >
                     <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                       <SelectValue />
