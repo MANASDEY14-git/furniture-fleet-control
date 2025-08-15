@@ -48,6 +48,15 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
   const createMaterialPurchase = useCreateMaterialPurchase();
   const { toast } = useToast();
 
+  // Debug logging
+  console.log('QuickPurchaseDialog - Data status:', {
+    storesCount: stores.length,
+    itemsCount: items.length, 
+    materialsCount: materials.length,
+    storeId,
+    purchaseItems
+  });
+
   const addPurchaseItem = () => {
     const newItem: PurchaseItem = {
       id: Date.now().toString(),
@@ -94,10 +103,37 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!storeId || !date || purchaseItems.some(item => !item.name || item.quantity <= 0 || item.unit_price < 0)) {
+    // More specific validation with better error messages
+    if (!storeId) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields",
+        description: "Please select a store",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!date) {
+      toast({
+        title: "Validation Error", 
+        description: "Please select a purchase date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate each purchase item
+    const invalidItems = purchaseItems.filter(item => 
+      !item.name || 
+      !item.item_id && !item.material_id || 
+      item.quantity <= 0 || 
+      item.unit_price < 0
+    );
+
+    if (invalidItems.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please ensure all items have a name, type selection, positive quantity, and valid unit price",
         variant: "destructive",
       });
       return;
@@ -144,6 +180,7 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
       });
 
       // Reset form
+      setStoreId('');
       setInvoiceNumber('');
       setPurchaseItems([{ id: '1', type: 'item', name: '', quantity: 1, unit_price: 0 }]);
       setOpen(false);
