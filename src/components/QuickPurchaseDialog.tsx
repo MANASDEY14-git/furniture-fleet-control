@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStores } from '@/hooks/useStores';
 import { useItems } from '@/hooks/useItems';
@@ -48,22 +48,8 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
   const createMaterialPurchase = useCreateMaterialPurchase();
   const { toast } = useToast();
 
-  // Debug logging
-  console.log('QuickPurchaseDialog - Data status:', {
-    storesCount: stores.length,
-    itemsCount: items.length, 
-    materialsCount: materials.length,
-    storeId,
-    purchaseItems: purchaseItems.map(item => ({
-      id: item.id,
-      type: item.type,
-      name: item.name,
-      item_id: item.item_id,
-      material_id: item.material_id,
-      quantity: item.quantity,
-      unit_price: item.unit_price
-    }))
-  });
+  // Remove excessive debug logging to fix performance
+  // Only log when there are actual errors or specific debugging is needed
 
   const addPurchaseItem = () => {
     const newItem: PurchaseItem = {
@@ -154,23 +140,12 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
       const hasValidSelection = (item.type === 'item' && item.item_id) || (item.type === 'material' && item.material_id);
       const isValidItem = item.name && hasValidSelection && item.quantity > 0 && item.unit_price >= 0;
       
-      console.log('Validation check for item:', {
-        id: item.id,
-        type: item.type,
-        name: item.name,
-        item_id: item.item_id,
-        material_id: item.material_id,
-        hasValidSelection,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        isValidItem
-      });
+      // Removed debug logging for performance
       
       return !isValidItem;
     });
 
     if (invalidItems.length > 0) {
-      console.log('Invalid items found:', invalidItems);
       const firstInvalidItem = invalidItems[0];
       let errorMessage = "Please check the following:";
       
@@ -256,6 +231,9 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
           <DialogTitle className="text-cyan-300 glow-text">
             Quick Purchase - {supplier.name}
           </DialogTitle>
+          <DialogDescription className="text-blue-200">
+            Record a quick purchase from this supplier for items or materials.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
