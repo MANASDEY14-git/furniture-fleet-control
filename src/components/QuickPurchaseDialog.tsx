@@ -110,10 +110,16 @@ export default function QuickPurchaseDialog({ supplier, trigger }: QuickPurchase
     }
 
     if (selectedItem) {
-      updatePurchaseItem(id, 'type', type);
-      updatePurchaseItem(id, type === 'item' ? 'item_id' : 'material_id', selectedId);
-      updatePurchaseItem(id, 'name', selectedItem.name);
-      updatePurchaseItem(id, 'unit_price', selectedItem.cost_price || 0);
+      setPurchaseItems(purchaseItems.map(item => 
+        item.id === id ? {
+          ...item,
+          type: type,
+          name: selectedItem.name,
+          item_id: type === 'item' ? selectedId : undefined,
+          material_id: type === 'material' ? selectedId : undefined,
+          unit_price: selectedItem.cost_price || 0
+        } : item
+      ));
     }
   };
 
