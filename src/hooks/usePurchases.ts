@@ -34,7 +34,7 @@ export const useCreatePurchase = () => {
             category_id: data.itemData.category_id,
             store_id: data.store_id,
             supplier_id: data.supplier_id,
-            quantity_available: data.quantity,
+            quantity_available: 0, // Set to 0 initially, trigger will add purchase quantity
             cost_price: data.total_cost / data.quantity,
             selling_price: data.itemData.selling_price,
             stock_received_date: data.date
