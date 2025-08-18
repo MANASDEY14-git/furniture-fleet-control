@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { CreateBOMData, CreateBOMComponentData } from '@/types/bom';
+import { CreateBOMData, CreateBOMComponentData, UpdateBOMData } from '@/types/bom';
 import { ItemSelectionStep } from '../ItemSelectionStep';
 import { BOMBasicInfoStep } from './wizard/BOMBasicInfoStep';
 import { BOMComponentsStep } from './wizard/BOMComponentsStep';
 import { BOMReviewStep } from './wizard/BOMReviewStep';
-import { useBOMValidation } from '@/hooks/useEnhancedBOM';
+import { useBOMValidation, useEnhancedBOMByItem, useUpdateEnhancedBOM } from '@/hooks/useEnhancedBOM';
 
 interface BOMFormWizardProps {
   itemId?: string;
   itemName?: string;
+  bomId?: string;
+  isEditMode?: boolean;
   onSubmit: (data: CreateBOMData) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -29,6 +31,8 @@ const steps = [
 export function BOMFormWizard({ 
   itemId, 
   itemName, 
+  bomId,
+  isEditMode = false,
   onSubmit, 
   onCancel, 
   isLoading = false 
@@ -45,6 +49,36 @@ export function BOMFormWizard({
   });
 
   const { validateBOM } = useBOMValidation();
+  const { data: existingBOM, isLoading: isLoadingBOM } = useEnhancedBOMByItem(itemId || '');
+  const updateBOM = useUpdateEnhancedBOM();
+
+  // Load existing BOM data when in edit mode
+  useEffect(() => {
+    if (isEditMode && existingBOM && existingBOM.item_id === itemId) {
+      setBomData({
+        item_id: existingBOM.item_id,
+        name: existingBOM.name || '',
+        version_notes: existingBOM.version_notes || '',
+        components: existingBOM.bom_components?.map(comp => ({
+          component_type: comp.component_type,
+          material_id: comp.material_id || undefined,
+          labor_category_id: comp.labor_category_id || undefined,
+          quantity_required: comp.quantity_required,
+          component_name: comp.component_name || undefined,
+          is_customizable: comp.is_customizable || false,
+          notes: comp.notes || undefined,
+          service_cost: comp.service_cost || undefined,
+          hourly_rate: comp.hourly_rate || undefined,
+          time_hours: comp.time_hours || undefined,
+          time_minutes: comp.time_minutes || undefined,
+          options: comp.bom_component_options?.map(opt => ({
+            option_name: opt.option_name,
+            material_id: opt.material_id || undefined,
+          })) || [],
+        })) || [],
+      });
+    }
+  }, [isEditMode, existingBOM, itemId]);
 
   const handleNext = () => {
     if (currentStep < steps.length) {
@@ -72,10 +106,26 @@ export function BOMFormWizard({
     setBomData(prev => ({ ...prev, components }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const validation = validateBOM(bomData);
     if (validation.isValid) {
-      onSubmit(bomData);
+      if (isEditMode && bomId) {
+        try {
+          const updateData: UpdateBOMData = {
+            bomId: bomId,
+            itemId: bomData.item_id,
+            name: bomData.name,
+            version_notes: bomData.version_notes,
+            components: bomData.components,
+          };
+          await updateBOM.mutateAsync(updateData);
+          onSubmit(bomData);
+        } catch (error) {
+          console.error('Error updating BOM:', error);
+        }
+      } else {
+        onSubmit(bomData);
+      }
     }
   };
 
@@ -142,7 +192,10 @@ export function BOMFormWizard({
       <Card className="border-primary/20">
         <CardHeader>
           <CardTitle className="text-primary">
-            {currentStep === 1 ? 'Create New BOM' : `Create BOM for ${selectedItem?.name || itemName}`}
+            {currentStep === 1 
+              ? (isEditMode ? 'Edit BOM' : 'Create New BOM') 
+              : `${isEditMode ? 'Edit' : 'Create'} BOM for ${selectedItem?.name || itemName}`
+            }
           </CardTitle>
           <Progress value={(currentStep / steps.length) * 100} className="w-full" />
         </CardHeader>
@@ -190,7 +243,13 @@ export function BOMFormWizard({
       {/* Step Content */}
       <Card>
         <CardContent className="p-6">
-          {renderCurrentStep()}
+          {(isEditMode && isLoadingBOM) ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-muted-foreground">Loading BOM data...</div>
+            </div>
+          ) : (
+            renderCurrentStep()
+          )}
         </CardContent>
       </Card>
 
@@ -240,10 +299,13 @@ export function BOMFormWizard({
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={!canProceed() || isLoading}
+              disabled={!canProceed() || isLoading || updateBOM.isPending}
               className="gap-2 bg-primary hover:bg-primary/90"
             >
-              {isLoading ? 'Creating...' : 'Create BOM'}
+              {isLoading || updateBOM.isPending 
+                ? (isEditMode ? 'Updating...' : 'Creating...') 
+                : (isEditMode ? 'Update BOM' : 'Create BOM')
+              }
               <Check className="w-4 h-4" />
             </Button>
           )}

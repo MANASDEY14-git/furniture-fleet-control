@@ -18,7 +18,7 @@ interface EnhancedBOMTableProps {
 export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTableProps) {
   const [selectedBOM, setSelectedBOM] = useState<BOMListItem | null>(null);
   const [showWizard, setShowWizard] = useState(false);
-  const [selectedItemForEdit, setSelectedItemForEdit] = useState<{ id: string; name: string } | null>(null);
+  const [selectedItemForEdit, setSelectedItemForEdit] = useState<{ id: string; name: string; bomId?: string } | null>(null);
 
   const { data: bomList = [], isLoading } = useEnhancedBOMList({
     searchTerm,
@@ -31,7 +31,7 @@ export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTa
   const handleEdit = (bom: BOMListItem) => {
     const item = items.find(i => i.id === bom.item_id);
     if (item) {
-      setSelectedItemForEdit({ id: item.id, name: item.name });
+      setSelectedItemForEdit({ id: item.id, name: item.name, bomId: bom.id });
       setShowWizard(true);
     }
   };
@@ -198,6 +198,8 @@ export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTa
             <BOMFormWizard
               itemId={selectedItemForEdit.id}
               itemName={selectedItemForEdit.name}
+              bomId={selectedItemForEdit.bomId}
+              isEditMode={!!selectedItemForEdit.bomId}
               onSubmit={() => {
                 setShowWizard(false);
                 setSelectedItemForEdit(null);
