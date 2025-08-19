@@ -21,7 +21,7 @@ export default function Reports() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   
-  const { data: metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useEnhancedDashboardMetrics(dateFilter, customDateRange);
+  const { data: metrics, isLoading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useEnhancedDashboardMetrics(dateFilter, customDateRange);
   const { data: sales = [], refetch: refetchSales } = useSales();
   const { data: purchases = [], refetch: refetchPurchases } = usePurchases();
   const { data: payments = [], refetch: refetchPayments } = usePayments();
@@ -31,24 +31,42 @@ export default function Reports() {
   useEffect(() => {
     const channels: any[] = [];
 
-    // Sales real-time updates
-    const salesChannel = supabase
-      .channel('reports-sales-changes')
+    // Sales orders real-time updates
+    const salesOrdersChannel = supabase
+      .channel('reports-sales-orders-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'sales'
+          table: 'sales_orders'
         },
         () => {
-          console.log('Sales data changed, refreshing reports...');
+          console.log('Sales orders data changed, refreshing reports...');
           refetchMetrics();
           refetchSales();
         }
       )
       .subscribe();
-    channels.push(salesChannel);
+    channels.push(salesOrdersChannel);
+
+    // Sales order items real-time updates
+    const salesOrderItemsChannel = supabase
+      .channel('reports-sales-order-items-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales_order_items'
+        },
+        () => {
+          console.log('Sales order items data changed, refreshing reports...');
+          refetchMetrics();
+        }
+      )
+      .subscribe();
+    channels.push(salesOrderItemsChannel);
 
     // Purchases real-time updates
     const purchasesChannel = supabase
@@ -68,6 +86,24 @@ export default function Reports() {
       )
       .subscribe();
     channels.push(purchasesChannel);
+
+    // Material purchases real-time updates
+    const materialPurchasesChannel = supabase
+      .channel('reports-material-purchases-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'material_purchases'
+        },
+        () => {
+          console.log('Material purchases data changed, refreshing reports...');
+          refetchMetrics();
+        }
+      )
+      .subscribe();
+    channels.push(materialPurchasesChannel);
 
     // Payments real-time updates
     const paymentsChannel = supabase
@@ -154,12 +190,57 @@ export default function Reports() {
   if (metricsLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <BarChart3 className="w-8 h-8 text-cyan-400" />
-          <div>
-            <h1 className="text-3xl font-bold glow-text">Analytics Dashboard</h1>
-            <p className="text-blue-300">Loading comprehensive reports...</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="w-8 h-8 text-cyan-400" />
+            <div>
+              <h1 className="text-3xl font-bold glow-text">Analytics Dashboard</h1>
+              <p className="text-blue-300">Loading comprehensive reports...</p>
+            </div>
           </div>
+          <DateFilterSelector
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            customDateRange={customDateRange}
+            onCustomDateRangeChange={setCustomDateRange}
+          />
+        </div>
+
+        {/* Loading skeletons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {['Total Sales', 'Total Purchases', 'Net Profit', 'Stock Value'].map((title) => (
+            <Card key={title} className="futuristic-card">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2 flex-1">
+                    <p className="text-sm text-blue-200">{title}</p>
+                    <div className="h-8 w-24 bg-card-secondary rounded animate-pulse" />
+                  </div>
+                  <div className="h-10 w-10 bg-card-secondary rounded-full animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Loading charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="futuristic-card">
+            <CardHeader>
+              <CardTitle className="text-cyan-300 glow-text">Sales Trend</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 bg-card-secondary rounded animate-pulse" />
+            </CardContent>
+          </Card>
+          <Card className="futuristic-card">
+            <CardHeader>
+              <CardTitle className="text-cyan-300 glow-text">Top Selling Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 bg-card-secondary rounded animate-pulse" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -190,19 +271,19 @@ export default function Reports() {
           title="Total Sales"
           value={formatCurrency(metrics?.totalSales || 0)}
           icon={<DollarSign />}
-          description="Revenue generated"
+          description="Revenue generated from sales orders"
         />
         <MetricCard
           title="Total Purchases"
           value={formatCurrency(metrics?.totalPurchases || 0)}
           icon={<Package />}
-          description="Cost of goods purchased"
+          description="Cost of materials and goods purchased"
         />
         <MetricCard
           title="Net Profit"
           value={formatCurrency(metrics?.totalProfit || 0)}
           icon={<TrendingUp />}
-          description="Sales minus purchases"
+          description="Sales revenue minus costs"
           trend={{
             value: metrics?.profitMarginPercentage || 0,
             label: "profit margin"
@@ -212,9 +293,29 @@ export default function Reports() {
           title="Stock Value"
           value={formatCurrency(metrics?.totalStockValue || 0)}
           icon={<Package />}
-          description="Current inventory value"
+          description="Total value of current inventory"
         />
       </div>
+
+      {/* Error state for metrics */}
+      {metricsError && (
+        <Card className="futuristic-card border-orange-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-orange-400">
+                <TrendingUp className="h-5 w-5" />
+                <span>Some metrics data could not be loaded</span>
+              </div>
+              <button 
+                onClick={() => refetchMetrics()}
+                className="text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
