@@ -143,6 +143,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       customer_address: formData.customerAddress || null,
       delivery_date: formData.deliveryDate || null,
       advance_paid: formData.advancePaid,
+      description: formData.description || null,
       items: validItems.map(item => ({
         item_id: item.itemId,
         item_name: item.itemName,

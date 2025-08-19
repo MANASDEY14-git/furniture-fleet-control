@@ -42,6 +42,7 @@ export const useCreateSalesOrder = () => {
           customer_address: data.customer_address,
           delivery_date: data.delivery_date,
           advance_paid: data.advance_paid || 0,
+          description: data.description,
           total_amount: data.items.reduce((sum, item) => sum + item.total_price, 0)
         }])
         .select()

@@ -101,6 +101,7 @@ export interface CreateSalesOrderData {
   customer_address?: string | null;
   delivery_date?: string | null;
   advance_paid?: number;
+  description?: string | null;
   items: {
     item_id: string;
     item_name: string;
