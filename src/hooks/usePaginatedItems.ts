@@ -30,6 +30,7 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
   } = useQuery({
     queryKey: ['items-paginated', currentPage, pageSize, searchTerm, storeId, categoryId, showLowStockOnly],
     queryFn: async () => {
+      console.log('Fetching items for page:', currentPage, 'with offset:', (currentPage - 1) * pageSize);
       // Use the enhanced search function
       const { data, error } = await supabase.rpc('search_items_enhanced', {
         search_term: searchTerm || null,
@@ -44,6 +45,13 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
 
       const totalCount = data && data.length > 0 ? data[0].total_count : 0;
 
+      console.log('Query result:', { 
+        itemsCount: data?.length, 
+        totalCount, 
+        currentPage, 
+        totalPages: Math.ceil(totalCount / pageSize) 
+      });
+
       return {
         items: data as Item[],
         totalCount: totalCount,
@@ -52,7 +60,7 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
         totalPages: Math.ceil(totalCount / pageSize)
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Force fresh data on each request
   });
 
   const paginationInfo = useMemo(() => {
@@ -73,8 +81,12 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
   }, [itemsData, currentPage, pageSize]);
 
   const goToPage = (page: number) => {
+    console.log('goToPage called with:', page, 'Total pages:', itemsData?.totalPages);
     if (page >= 1 && page <= (itemsData?.totalPages || 1)) {
+      console.log('Setting current page to:', page);
       setCurrentPage(page);
+    } else {
+      console.log('Page out of bounds:', page);
     }
   };
 
