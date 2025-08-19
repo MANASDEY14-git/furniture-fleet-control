@@ -7,7 +7,7 @@ import InventoryHeader from '@/components/inventory/InventoryHeader';
 import InventoryTable from '@/components/inventory/InventoryTable';
 
 import StoreSelector from '@/components/StoreSelector';
-import { useItems, useDeleteItem } from '@/hooks/useItems';
+import { useDeleteItem } from '@/hooks/useItems';
 import { usePaginatedItems } from '@/hooks/usePaginatedItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
@@ -20,7 +20,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Inventory() {
-  const { data: items = [], isLoading, refetch: refetchItems } = useItems();
   const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
   const deleteItem = useDeleteItem();
@@ -52,7 +51,7 @@ export default function Inventory() {
   // Reset to first page when filters change
   useEffect(() => {
     resetToFirstPage();
-  }, [searchTerm, storeFilter, categoryFilter, showLowStockOnly, resetToFirstPage]);
+  }, [searchTerm, storeFilter, categoryFilter, showLowStockOnly]);
 
   // Set up real-time subscriptions
   useEffect(() => {
@@ -71,7 +70,6 @@ export default function Inventory() {
         },
         () => {
           console.log('Items changed, refreshing inventory...');
-          refetchItems();
           refetchPaginated();
         }
       )
@@ -90,7 +88,6 @@ export default function Inventory() {
         },
         () => {
           console.log('Purchases changed, refreshing inventory...');
-          refetchItems();
           refetchPaginated();
         }
       )
@@ -109,7 +106,6 @@ export default function Inventory() {
         },
         () => {
           console.log('Sales changed, refreshing inventory...');
-          refetchItems();
           refetchPaginated();
         }
       )
@@ -121,7 +117,7 @@ export default function Inventory() {
         supabase.removeChannel(channel);
       });
     };
-  }, [session, refetchItems, refetchPaginated]);
+  }, [session, refetchPaginated]);
 
   const handleDeleteItem = (id: string) => {
     deleteItem.mutate(id);
@@ -135,7 +131,7 @@ export default function Inventory() {
     }
   };
 
-  const lowStockItems = items.filter(item => item.quantity_available < 10);
+  const lowStockItems = paginatedItems.filter(item => item.quantity_available < 10);
 
   return (
     <ErrorBoundary>
