@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useBOMByItem } from '@/hooks/useBOM';
+import { useEnhancedBOMByItem } from '@/hooks/useEnhancedBOM';
 
 interface ProductCustomization {
   componentId: string;
@@ -33,7 +33,7 @@ export default function ProductCustomizationDialog({
   quantity,
   onCustomizationComplete 
 }: ProductCustomizationDialogProps) {
-  const { data: bom, isLoading } = useBOMByItem(itemId);
+  const { data: bom, isLoading } = useEnhancedBOMByItem(itemId);
   const [customizations, setCustomizations] = useState<ProductCustomization[]>([]);
   const [stockWarnings, setStockWarnings] = useState<string[]>([]);
 
