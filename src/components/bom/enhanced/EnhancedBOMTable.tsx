@@ -13,9 +13,10 @@ import { useItems } from '@/hooks/useItems';
 interface EnhancedBOMTableProps {
   searchTerm: string;
   selectedCategory: string;
+  onSelectItem?: (item: { id: string; name: string }) => void;
 }
 
-export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTableProps) {
+export function EnhancedBOMTable({ searchTerm, selectedCategory, onSelectItem }: EnhancedBOMTableProps) {
   const [selectedBOM, setSelectedBOM] = useState<BOMListItem | null>(null);
   const [showWizard, setShowWizard] = useState(false);
   const [selectedItemForEdit, setSelectedItemForEdit] = useState<{ id: string; name: string; bomId?: string } | null>(null);
@@ -115,6 +116,22 @@ export function EnhancedBOMTable({ searchTerm, selectedCategory }: EnhancedBOMTa
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {onSelectItem && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              const item = items.find(i => i.id === bom.item_id);
+                              if (item) {
+                                onSelectItem({ id: item.id, name: item.name });
+                              }
+                            }}
+                            className="gap-1 bg-primary hover:bg-primary/80"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Manage
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"

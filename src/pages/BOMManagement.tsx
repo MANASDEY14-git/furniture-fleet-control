@@ -99,6 +99,7 @@ export default function BOMManagement() {
           <EnhancedBOMTable 
             searchTerm={searchTerm}
             selectedCategory={selectedCategory}
+            onSelectItem={(item) => setSelectedItemForBOM(item)}
           />
         )}
         
