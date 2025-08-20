@@ -174,26 +174,26 @@ export default function ProductCustomizationDialog({
                       }}
                     >
                     <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                      <SelectValue placeholder={`Choose ${component.component_name?.toLowerCase() || 'option'}`} />
+                      <SelectValue placeholder={`Choose ${component.component_name?.toLowerCase() || 'option'}`}>
+                        {customization?.selectedOptionName || `Choose ${component.component_name?.toLowerCase() || 'option'}`}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-slate-800 border border-blue-500/30 shadow-lg backdrop-blur-sm">
                         {component.bom_component_options.map((option) => {
                           const material = materials.find(m => m.id === option.material_id);
                           const available = material ? material.quantity_available : 0;
                           const needed = component.quantity_required * quantity;
-                          const inStock = available >= needed;
                           
                           return (
                             <SelectItem 
                               key={option.id} 
                               value={option.material_id} 
                               className="text-blue-100 focus:bg-blue-800/30"
-                              disabled={!inStock}
                             >
                               <div className="flex items-center justify-between w-full">
                                 <span>{option.option_name}</span>
-                                <span className={`text-xs ml-2 ${inStock ? 'text-green-400' : 'text-red-400'}`}>
-                                  {inStock ? `✓ In Stock (${available})` : `⚠ Low Stock (${available})`}
+                                <span className={`text-xs ml-2 ${available >= needed ? 'text-green-400' : 'text-yellow-400'}`}>
+                                  {available >= needed ? `✓ In Stock (${available})` : `⚠ Low Stock (${available})`}
                                 </span>
                               </div>
                             </SelectItem>
