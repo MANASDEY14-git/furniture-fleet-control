@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BarChart3, TrendingUp, DollarSign, Package, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MetricCard from '@/components/MetricCard';
@@ -13,7 +13,6 @@ import { useSales } from '@/hooks/useSales';
 import { usePurchases } from '@/hooks/usePurchases';
 import { usePayments } from '@/hooks/usePayments';
 import { useItems } from '@/hooks/useItems';
-import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
@@ -22,133 +21,10 @@ export default function Reports() {
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   
   const { data: metrics, isLoading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useEnhancedDashboardMetrics(dateFilter, customDateRange);
-  const { data: sales = [], refetch: refetchSales } = useSales();
-  const { data: purchases = [], refetch: refetchPurchases } = usePurchases();
-  const { data: payments = [], refetch: refetchPayments } = usePayments();
-  const { data: items = [], refetch: refetchItems } = useItems();
-
-  // Set up real-time subscriptions for reports
-  useEffect(() => {
-    const channels: any[] = [];
-
-    // Sales orders real-time updates
-    const salesOrdersChannel = supabase
-      .channel('reports-sales-orders-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sales_orders'
-        },
-        () => {
-          console.log('Sales orders data changed, refreshing reports...');
-          refetchMetrics();
-          refetchSales();
-        }
-      )
-      .subscribe();
-    channels.push(salesOrdersChannel);
-
-    // Sales order items real-time updates
-    const salesOrderItemsChannel = supabase
-      .channel('reports-sales-order-items-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'sales_order_items'
-        },
-        () => {
-          console.log('Sales order items data changed, refreshing reports...');
-          refetchMetrics();
-        }
-      )
-      .subscribe();
-    channels.push(salesOrderItemsChannel);
-
-    // Purchases real-time updates
-    const purchasesChannel = supabase
-      .channel('reports-purchases-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'purchases'
-        },
-        () => {
-          console.log('Purchases data changed, refreshing reports...');
-          refetchMetrics();
-          refetchPurchases();
-        }
-      )
-      .subscribe();
-    channels.push(purchasesChannel);
-
-    // Material purchases real-time updates
-    const materialPurchasesChannel = supabase
-      .channel('reports-material-purchases-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'material_purchases'
-        },
-        () => {
-          console.log('Material purchases data changed, refreshing reports...');
-          refetchMetrics();
-        }
-      )
-      .subscribe();
-    channels.push(materialPurchasesChannel);
-
-    // Payments real-time updates
-    const paymentsChannel = supabase
-      .channel('reports-payments-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'payments'
-        },
-        () => {
-          console.log('Payments data changed, refreshing reports...');
-          refetchMetrics();
-          refetchPayments();
-        }
-      )
-      .subscribe();
-    channels.push(paymentsChannel);
-
-    // Items real-time updates
-    const itemsChannel = supabase
-      .channel('reports-items-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'items'
-        },
-        () => {
-          console.log('Items data changed, refreshing reports...');
-          refetchMetrics();
-          refetchItems();
-        }
-      )
-      .subscribe();
-    channels.push(itemsChannel);
-
-    return () => {
-      channels.forEach(channel => {
-        supabase.removeChannel(channel);
-      });
-    };
-  }, [refetchMetrics, refetchSales, refetchPurchases, refetchPayments, refetchItems]);
+  const { data: sales = [] } = useSales();
+  const { data: purchases = [] } = usePurchases();
+  const { data: payments = [] } = usePayments();
+  const { data: items = [] } = useItems();
 
   // Filter data based on date range
   const getFilteredData = (data: any[], dateField = 'date') => {

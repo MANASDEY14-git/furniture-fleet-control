@@ -8,24 +8,19 @@ import { useStores } from '@/hooks/useStores';
 import { formatCurrency } from '@/utils/currencyUtils';
 import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
 import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const {
     data: metrics,
-    isLoading: metricsLoading,
-    refetch: refetchMetrics
+    isLoading: metricsLoading
   } = useRealDashboardMetrics();
   const {
-    data: salePaymentStatus = [],
-    refetch: refetchSalePaymentStatus
+    data: salePaymentStatus = []
   } = useSalePaymentStatus();
   const {
     data: stores = []
   } = useStores();
-  const { session } = useAuth();
 
   // Update time every minute
   useEffect(() => {
@@ -35,63 +30,6 @@ export default function RealDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Set up real-time subscriptions
-  useEffect(() => {
-    if (!session?.user) return;
-    const channels: any[] = [];
-
-    // Subscribe to sales changes
-    const salesChannel = supabase.channel('dashboard-sales-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'sales_orders'
-    }, () => {
-      console.log('Sales data changed, refreshing dashboard...');
-      refetchMetrics();
-      refetchSalePaymentStatus();
-    }).subscribe();
-    channels.push(salesChannel);
-
-    // Subscribe to purchases changes
-    const purchasesChannel = supabase.channel('dashboard-purchases-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'purchases'
-    }, () => {
-      console.log('Purchases data changed, refreshing dashboard...');
-      refetchMetrics();
-    }).subscribe();
-    channels.push(purchasesChannel);
-
-    // Subscribe to items changes
-    const itemsChannel = supabase.channel('dashboard-items-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'items'
-    }, () => {
-      console.log('Items data changed, refreshing dashboard...');
-      refetchMetrics();
-    }).subscribe();
-    channels.push(itemsChannel);
-
-    // Subscribe to payments changes
-    const paymentsChannel = supabase.channel('dashboard-payments-changes').on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'payments'
-    }, () => {
-      console.log('Payments data changed, refreshing dashboard...');
-      refetchMetrics();
-      refetchSalePaymentStatus();
-    }).subscribe();
-    channels.push(paymentsChannel);
-    
-    return () => {
-      channels.forEach(channel => {
-        supabase.removeChannel(channel);
-      });
-    };
-  }, [session, refetchMetrics, refetchSalePaymentStatus]);
 
   // Calculate overdue deliveries
   const overdueDeliveries = salePaymentStatus.filter(sale => {
