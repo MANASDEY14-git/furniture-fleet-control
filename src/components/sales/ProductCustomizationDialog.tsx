@@ -47,7 +47,8 @@ export default function ProductCustomizationDialog({
   const customizableComponents = bom?.bom_components?.filter(comp => comp.is_customizable) || [];
 
   useEffect(() => {
-    if (customizableComponents.length > 0) {
+    if (bom && customizableComponents.length > 0) {
+      console.log('Setting customizations for components:', customizableComponents);
       setCustomizations(customizableComponents.map(comp => ({
         componentId: comp.id,
         componentName: comp.component_name || 'Component',
@@ -56,7 +57,7 @@ export default function ProductCustomizationDialog({
         quantityUsed: comp.quantity_required * quantity
       })));
     }
-  }, [customizableComponents, quantity]);
+  }, [bom, customizableComponents, quantity]);
 
   useEffect(() => {
     // Check stock availability for selected materials
@@ -184,25 +185,20 @@ export default function ProductCustomizationDialog({
                     <SelectContent className="z-50 bg-slate-800 border border-blue-500/30 shadow-lg backdrop-blur-sm">
                         {component.bom_component_options?.length > 0 ? (
                           component.bom_component_options.map((option) => {
-                            console.log('Rendering option:', option);
-                            const material = materials.find(m => m.id === option.material_id);
-                            console.log('Found material for option:', material);
-                            const available = material ? material.quantity_available : 0;
-                            const needed = component.quantity_required * quantity;
-                            
+                            console.log('Option data:', option);
                             return (
                               <SelectItem 
                                 key={option.id} 
                                 value={option.material_id} 
                                 className="text-blue-100 focus:bg-blue-800/30"
                               >
-                                {option.option_name} ({available >= needed ? `In Stock: ${available}` : `Low Stock: ${available}`})
+                                {option.option_name || "Unnamed option"} - ID: {option.material_id}
                               </SelectItem>
                             );
                           })
                         ) : (
                           <SelectItem value="no-options" disabled className="text-gray-400">
-                            No customization options available
+                            No options found (length: {component.bom_component_options?.length || 0})
                           </SelectItem>
                         )}
                       </SelectContent>
