@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Settings, Package } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -91,6 +91,15 @@ export default function ProductCustomizationDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl futuristic-card">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-300 glow-text flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Loading Customization
+            </DialogTitle>
+            <DialogDescription className="text-blue-300">
+              Please wait while we load customization options for {itemName}.
+            </DialogDescription>
+          </DialogHeader>
           <div className="text-center py-8 text-blue-300">Loading customization options...</div>
         </DialogContent>
       </Dialog>
@@ -106,6 +115,9 @@ export default function ProductCustomizationDialog({
               <Package className="w-5 h-5" />
               Product Customization
             </DialogTitle>
+            <DialogDescription className="text-blue-300">
+              Customization options for {itemName}
+            </DialogDescription>
           </DialogHeader>
           <div className="text-center py-8 text-blue-300">
             This product has no customizable options available.
@@ -128,6 +140,9 @@ export default function ProductCustomizationDialog({
             <Settings className="w-5 h-5" />
             Customize "{itemName}" (Qty: {quantity})
           </DialogTitle>
+          <DialogDescription className="text-blue-300">
+            Configure material options for customizable components in this product.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6">
