@@ -39,7 +39,12 @@ export default function ProductCustomizationDialog({
   const [customizations, setCustomizations] = useState<ProductCustomization[]>([]);
   const [stockWarnings, setStockWarnings] = useState<string[]>([]);
 
-  const customizableComponents = bom?.bom_components.filter(comp => comp.is_customizable) || [];
+  // Debug logging
+  console.log('BOM data:', bom);
+  console.log('Materials data:', materials);
+  console.log('BOM components:', bom?.bom_components);
+
+  const customizableComponents = bom?.bom_components?.filter(comp => comp.is_customizable) || [];
 
   useEffect(() => {
     if (customizableComponents.length > 0) {
@@ -177,21 +182,29 @@ export default function ProductCustomizationDialog({
                       <SelectValue placeholder={`Choose ${component.component_name?.toLowerCase() || 'option'}`} />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-slate-800 border border-blue-500/30 shadow-lg backdrop-blur-sm">
-                        {component.bom_component_options.map((option) => {
-                          const material = materials.find(m => m.id === option.material_id);
-                          const available = material ? material.quantity_available : 0;
-                          const needed = component.quantity_required * quantity;
-                          
-                          return (
-                            <SelectItem 
-                              key={option.id} 
-                              value={option.material_id} 
-                              className="text-blue-100 focus:bg-blue-800/30"
-                            >
-                              {option.option_name} ({available >= needed ? `In Stock: ${available}` : `Low Stock: ${available}`})
-                            </SelectItem>
-                          );
-                        })}
+                        {component.bom_component_options?.length > 0 ? (
+                          component.bom_component_options.map((option) => {
+                            console.log('Rendering option:', option);
+                            const material = materials.find(m => m.id === option.material_id);
+                            console.log('Found material for option:', material);
+                            const available = material ? material.quantity_available : 0;
+                            const needed = component.quantity_required * quantity;
+                            
+                            return (
+                              <SelectItem 
+                                key={option.id} 
+                                value={option.material_id} 
+                                className="text-blue-100 focus:bg-blue-800/30"
+                              >
+                                {option.option_name} ({available >= needed ? `In Stock: ${available}` : `Low Stock: ${available}`})
+                              </SelectItem>
+                            );
+                          })
+                        ) : (
+                          <SelectItem value="no-options" disabled className="text-gray-400">
+                            No customization options available
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
