@@ -13,8 +13,22 @@ import SupplierSelector from '@/components/SupplierSelector';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
+import { useCreateSalesCustomizations } from '@/hooks/useSalesCustomizations';
+import { useEnhancedBOMByItem } from '@/hooks/useEnhancedBOM';
 import { DeliveryStatus } from '@/types';
+import ProductCustomizationDialog from '@/components/sales/ProductCustomizationDialog';
+import CustomizableItemIndicator from '@/components/CustomizableItemIndicator';
+import CustomizableItemRow from '@/components/CustomizableItemRow';
+import { Badge } from '@/components/ui/badge';
 
+
+interface ProductCustomization {
+  componentId: string;
+  componentName: string;
+  selectedMaterialId: string;
+  selectedOptionName: string;
+  quantityUsed: number;
+}
 
 interface OrderItem {
   id: string;
@@ -24,6 +38,8 @@ interface OrderItem {
   unitPrice: number;
   totalPrice: number;
   availableStock: number;
+  isCustomizable?: boolean;
+  customizations?: ProductCustomization[];
 }
 
 interface EnhancedSalesOrderFormProps {
@@ -48,12 +64,21 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
   });
 
   const [items, setItems] = useState<OrderItem[]>([
-    { id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }
+    { id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0, isCustomizable: false, customizations: [] }
   ]);
 
   const { data: availableItems = [] } = useItems();
   const { data: stores = [] } = useStores();
   const createSalesOrder = useCreateSalesOrder();
+  const createCustomizations = useCreateSalesCustomizations();
+  
+  const [customizationDialog, setCustomizationDialog] = useState({
+    open: false,
+    itemId: '',
+    itemName: '',
+    quantity: 0,
+    orderItemId: ''
+  });
 
   const filteredItems = availableItems.filter(item => {
     const matchesSupplier = isWalkInCustomer || !formData.supplierId || item.supplier_id === formData.supplierId;
@@ -69,7 +94,9 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       quantity: 0,
       unitPrice: 0,
       totalPrice: 0,
-      availableStock: 0
+      availableStock: 0,
+      isCustomizable: false,
+      customizations: []
     }]);
   };
 
@@ -90,6 +117,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
             updatedItem.itemName = selectedItem?.name || '';
             updatedItem.unitPrice = selectedItem?.selling_price || 0;
             updatedItem.availableStock = selectedItem?.quantity_available || 0;
+            updatedItem.customizations = [];
           }
           
           if (field === 'quantity' || field === 'unitPrice') {
@@ -100,8 +128,29 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
         }
         return item;
       });
-      // Removed console.log for production
       return newItems;
+    });
+  };
+
+  const handleCustomizationComplete = (itemId: string, customizations: ProductCustomization[]) => {
+    setItems(prevItems => prevItems.map(item => 
+      item.id === itemId 
+        ? { ...item, customizations }
+        : item
+    ));
+  };
+
+  const openCustomizationDialog = (item: OrderItem) => {
+    if (!item.itemId || item.quantity <= 0) {
+      alert('Please select an item and quantity first');
+      return;
+    }
+    setCustomizationDialog({
+      open: true,
+      itemId: item.itemId,
+      itemName: item.itemName,
+      quantity: item.quantity,
+      orderItemId: item.id
     });
   };
 
@@ -132,29 +181,50 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
 
     const supplierId = isWalkInCustomer ? null : formData.supplierId;
 
-    await createSalesOrder.mutateAsync({
-      order_number: formData.orderNumber,
-      store_id: formData.storeId,
-      supplier_id: supplierId,
-      delivery_status: formData.deliveryStatus,
-      date: formData.date,
-      customer_name: formData.customerName || null,
-      customer_phone: formData.customerPhone || null,
-      customer_address: formData.customerAddress || null,
-      delivery_date: formData.deliveryDate || null,
-      advance_paid: formData.advancePaid,
-      description: formData.description || null,
-      items: validItems.map(item => ({
-        item_id: item.itemId,
-        item_name: item.itemName,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        total_price: item.totalPrice
-      }))
-    });
+    try {
+      const salesOrder = await createSalesOrder.mutateAsync({
+        order_number: formData.orderNumber,
+        store_id: formData.storeId,
+        supplier_id: supplierId,
+        delivery_status: formData.deliveryStatus,
+        date: formData.date,
+        customer_name: formData.customerName || null,
+        customer_phone: formData.customerPhone || null,
+        customer_address: formData.customerAddress || null,
+        delivery_date: formData.deliveryDate || null,
+        advance_paid: formData.advancePaid,
+        description: formData.description || null,
+        items: validItems.map(item => ({
+          item_id: item.itemId,
+          item_name: item.itemName,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total_price: item.totalPrice
+        }))
+      });
 
-    resetForm();
-    setOpen(false);
+      // Create customizations if any
+      const allCustomizations = validItems
+        .filter(item => item.customizations && item.customizations.length > 0)
+        .flatMap(item => 
+          item.customizations!.map(custom => ({
+            sale_id: salesOrder.id,
+            bom_component_id: custom.componentId,
+            selected_material_id: custom.selectedMaterialId,
+            selected_option_name: custom.selectedOptionName,
+            quantity_used: custom.quantityUsed
+          }))
+        );
+
+      if (allCustomizations.length > 0) {
+        await createCustomizations.mutateAsync(allCustomizations);
+      }
+
+      resetForm();
+      setOpen(false);
+    } catch (error) {
+      console.error('Error creating sales order:', error);
+    }
   };
 
   const resetForm = () => {
@@ -171,7 +241,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
       advancePaid: 0,
       description: '',
     });
-    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
+    setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0, isCustomizable: false, customizations: [] }]);
     setIsWalkInCustomer(false);
   };
 
@@ -337,31 +407,35 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                   <Table className="data-grid">
                     <TableHeader>
                        <TableRow className="border-blue-500/30">
-                         <TableHead className="text-blue-200">Item</TableHead>
+                     <TableHead className="text-blue-200">Item</TableHead>
                          <TableHead className="text-blue-200">Available</TableHead>
                          <TableHead className="text-blue-200">Quantity</TableHead>
                          <TableHead className="text-blue-200">Unit Price</TableHead>
                          <TableHead className="text-blue-200">Total</TableHead>
+                         <TableHead className="text-blue-200">Customize</TableHead>
                          <TableHead className="text-blue-200">Action</TableHead>
                        </TableRow>
                     </TableHeader>
                     <TableBody>
                       {items.map((item) => (
                         <TableRow key={item.id} className="border-blue-500/20">
-                          <TableCell>
-                            <select
-                              value={item.itemId}
-                              onChange={(e) => updateItem(item.id, 'itemId', e.target.value)}
-                              className="w-full p-2 rounded border bg-slate-800 text-blue-100 border-blue-500/30 min-w-[200px]"
-                            >
-                              <option value="">Select item</option>
-                              {filteredItems.map((availableItem) => (
-                                <option key={availableItem.id} value={availableItem.id}>
-                                  {availableItem.name}
-                                </option>
-                              ))}
-                            </select>
-                           </TableCell>
+                           <TableCell>
+                             <div className="space-y-2">
+                               <select
+                                 value={item.itemId}
+                                 onChange={(e) => updateItem(item.id, 'itemId', e.target.value)}
+                                 className="w-full p-2 rounded border bg-slate-800 text-blue-100 border-blue-500/30 min-w-[200px]"
+                               >
+                                 <option value="">Select item</option>
+                                 {filteredItems.map((availableItem) => (
+                                   <option key={availableItem.id} value={availableItem.id}>
+                                     {availableItem.name}
+                                   </option>
+                                 ))}
+                               </select>
+                               {item.itemId && <CustomizableItemIndicator itemId={item.itemId} />}
+                             </div>
+                            </TableCell>
                           <TableCell className="text-cyan-300">
                             {item.availableStock}
                           </TableCell>
@@ -387,10 +461,19 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                               min="0"
                             />
                           </TableCell>
-                          <TableCell className="text-cyan-300 font-semibold">
-                            ₹{item.totalPrice.toFixed(2)}
-                          </TableCell>
-                          <TableCell>
+                           <TableCell className="text-cyan-300 font-semibold">
+                             ₹{item.totalPrice.toFixed(2)}
+                           </TableCell>
+                           <TableCell>
+                             <CustomizableItemRow
+                               itemId={item.itemId}
+                               itemName={item.itemName}
+                               quantity={item.quantity}
+                               customizations={item.customizations}
+                               onCustomize={() => openCustomizationDialog(item)}
+                             />
+                           </TableCell>
+                           <TableCell>
                             <Button
                               type="button"
                               onClick={() => removeItem(item.id)}
@@ -453,6 +536,17 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
             </form>
           </CardContent>
         </Card>
+        
+        <ProductCustomizationDialog
+          open={customizationDialog.open}
+          onOpenChange={(open) => setCustomizationDialog({ ...customizationDialog, open })}
+          itemId={customizationDialog.itemId}
+          itemName={customizationDialog.itemName}
+          quantity={customizationDialog.quantity}
+          onCustomizationComplete={(customizations) => 
+            handleCustomizationComplete(customizationDialog.orderItemId, customizations)
+          }
+        />
       </DialogContent>
     </Dialog>
   );
