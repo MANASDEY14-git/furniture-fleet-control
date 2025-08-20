@@ -10,15 +10,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import EnhancedPurchaseForm from '@/components/EnhancedPurchaseForm';
 import RefactoredMultiItemPurchaseForm from '@/components/purchase/RefactoredMultiItemPurchaseForm';
 import ExportButton from '@/components/ExportButton';
+import DateFilterSelector from '@/components/DateFilterSelector';
 import { usePurchases } from '@/hooks/usePurchases';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { formatCurrency } from '@/utils/currencyUtils';
+import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 export default function Purchases() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
   const { data: purchases = [], isLoading } = usePurchases();
   const { data: stores = [] } = useStores();
@@ -30,9 +34,29 @@ export default function Purchases() {
                            purchase.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStore = selectedStore === 'all' || purchase.store_id === selectedStore;
       const matchesSupplier = selectedSupplier === 'all' || purchase.supplier_id === selectedSupplier;
-      return matchesSearch && matchesStore && matchesSupplier;
+      
+      // Date filtering logic
+      const purchaseDate = new Date(purchase.date);
+      let matchesDate = true;
+      
+      if (dateFilter === 'today') {
+        const today = new Date();
+        matchesDate = purchaseDate.toDateString() === today.toDateString();
+      } else if (dateFilter === 'week') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        matchesDate = purchaseDate >= weekAgo;
+      } else if (dateFilter === 'month') {
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        matchesDate = purchaseDate >= monthAgo;
+      } else if (dateFilter === 'custom' && customDateRange) {
+        matchesDate = purchaseDate >= customDateRange.from && purchaseDate <= customDateRange.to;
+      }
+      
+      return matchesSearch && matchesStore && matchesSupplier && matchesDate;
     });
-  }, [purchases, searchTerm, selectedStore, selectedSupplier]);
+  }, [purchases, searchTerm, selectedStore, selectedSupplier, dateFilter, customDateRange]);
 
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
@@ -128,7 +152,7 @@ export default function Purchases() {
       {/* Filters */}
       <Card className="futuristic-card">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm text-blue-200">Search</label>
               <Input
@@ -169,6 +193,17 @@ export default function Purchases() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-blue-200">Date Range</label>
+              <div className="bg-slate-800/50 p-3 rounded-md border border-blue-500/30">
+                <DateFilterSelector
+                  dateFilter={dateFilter}
+                  onDateFilterChange={setDateFilter}
+                  customDateRange={customDateRange}
+                  onCustomDateRangeChange={setCustomDateRange}
+                />
+              </div>
             </div>
           </div>
         </CardContent>

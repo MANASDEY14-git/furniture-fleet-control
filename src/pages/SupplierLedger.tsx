@@ -1,21 +1,25 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import SupplierSelector from '@/components/SupplierSelector';
 import StoreSelector from '@/components/StoreSelector';
+import DateFilterSelector from '@/components/DateFilterSelector';
 import { useSupplierLedger, useSupplierBalances } from '@/hooks/useSupplierLedger';
 import { useStores } from '@/hooks/useStores';
 import { Skeleton } from '@/components/ui/skeleton';
 import ExportButton from '@/components/ExportButton';
 import { supabase } from '@/integrations/supabase/client';
+import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 export default function SupplierLedger() {
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [selectedStore, setSelectedStore] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
   const { data: stores = [] } = useStores();
   const { data: ledgerEntries = [], isLoading, refetch: refetchLedgerEntries } = useSupplierLedger(
@@ -92,11 +96,34 @@ export default function SupplierLedger() {
     };
   }, [refetchLedgerEntries, refetchBalances]);
 
-  const filteredEntries = ledgerEntries.filter(entry =>
-    entry.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    entry.suppliers?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    entry.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEntries = useMemo(() => {
+    return ledgerEntries.filter(entry => {
+      const matchesSearch = entry.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           entry.suppliers?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           entry.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Date filtering logic
+      const entryDate = new Date(entry.transaction_date);
+      let matchesDate = true;
+      
+      if (dateFilter === 'today') {
+        const today = new Date();
+        matchesDate = entryDate.toDateString() === today.toDateString();
+      } else if (dateFilter === 'week') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        matchesDate = entryDate >= weekAgo;
+      } else if (dateFilter === 'month') {
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        matchesDate = entryDate >= monthAgo;
+      } else if (dateFilter === 'custom' && customDateRange) {
+        matchesDate = entryDate >= customDateRange.from && entryDate <= customDateRange.to;
+      }
+      
+      return matchesSearch && matchesDate;
+    });
+  }, [ledgerEntries, searchTerm, dateFilter, customDateRange]);
 
   const getRunningBalance = (index: number) => {
     let balance = 0;
@@ -177,7 +204,7 @@ export default function SupplierLedger() {
       {/* Filters */}
       <Card className="futuristic-card">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
               <Input
@@ -200,6 +227,17 @@ export default function SupplierLedger() {
               isLoading={false}
               placeholder="All stores"
             />
+            <div className="space-y-2">
+              <label className="text-sm text-blue-200">Date Range</label>
+              <div className="bg-slate-800/50 p-3 rounded-md border border-blue-500/30">
+                <DateFilterSelector
+                  dateFilter={dateFilter}
+                  onDateFilterChange={setDateFilter}
+                  customDateRange={customDateRange}
+                  onCustomDateRangeChange={setCustomDateRange}
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
