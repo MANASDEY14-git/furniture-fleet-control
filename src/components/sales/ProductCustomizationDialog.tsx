@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useBOMByItem } from '@/hooks/useBOM';
-import { useMaterials } from '@/hooks/useMaterials';
 
 interface ProductCustomization {
   componentId: string;
@@ -35,20 +34,13 @@ export default function ProductCustomizationDialog({
   onCustomizationComplete 
 }: ProductCustomizationDialogProps) {
   const { data: bom, isLoading } = useBOMByItem(itemId);
-  const { data: materials = [] } = useMaterials();
   const [customizations, setCustomizations] = useState<ProductCustomization[]>([]);
   const [stockWarnings, setStockWarnings] = useState<string[]>([]);
-
-  // Debug logging
-  console.log('BOM data:', bom);
-  console.log('Materials data:', materials);
-  console.log('BOM components:', bom?.bom_components);
 
   const customizableComponents = bom?.bom_components?.filter(comp => comp.is_customizable) || [];
 
   useEffect(() => {
-    if (bom && customizableComponents.length > 0) {
-      console.log('Setting customizations for components:', customizableComponents);
+    if (customizableComponents.length > 0) {
       setCustomizations(customizableComponents.map(comp => ({
         componentId: comp.id,
         componentName: comp.component_name || 'Component',
@@ -57,23 +49,31 @@ export default function ProductCustomizationDialog({
         quantityUsed: comp.quantity_required * quantity
       })));
     }
-  }, [bom, customizableComponents, quantity]);
+  }, [customizableComponents, quantity]);
 
   useEffect(() => {
     // Check stock availability for selected materials
     const warnings: string[] = [];
     customizations.forEach(customization => {
       if (customization.selectedMaterialId) {
-        const material = materials.find(m => m.id === customization.selectedMaterialId);
-        if (material && material.quantity_available < customization.quantityUsed) {
+        // Find the material in the BOM component options
+        let materialData = null;
+        customizableComponents.forEach(comp => {
+          const option = comp.bom_component_options?.find(opt => opt.material_id === customization.selectedMaterialId);
+          if (option?.materials) {
+            materialData = option.materials;
+          }
+        });
+        
+        if (materialData && materialData.quantity_available < customization.quantityUsed) {
           warnings.push(
-            `${customization.componentName}: Only ${material.quantity_available} ${material.unit || 'units'} available, need ${customization.quantityUsed}`
+            `${customization.componentName}: Only ${materialData.quantity_available} ${materialData.unit || 'units'} available, need ${customization.quantityUsed}`
           );
         }
       }
     });
     setStockWarnings(warnings);
-  }, [customizations, materials]);
+  }, [customizations, customizableComponents]);
 
   const updateCustomization = (componentId: string, materialId: string, optionName: string) => {
     setCustomizations(prev => prev.map(custom => 
@@ -185,20 +185,23 @@ export default function ProductCustomizationDialog({
                     <SelectContent className="z-50 bg-slate-800 border border-blue-500/30 shadow-lg backdrop-blur-sm">
                         {component.bom_component_options?.length > 0 ? (
                           component.bom_component_options.map((option) => {
-                            console.log('Option data:', option);
+                            const material = option.materials;
+                            const available = material?.quantity_available || 0;
+                            const needed = component.quantity_required * quantity;
+                            
                             return (
                               <SelectItem 
                                 key={option.id} 
                                 value={option.material_id} 
                                 className="text-blue-100 focus:bg-blue-800/30"
                               >
-                                {option.option_name || "Unnamed option"} - ID: {option.material_id}
+                                {option.option_name} ({available >= needed ? `In Stock: ${available}` : `Low Stock: ${available}`})
                               </SelectItem>
                             );
                           })
                         ) : (
                           <SelectItem value="no-options" disabled className="text-gray-400">
-                            No options found (length: {component.bom_component_options?.length || 0})
+                            No customization options available
                           </SelectItem>
                         )}
                       </SelectContent>
@@ -210,7 +213,12 @@ export default function ProductCustomizationDialog({
                       <div className="text-sm text-blue-200">
                         <div className="flex justify-between">
                           <span>Selected: {customization.selectedOptionName}</span>
-                          <span>Quantity needed: {customization.quantityUsed} {materials.find(m => m.id === customization.selectedMaterialId)?.unit || 'units'}</span>
+                          <span>Quantity needed: {customization.quantityUsed} {
+                            (() => {
+                              const option = component.bom_component_options?.find(opt => opt.material_id === customization.selectedMaterialId);
+                              return option?.materials?.unit || 'units';
+                            })()
+                          }</span>
                         </div>
                       </div>
                     </div>
