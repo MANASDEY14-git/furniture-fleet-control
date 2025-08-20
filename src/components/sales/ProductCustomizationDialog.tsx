@@ -173,10 +173,10 @@ export default function ProductCustomizationDialog({
                         }
                       }}
                     >
-                      <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                        <SelectValue placeholder={`Choose ${component.component_name?.toLowerCase() || 'option'}`} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-blue-500/30">
+                    <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                      <SelectValue placeholder={`Choose ${component.component_name?.toLowerCase() || 'option'}`} />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-slate-800 border border-blue-500/30 shadow-lg backdrop-blur-sm">
                         {component.bom_component_options.map((option) => {
                           const material = materials.find(m => m.id === option.material_id);
                           const available = material ? material.quantity_available : 0;
