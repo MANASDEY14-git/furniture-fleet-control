@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+// Component categories for BOM
+export type ComponentCategory = 'primary' | 'secondary' | 'optional' | 'consumable';
+
 // Base interfaces for BOM system
 export interface BOMComponentOption {
   id: string;
@@ -26,6 +29,7 @@ export interface BOMComponent {
   created_by?: string;
   updated_by?: string;
   component_type: 'material' | 'labor' | 'service';
+  category?: ComponentCategory;
   time_hours?: number;
   time_minutes?: number;
   hourly_rate?: number;
@@ -45,6 +49,7 @@ export interface BOMComponent {
     default_hourly_rate: number;
   };
   bom_component_options: BOMComponentOption[];
+  options?: BOMComponentOption[];
 }
 
 export interface BOM {
@@ -125,6 +130,7 @@ export interface CreateBOMComponentData {
   is_customizable: boolean;
   notes?: string;
   component_type: 'material' | 'labor' | 'service';
+  category?: ComponentCategory;
   time_hours?: number;
   time_minutes?: number;
   hourly_rate?: number;

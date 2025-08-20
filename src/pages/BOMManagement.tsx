@@ -10,6 +10,7 @@ import { EnhancedBOMTable } from '@/components/bom/enhanced/EnhancedBOMTable';
 import { BOMFormWizard } from '@/components/bom/enhanced/BOMFormWizard';
 import { BOMCostAnalytics } from '@/components/bom/BOMCostAnalytics';
 import { BOMTemplates } from '@/components/bom/BOMTemplates';
+import { EnhancedBOMManager } from '@/components/bom/enhanced/EnhancedBOMManager';
 import { useItems } from '@/hooks/useItems';
 import { useEnhancedBOMList, useCreateEnhancedBOM } from '@/hooks/useEnhancedBOM';
 
@@ -107,6 +108,11 @@ export default function BOMManagement() {
         
         {activeTab === 'templates' && (
           <BOMTemplates />
+        )}
+        
+        {/* Enhanced BOM Manager for selected item */}
+        {selectedItemForBOM && (
+          <EnhancedBOMManager itemId={selectedItemForBOM.id} />
         )}
       </div>
 
