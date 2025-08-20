@@ -188,12 +188,7 @@ export default function ProductCustomizationDialog({
                               value={option.material_id} 
                               className="text-blue-100 focus:bg-blue-800/30"
                             >
-                              <div className="flex items-center justify-between w-full">
-                                <span>{option.option_name}</span>
-                                <span className={`text-xs ml-2 ${available >= needed ? 'text-green-400' : 'text-yellow-400'}`}>
-                                  {available >= needed ? `✓ In Stock (${available})` : `⚠ Low Stock (${available})`}
-                                </span>
-                              </div>
+                              {option.option_name} ({available >= needed ? `In Stock: ${available}` : `Low Stock: ${available}`})
                             </SelectItem>
                           );
                         })}
