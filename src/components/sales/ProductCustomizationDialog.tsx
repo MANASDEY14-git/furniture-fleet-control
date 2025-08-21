@@ -40,25 +40,30 @@ export default function ProductCustomizationDialog({
   const customizableComponents = bom?.bom_components?.filter(comp => comp.is_customizable) || [];
 
   useEffect(() => {
-    if (customizableComponents.length > 0) {
-      setCustomizations(customizableComponents.map(comp => ({
-        componentId: comp.id,
-        componentName: comp.component_name || 'Component',
-        selectedMaterialId: '',
-        selectedOptionName: '',
-        quantityUsed: comp.quantity_required * quantity
-      })));
+    if (bom?.bom_components && bom.bom_components.length > 0) {
+      const customizable = bom.bom_components.filter(comp => comp.is_customizable);
+      if (customizable.length > 0) {
+        setCustomizations(customizable.map(comp => ({
+          componentId: comp.id,
+          componentName: comp.component_name || 'Component',
+          selectedMaterialId: '',
+          selectedOptionName: '',
+          quantityUsed: comp.quantity_required * quantity
+        })));
+      }
     }
-  }, [customizableComponents, quantity]);
+  }, [bom?.bom_components, quantity]);
 
   useEffect(() => {
     // Check stock availability for selected materials
     const warnings: string[] = [];
+    const customizable = bom?.bom_components?.filter(comp => comp.is_customizable) || [];
+    
     customizations.forEach(customization => {
       if (customization.selectedMaterialId) {
         // Find the material in the BOM component options
         let materialData = null;
-        customizableComponents.forEach(comp => {
+        customizable.forEach(comp => {
           const option = comp.bom_component_options?.find(opt => opt.material_id === customization.selectedMaterialId);
           if (option?.materials) {
             materialData = option.materials;
@@ -73,7 +78,7 @@ export default function ProductCustomizationDialog({
       }
     });
     setStockWarnings(warnings);
-  }, [customizations, customizableComponents]);
+  }, [customizations, bom?.bom_components]);
 
   const updateCustomization = (componentId: string, materialId: string, optionName: string) => {
     setCustomizations(prev => prev.map(custom => 
