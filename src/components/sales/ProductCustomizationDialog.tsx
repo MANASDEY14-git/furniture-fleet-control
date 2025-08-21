@@ -188,14 +188,20 @@ export default function ProductCustomizationDialog({
                             const material = option.materials;
                             const available = material?.quantity_available || 0;
                             const needed = component.quantity_required * quantity;
+                            const isAvailable = available >= needed;
                             
                             return (
                               <SelectItem 
                                 key={option.id} 
                                 value={option.material_id} 
-                                className="text-blue-100 focus:bg-blue-800/30"
+                                className={`text-blue-100 focus:bg-blue-800/30 ${!isAvailable ? 'text-orange-300' : ''}`}
                               >
-                                {option.option_name} ({available >= needed ? `In Stock: ${available}` : `Low Stock: ${available}`})
+                                <div className="flex justify-between items-center w-full">
+                                  <span>{option.option_name}</span>
+                                  <span className={`text-xs ml-2 ${isAvailable ? 'text-green-300' : 'text-orange-300'}`}>
+                                    {isAvailable ? `✓ Available: ${available}` : `⚠ Low: ${available}/${needed}`}
+                                  </span>
+                                </div>
                               </SelectItem>
                             );
                           })

@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Filter, Plus, Settings, Target, Eye } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BOMHeader } from '@/components/bom/enhanced/BOMHeader';
 import { EnhancedBOMTable } from '@/components/bom/enhanced/EnhancedBOMTable';
 import { BOMFormWizard } from '@/components/bom/enhanced/BOMFormWizard';
 import { BOMCostAnalytics } from '@/components/bom/BOMCostAnalytics';
 import { BOMTemplates } from '@/components/bom/BOMTemplates';
 import { EnhancedBOMManager } from '@/components/bom/enhanced/EnhancedBOMManager';
+import { BOMBulkOperations } from '@/components/bom/BOMBulkOperations';
+import { BOMStatusIndicator } from '@/components/bom/BOMStatusIndicator';
 import { useItems } from '@/hooks/useItems';
 import { useEnhancedBOMList, useCreateEnhancedBOM } from '@/hooks/useEnhancedBOM';
 
@@ -20,6 +23,7 @@ export default function BOMManagement() {
   const [activeTab, setActiveTab] = useState<'list' | 'analytics' | 'templates'>('list');
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [selectedItemForBOM, setSelectedItemForBOM] = useState<{ id: string; name: string } | null>(null);
+  const [showBulkOperations, setShowBulkOperations] = useState(false);
   
   const { data: items = [] } = useItems();
   const { data: bomList = [] } = useEnhancedBOMList();
@@ -59,14 +63,14 @@ export default function BOMManagement() {
         onViewTemplates={() => setActiveTab('templates')}
       />
 
-      {/* Search and Filter Bar */}
+      {/* Enhanced Search and Control Bar */}
       <Card className="bg-slate-800/50 border-blue-500/30">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
               <Input
-                placeholder="Search items, materials, or BOMs..."
+                placeholder="Search items, materials, or BOMs by name, components..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-slate-700/50 border-blue-500/30 text-white placeholder-blue-300"
@@ -85,35 +89,86 @@ export default function BOMManagement() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="border-blue-500/30 text-blue-200 hover:bg-blue-800/30">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowBulkOperations(!showBulkOperations)}
+              className="border-blue-500/30 text-blue-200 hover:bg-blue-800/30"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Bulk Operations
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="border-blue-500/30 text-blue-200 hover:bg-blue-800/30"
+            >
               <Filter className="h-4 w-4 mr-2" />
-              More Filters
+              Advanced Filters
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Tab Content */}
-      <div className="space-y-6">
-        {activeTab === 'list' && (
-          <EnhancedBOMTable 
-            searchTerm={searchTerm}
-            selectedCategory={selectedCategory}
-            onSelectItem={(item) => setSelectedItemForBOM(item)}
+      {/* Bulk Operations Panel */}
+      {showBulkOperations && (
+        <div className="space-y-4">
+          <BOMBulkOperations 
+            bomList={bomList} 
+            onRefresh={() => window.location.reload()} 
           />
-        )}
-        
-        {activeTab === 'analytics' && (
-          <BOMCostAnalytics />
-        )}
-        
-        {activeTab === 'templates' && (
-          <BOMTemplates />
-        )}
+        </div>
+      )}
+
+      {/* Enhanced Tab Content */}
+      <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="list">BOM Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Cost Analytics</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="list" className="space-y-6">
+            <EnhancedBOMTable 
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              onSelectItem={(item) => setSelectedItemForBOM(item)}
+            />
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="space-y-6">
+            <BOMCostAnalytics />
+          </TabsContent>
+          
+          <TabsContent value="templates" className="space-y-6">
+            <BOMTemplates />
+          </TabsContent>
+        </Tabs>
         
         {/* Enhanced BOM Manager for selected item */}
         {selectedItemForBOM && (
-          <EnhancedBOMManager itemId={selectedItemForBOM.id} />
+          <Card className="bg-slate-800/50 border-blue-500/30">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-cyan-300 flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Managing BOM: {selectedItemForBOM.name}
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedItemForBOM(null)}
+                  className="border-blue-500/30 text-blue-200"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Close Manager
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <EnhancedBOMManager itemId={selectedItemForBOM.id} />
+            </CardContent>
+          </Card>
         )}
       </div>
 
