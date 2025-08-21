@@ -170,18 +170,22 @@ export default function ProductCustomizationDialog({
                     <Label className="text-blue-200">
                       Choose {component.component_name} *
                     </Label>
-                    <Select 
-                      value={customization?.selectedMaterialId || ''} 
-                      onValueChange={(materialId) => {
-                        const option = component.bom_component_options.find(opt => opt.material_id === materialId);
-                        if (option) {
-                          updateCustomization(component.id, materialId, option.option_name);
-                        }
-                      }}
-                    >
-                    <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
-                      <SelectValue placeholder={`Choose ${component.component_name?.toLowerCase() || 'option'}`} />
-                    </SelectTrigger>
+                     <Select 
+                       value={customization?.selectedMaterialId || ''} 
+                       onValueChange={(materialId) => {
+                         const option = component.bom_component_options.find(opt => opt.material_id === materialId);
+                         if (option) {
+                           updateCustomization(component.id, materialId, option.option_name);
+                         }
+                       }}
+                     >
+                       <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                         <SelectValue 
+                           placeholder={`Choose ${component.component_name?.toLowerCase() || 'option'}`}
+                         >
+                           {customization?.selectedOptionName || `Choose ${component.component_name?.toLowerCase() || 'option'}`}
+                         </SelectValue>
+                       </SelectTrigger>
                     <SelectContent className="z-50 bg-slate-800 border border-blue-500/30 shadow-lg backdrop-blur-sm">
                         {component.bom_component_options?.length > 0 ? (
                           component.bom_component_options.map((option) => {
