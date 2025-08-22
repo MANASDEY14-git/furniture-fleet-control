@@ -20,6 +20,7 @@ import ProductCustomizationDialog from '@/components/sales/ProductCustomizationD
 import CustomizableItemIndicator from '@/components/CustomizableItemIndicator';
 import CustomizableItemRow from '@/components/CustomizableItemRow';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
 
 interface ProductCustomization {
@@ -203,21 +204,53 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
         }))
       });
 
-      // Create customizations if any
-      const allCustomizations = validItems
-        .filter(item => item.customizations && item.customizations.length > 0)
-        .flatMap(item => 
-          item.customizations!.map(custom => ({
-            sale_id: salesOrder.id,
-            bom_component_id: custom.componentId,
-            selected_material_id: custom.selectedMaterialId,
-            selected_option_name: custom.selectedOptionName,
-            quantity_used: custom.quantityUsed
-          }))
-        );
+      // Process customizations by updating material stock directly
+      for (const item of validItems) {
+        if (item.customizations && item.customizations.length > 0) {
+          for (const custom of item.customizations) {
+            // Get current material quantity
+            const { data: material, error: materialError } = await supabase
+              .from('materials')
+              .select('quantity_available')
+              .eq('id', custom.selectedMaterialId)
+              .single();
 
-      if (allCustomizations.length > 0) {
-        await createCustomizations.mutateAsync(allCustomizations);
+            if (materialError) {
+              console.error('Error fetching material:', materialError);
+              continue;
+            }
+
+            // Update material quantity
+            const { error: materialUpdateError } = await supabase
+              .from('materials')
+              .update({ 
+                quantity_available: (material.quantity_available || 0) - custom.quantityUsed,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', custom.selectedMaterialId);
+
+            if (materialUpdateError) {
+              console.error('Error updating material quantity:', materialUpdateError);
+              continue;
+            }
+
+            // Create material stock movement record
+            const { error: movementError } = await supabase
+              .from('material_stock_movements')
+              .insert({
+                material_id: custom.selectedMaterialId,
+                movement_type: 'OUT',
+                quantity_change: -custom.quantityUsed,
+                reference_type: 'sales_order',
+                reference_id: salesOrder.id,
+                notes: `Used for sales order ${formData.orderNumber} - ${custom.selectedOptionName}`
+              });
+
+            if (movementError) {
+              console.error('Error creating material movement record:', movementError);
+            }
+          }
+        }
       }
 
       resetForm();
