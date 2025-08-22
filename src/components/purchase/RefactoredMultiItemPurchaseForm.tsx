@@ -59,6 +59,13 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
   const { data: categories = [] } = useCategories();
   const createPurchase = useCreatePurchaseOrder();
 
+  // Filter items based on selected supplier and store
+  const filteredItems = availableItems.filter(item => {
+    const matchesSupplier = !formData.supplierId || item.supplier_id === formData.supplierId;
+    const matchesStore = !formData.storeId || item.store_id === formData.storeId;
+    return matchesSupplier && matchesStore;
+  });
+
   const addItem = () => {
     setItems([...items, {
       id: Date.now().toString(),
@@ -87,7 +94,7 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
         const updatedItem = { ...item, [field]: value };
         
         if (field === 'itemId') {
-          const selectedItem = availableItems.find(i => i.id === value);
+          const selectedItem = filteredItems.find(i => i.id === value);
           updatedItem.itemName = selectedItem?.name || '';
         }
         
@@ -102,6 +109,22 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
   };
 
   const handleFormDataChange = (updates: Partial<typeof formData>) => {
+    // Reset all items when supplier or store changes to avoid invalid selections
+    if (updates.supplierId !== undefined || updates.storeId !== undefined) {
+      setItems([{
+        id: '1',
+        itemId: '',
+        itemName: '',
+        quantity: 0,
+        unitPrice: 0,
+        totalPrice: 0,
+        isNewItem: false,
+        newItemName: '',
+        newItemSellingPrice: 0,
+        newItemCostPrice: 0,
+        newItemCategoryId: ''
+      }]);
+    }
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
@@ -217,7 +240,7 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
 
               <PurchaseItemsTable
                 items={items}
-                availableItems={availableItems}
+                availableItems={filteredItems}
                 categories={categories}
                 onAddItem={addItem}
                 onUpdateItem={updateItem}

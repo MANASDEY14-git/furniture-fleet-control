@@ -42,6 +42,15 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
     return matchesSupplier && matchesStore;
   });
 
+  const handleFormDataChange = (updates: Partial<typeof formData>) => {
+    // Reset item selection when supplier or store changes
+    if (updates.supplierId !== undefined || updates.storeId !== undefined) {
+      setFormData(prev => ({ ...prev, ...updates, itemId: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, ...updates }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -64,7 +73,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
       store_id: formData.storeId,
       supplier_id: formData.supplierId,
       item_id: isNewItem ? '' : formData.itemId,
-      item_name: isNewItem ? newItemData.name : availableItems.find(i => i.id === formData.itemId)?.name || '',
+      item_name: isNewItem ? newItemData.name : filteredItems.find(i => i.id === formData.itemId)?.name || '',
       invoice_number: formData.invoiceNumber,
       quantity: formData.quantity,
       total_cost: formData.totalCost,
@@ -133,7 +142,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
                   invoiceNumber: formData.invoiceNumber,
                   date: formData.date,
                 }}
-                onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
+                onFormDataChange={handleFormDataChange}
               />
 
               <PurchaseItemSection
@@ -145,7 +154,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
                 }}
                 newItemData={newItemData}
                 filteredItems={filteredItems}
-                onFormDataChange={(updates) => setFormData({ ...formData, ...updates })}
+                onFormDataChange={handleFormDataChange}
                 onNewItemDataChange={(updates) => setNewItemData({ ...newItemData, ...updates })}
               />
 
