@@ -9,6 +9,7 @@ import { useMaterialStockMovements } from '@/hooks/useMaterialStockMovements';
 import { useMaterials } from '@/hooks/useMaterials';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import MaterialStockMovementDetailsDialog from '@/components/MaterialStockMovementDetailsDialog';
 
 export default function MaterialStockLedgerPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -202,18 +203,19 @@ export default function MaterialStockLedgerPage() {
                   <TableHead className="text-blue-200">Quantity Change</TableHead>
                   <TableHead className="text-blue-200">Reference</TableHead>
                   <TableHead className="text-blue-200">Notes</TableHead>
+                  <TableHead className="text-blue-200">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-blue-300">
+                    <TableCell colSpan={7} className="text-center text-blue-300">
                       Loading movements...
                     </TableCell>
                   </TableRow>
                 ) : filteredMovements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-blue-300">
+                    <TableCell colSpan={7} className="text-center text-blue-300">
                       No stock movements found
                     </TableCell>
                   </TableRow>
@@ -248,6 +250,9 @@ export default function MaterialStockLedgerPage() {
                       </TableCell>
                       <TableCell className="text-blue-200 max-w-xs truncate">
                         {movement.notes || 'No notes'}
+                      </TableCell>
+                      <TableCell>
+                        <MaterialStockMovementDetailsDialog movement={movement} />
                       </TableCell>
                     </TableRow>
                   ))
