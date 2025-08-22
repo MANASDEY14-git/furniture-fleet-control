@@ -13,7 +13,7 @@ import SupplierSelector from '@/components/SupplierSelector';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
-import { useCreateSalesCustomizations } from '@/hooks/useSalesCustomizations';
+
 import { useEnhancedBOMByItem } from '@/hooks/useEnhancedBOM';
 import { DeliveryStatus } from '@/types';
 import ProductCustomizationDialog from '@/components/sales/ProductCustomizationDialog';
@@ -71,7 +71,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
   const { data: availableItems = [] } = useItems();
   const { data: stores = [] } = useStores();
   const createSalesOrder = useCreateSalesOrder();
-  const createCustomizations = useCreateSalesCustomizations();
+  
   
   const [customizationDialog, setCustomizationDialog] = useState({
     open: false,

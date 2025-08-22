@@ -49,26 +49,8 @@ export const useCreateSale = () => {
 
       if (saleError) throw saleError;
 
-      // If there are customizations, save them after the sale is created
+      // If there are customizations, update material stock directly
       if (customizations && customizations.length > 0) {
-        const customizationData = customizations.map(custom => ({
-          sale_id: sale.id,
-          bom_component_id: custom.componentId,
-          selected_material_id: custom.selectedMaterialId,
-          selected_option_name: custom.selectedOptionName,
-          quantity_used: custom.quantityUsed
-        }));
-
-        const { error: customizationError } = await supabase
-          .from('sales_customizations')
-          .insert(customizationData);
-
-        if (customizationError) {
-          // Rollback sale if customization save fails
-          await supabase.from('sales').delete().eq('id', sale.id);
-          throw customizationError;
-        }
-
         // Update material stock for customizations
         for (const custom of customizations) {
           // Get current material quantity
