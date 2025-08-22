@@ -165,7 +165,7 @@ export const useCreateEnhancedBOM = () => {
           }));
 
         if (components.length === 0) {
-          throw new Error('No valid components to create');
+          throw new Error('BOM must have at least one valid component. Please add components before saving.');
         }
 
         const { data: insertedComponents, error: componentsError } = await supabase

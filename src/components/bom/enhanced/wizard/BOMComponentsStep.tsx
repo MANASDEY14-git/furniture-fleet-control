@@ -26,7 +26,7 @@ export const BOMComponentsStep: React.FC<BOMComponentsStepProps> = ({
   const addComponent = () => {
     const newComponent: CreateBOMComponentData = {
       quantity_required: 1,
-      component_name: '',
+      component_name: `Component ${components.length + 1}`,
       is_customizable: false,
       notes: '',
       component_type: 'material',

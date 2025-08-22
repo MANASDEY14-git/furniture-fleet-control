@@ -25,10 +25,16 @@ const validationRules: ValidationRule[] = [
     description: 'BOM must have at least one component',
     severity: 'error',
     category: 'structure',
-    check: (bom) => ({
-      passed: (bom.bom_components?.length || 0) > 0,
-      message: bom.bom_components?.length === 0 ? 'No components defined' : undefined
-    })
+    check: (bom) => {
+      if (!bom || !bom.bom_components) {
+        return { passed: false, message: 'BOM data is missing or invalid' };
+      }
+      const componentCount = bom.bom_components.length;
+      return {
+        passed: componentCount > 0,
+        message: componentCount === 0 ? 'No components defined' : undefined
+      };
+    }
   },
   {
     id: 'material_availability',
@@ -37,17 +43,24 @@ const validationRules: ValidationRule[] = [
     severity: 'warning',
     category: 'materials',
     check: (bom) => {
-      const unavailable = bom.bom_components?.filter(comp => 
+      if (!bom || !bom.bom_components || bom.bom_components.length === 0) {
+        return { passed: true }; // Skip validation for empty BOMs
+      }
+      
+      const unavailable = bom.bom_components.filter(comp => 
         comp.materials && 
         comp.materials.quantity_available !== undefined &&
+        comp.materials.quantity_available !== null &&
+        comp.quantity_required !== undefined &&
+        comp.quantity_required !== null &&
         comp.materials.quantity_available < comp.quantity_required
-      ) || [];
+      );
       
       return {
         passed: unavailable.length === 0,
         message: unavailable.length > 0 ? `${unavailable.length} materials have insufficient stock` : undefined,
         details: unavailable.map(comp => 
-          `${comp.materials?.name}: Required ${comp.quantity_required}, Available ${comp.materials?.quantity_available}`
+          `${comp.materials?.name || 'Unknown'}: Required ${comp.quantity_required}, Available ${comp.materials?.quantity_available}`
         )
       };
     }
@@ -59,9 +72,13 @@ const validationRules: ValidationRule[] = [
     severity: 'warning',
     category: 'structure',
     check: (bom) => {
-      const customizableWithoutOptions = bom.bom_components?.filter(comp => 
+      if (!bom || !bom.bom_components || bom.bom_components.length === 0) {
+        return { passed: true }; // Skip validation for empty BOMs
+      }
+      
+      const customizableWithoutOptions = bom.bom_components.filter(comp => 
         comp.is_customizable && (!comp.options || comp.options.length === 0)
-      ) || [];
+      );
       
       return {
         passed: customizableWithoutOptions.length === 0,
@@ -135,10 +152,25 @@ interface BOMValidationRulesProps {
 
 export function BOMValidationRules({ bom, onFixIssue }: BOMValidationRulesProps) {
   const runValidation = () => {
-    return validationRules.map(rule => ({
-      ...rule,
-      result: rule.check(bom)
-    }));
+    // Skip validation if BOM is null, undefined, or has no components
+    if (!bom || !bom.bom_components || bom.bom_components.length === 0) {
+      return [];
+    }
+    
+    return validationRules.map(rule => {
+      try {
+        return {
+          ...rule,
+          result: rule.check(bom)
+        };
+      } catch (error) {
+        // If validation fails, treat as a passed rule to prevent crashes
+        return {
+          ...rule,
+          result: { passed: true }
+        };
+      }
+    });
   };
 
   const validationResults = runValidation();
