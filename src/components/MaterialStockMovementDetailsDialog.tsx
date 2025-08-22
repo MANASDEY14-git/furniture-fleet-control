@@ -5,30 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MaterialStockMovement } from '@/hooks/useMaterialStockMovements';
-
 interface MaterialStockMovementDetailsDialogProps {
   movement: MaterialStockMovement;
 }
-
-export default function MaterialStockMovementDetailsDialog({ movement }: MaterialStockMovementDetailsDialogProps) {
+export default function MaterialStockMovementDetailsDialog({
+  movement
+}: MaterialStockMovementDetailsDialogProps) {
   const [open, setOpen] = useState(false);
-
   const getMovementTypeColor = (quantityChange: number) => {
     return quantityChange > 0 ? 'text-green-400' : 'text-red-400';
   };
-
   const getMovementIcon = (quantityChange: number) => {
     return quantityChange > 0 ? '📈' : '📉';
   };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
+  return <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="h-8 w-8 p-0 hover:bg-blue-900/20"
-        >
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-blue-900/20">
           <Eye className="h-4 w-4 text-blue-400" />
         </Button>
       </DialogTrigger>
@@ -53,18 +45,15 @@ export default function MaterialStockMovementDetailsDialog({ movement }: Materia
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-blue-200 text-sm">Material</p>
-                  <p className="text-white font-semibold">{movement.materials.name}</p>
+                  <p className="font-semibold text-slate-950">{movement.materials.name}</p>
                 </div>
                 <div>
                   <p className="text-blue-200 text-sm">Unit</p>
-                  <p className="text-white">{movement.materials.unit || 'units'}</p>
+                  <p className="text-slate-950">{movement.materials.unit || 'units'}</p>
                 </div>
                 <div>
                   <p className="text-blue-200 text-sm">Movement Type</p>
-                  <Badge 
-                    variant="outline" 
-                    className={`${movement.quantity_change > 0 ? 'border-green-400 text-green-400 bg-green-400/10' : 'border-red-400 text-red-400 bg-red-400/10'}`}
-                  >
+                  <Badge variant="outline" className={`${movement.quantity_change > 0 ? 'border-green-400 text-green-400 bg-green-400/10' : 'border-red-400 text-red-400 bg-red-400/10'}`}>
                     {getMovementIcon(movement.quantity_change)} {movement.movement_type.toUpperCase()}
                   </Badge>
                 </div>
@@ -90,27 +79,23 @@ export default function MaterialStockMovementDetailsDialog({ movement }: Materia
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-blue-200 text-sm">Date & Time</p>
-                  <p className="text-white">{new Date(movement.created_at).toLocaleString()}</p>
+                  <p className="text-slate-950">{new Date(movement.created_at).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-blue-200 text-sm">Reference Type</p>
-                  {movement.reference_type ? (
-                    <Badge variant="outline" className="border-blue-400 text-blue-400 bg-blue-400/10">
+                  {movement.reference_type ? <Badge variant="outline" className="border-blue-400 text-blue-400 bg-blue-400/10">
                       {movement.reference_type}
-                    </Badge>
-                  ) : (
-                    <p className="text-blue-300">N/A</p>
-                  )}
+                    </Badge> : <p className="text-blue-300">N/A</p>}
                 </div>
                 <div>
                   <p className="text-blue-200 text-sm">Reference ID</p>
-                  <p className="text-white font-mono text-sm">
+                  <p className="font-mono text-sm text-slate-950">
                     {movement.reference_id ? movement.reference_id.slice(0, 8) + '...' : 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-blue-200 text-sm">Movement ID</p>
-                  <p className="text-white font-mono text-sm">{movement.id.slice(0, 8)}...</p>
+                  <p className="font-mono text-sm text-slate-950">{movement.id.slice(0, 8)}...</p>
                 </div>
               </div>
             </CardContent>
@@ -135,16 +120,11 @@ export default function MaterialStockMovementDetailsDialog({ movement }: Materia
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-              className="neon-border bg-slate-800/50 text-blue-100 hover:bg-blue-900/20"
-            >
+            <Button variant="outline" onClick={() => setOpen(false)} className="neon-border bg-slate-800/50 text-blue-100 hover:bg-blue-900/20">
               Close
             </Button>
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
