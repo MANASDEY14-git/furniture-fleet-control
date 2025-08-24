@@ -130,14 +130,7 @@ export default function EnhancedPaymentsPage() {
           <p className="text-blue-300">Complete financial overview with real-time summaries</p>
         </div>
         <ExportButton 
-          data={filteredPayments.map(payment => ({
-            'Date': new Date(payment.date).toLocaleDateString('en-GB'),
-            'Type': payment.type,
-            'Store': getStoreName(payment.store_id),
-            'Supplier': payment.supplier_id ? getSupplierName(payment.supplier_id) : 'N/A',
-            'Description': payment.description || 'No description',
-            'Amount': payment.amount
-          }))} 
+          data={filteredPayments} 
           filename="enhanced-payments" 
           type="payments"
         />
