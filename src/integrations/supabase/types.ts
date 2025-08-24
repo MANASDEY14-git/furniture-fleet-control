@@ -1285,6 +1285,29 @@ export type Database = {
         Args: { _user_id?: string }
         Returns: boolean
       }
+      get_sales_orders_secure: {
+        Args: { _store_id?: string; _user_id?: string }
+        Returns: {
+          advance_paid: number
+          balance_due: number
+          created_at: string
+          customer_address: string
+          customer_name: string
+          customer_phone: string
+          date: string
+          delivered_at: string
+          delivery_date: string
+          delivery_status: string
+          description: string
+          id: string
+          order_number: string
+          status: string
+          store_id: string
+          supplier_id: string
+          total_amount: number
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
