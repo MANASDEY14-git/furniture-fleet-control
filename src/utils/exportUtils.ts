@@ -55,7 +55,7 @@ export const exportToJSON = (data: any[], filename: string) => {
   }
 };
 
-export const formatDataForExport = (data: any[], type: 'sales' | 'purchases' | 'items' | 'payments') => {
+export const formatDataForExport = (data: any[], type: 'sales' | 'purchases' | 'items' | 'payments' | 'supplier-ledger') => {
   switch (type) {
     case 'sales':
       return data.map(item => ({
@@ -93,6 +93,20 @@ export const formatDataForExport = (data: any[], type: 'sales' | 'purchases' | '
         Date: new Date(item.date).toLocaleDateString(),
         Type: item.type,
         Amount: item.amount,
+        Description: item.description || '',
+        'Created At': new Date(item.created_at).toLocaleString()
+      }));
+    
+    case 'supplier-ledger':
+      return data.map(item => ({
+        Date: new Date(item.transaction_date).toLocaleDateString(),
+        Supplier: item.suppliers?.name || 'Unknown',
+        Store: item.stores?.name || 'Unknown',
+        'Transaction Type': item.transaction_type,
+        'Debit Amount': item.debit_amount || 0,
+        'Credit Amount': item.credit_amount || 0,
+        'Invoice Number': item.invoice_number || '',
+        'Payment Reference': item.payment_reference || '',
         Description: item.description || '',
         'Created At': new Date(item.created_at).toLocaleString()
       }));

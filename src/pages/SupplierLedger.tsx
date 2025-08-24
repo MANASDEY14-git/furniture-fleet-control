@@ -151,19 +151,9 @@ export default function SupplierLedger() {
           <p className="text-blue-300">Track supplier transactions and balances</p>
         </div>
         <ExportButton 
-          data={filteredEntries.map(entry => ({
-            'Date': entry.transaction_date,
-            'Supplier': entry.suppliers?.name || 'Unknown',
-            'Store': entry.stores?.name || 'Unknown',
-            'Type': entry.transaction_type,
-            'Description': entry.description || 'N/A',
-            'Debit': entry.debit_amount || 0,
-            'Credit': entry.credit_amount || 0,
-            'Invoice Number': entry.invoice_number || 'N/A',
-            'Payment Reference': entry.payment_reference || 'N/A'
-          }))} 
+          data={filteredEntries} 
           filename="supplier-ledger" 
-          type="payments"
+          type="supplier-ledger"
         />
       </div>
 

@@ -13,7 +13,7 @@ import { exportToCSV, exportToJSON, formatDataForExport } from '@/utils/exportUt
 interface ExportButtonProps {
   data: any[];
   filename: string;
-  type: 'sales' | 'purchases' | 'items' | 'payments';
+  type: 'sales' | 'purchases' | 'items' | 'payments' | 'supplier-ledger';
 }
 
 export default function ExportButton({ data, filename, type }: ExportButtonProps) {
