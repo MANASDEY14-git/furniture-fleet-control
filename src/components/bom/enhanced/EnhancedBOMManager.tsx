@@ -11,6 +11,9 @@ import { AlternativeMaterials } from '../AlternativeMaterials';
 import { BOMCostBreakdown } from '../BOMCostBreakdown';
 import { BOMProductionPlanning } from '../BOMProductionPlanning';
 import { BOMTemplates } from '../BOMTemplates';
+import { BOMStockIntegration } from '../BOMStockIntegration';
+import { BOMVersionManagement } from '../BOMVersionManagement';
+import { BOMSalesIntegration } from '../BOMSalesIntegration';
 import { useEnhancedBOMByItem, useBOMCostCalculation, useBOMValidation } from '@/hooks/useEnhancedBOM';
 import { useToast } from '@/hooks/use-toast';
 
@@ -96,7 +99,7 @@ export function EnhancedBOMManager({ itemId, bomId, isEditMode = false }: Enhanc
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-slate-800/50 border border-blue-500/30">
+        <TabsList className="grid w-full grid-cols-8 bg-slate-800/50 border border-blue-500/30">
           <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">
             <Package className="w-4 h-4 mr-2" />
             Overview
@@ -108,6 +111,15 @@ export function EnhancedBOMManager({ itemId, bomId, isEditMode = false }: Enhanc
           <TabsTrigger value="costing" className="data-[state=active]:bg-blue-600">
             <TrendingUp className="w-4 h-4 mr-2" />
             Costing
+          </TabsTrigger>
+          <TabsTrigger value="stock" className="data-[state=active]:bg-blue-600">
+            Stock
+          </TabsTrigger>
+          <TabsTrigger value="sales" className="data-[state=active]:bg-blue-600">
+            Sales
+          </TabsTrigger>
+          <TabsTrigger value="versions" className="data-[state=active]:bg-blue-600">
+            Versions
           </TabsTrigger>
           <TabsTrigger value="production" className="data-[state=active]:bg-blue-600">
             Production
@@ -312,6 +324,73 @@ export function EnhancedBOMManager({ itemId, bomId, isEditMode = false }: Enhanc
                 <Package className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-white mb-2">No BOM Available</h3>
                 <p className="text-blue-200">Create a BOM to access production planning features.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="stock" className="space-y-6">
+          {bom ? (
+            <BOMStockIntegration 
+              bom={bom} 
+              onReorderRequest={(materialId, quantity) => {
+                toast({
+                  title: "Reorder Request",
+                  description: `Reorder request created for ${quantity} units`,
+                });
+              }}
+            />
+          ) : (
+            <Card className="bg-slate-800/50 border-blue-500/30">
+              <CardContent className="p-8 text-center">
+                <Package className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">No BOM Available</h3>
+                <p className="text-blue-200">Create a BOM to access stock integration features.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="sales" className="space-y-6">
+          {bom && itemId ? (
+            <BOMSalesIntegration 
+              bom={bom} 
+              itemId={itemId}
+            />
+          ) : (
+            <Card className="bg-slate-800/50 border-blue-500/30">
+              <CardContent className="p-8 text-center">
+                <Package className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">No BOM Available</h3>
+                <p className="text-blue-200">Create a BOM to access sales integration features.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="versions" className="space-y-6">
+          {bom ? (
+            <BOMVersionManagement 
+              bom={bom}
+              onCreateVersion={(notes) => {
+                toast({
+                  title: "Version Created",
+                  description: "New BOM version created successfully",
+                });
+              }}
+              onRestoreVersion={(versionId) => {
+                toast({
+                  title: "Version Restored",
+                  description: "BOM version restored successfully",
+                });
+              }}
+            />
+          ) : (
+            <Card className="bg-slate-800/50 border-blue-500/30">
+              <CardContent className="p-8 text-center">
+                <Package className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">No BOM Available</h3>
+                <p className="text-blue-200">Create a BOM to access version management features.</p>
               </CardContent>
             </Card>
           )}
