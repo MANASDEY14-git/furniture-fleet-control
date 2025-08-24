@@ -1279,34 +1279,34 @@ export type Database = {
           },
         ]
       }
-      sales_orders_secure: {
-        Row: {
-          advance_paid: number | null
-          balance_due: number | null
-          created_at: string | null
-          customer_address: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          date: string | null
-          delivered_at: string | null
-          delivery_date: string | null
-          delivery_status: string | null
-          description: string | null
-          id: string | null
-          order_number: string | null
-          status: string | null
-          store_id: string | null
-          supplier_id: string | null
-          total_amount: number | null
-          updated_at: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       can_access_customer_pii: {
         Args: { _user_id?: string }
         Returns: boolean
+      }
+      get_sales_orders_for_user: {
+        Args: { _store_id?: string }
+        Returns: {
+          advance_paid: number
+          balance_due: number
+          created_at: string
+          customer_address: string
+          customer_name: string
+          customer_phone: string
+          date: string
+          delivered_at: string
+          delivery_date: string
+          delivery_status: string
+          description: string
+          id: string
+          order_number: string
+          status: string
+          store_id: string
+          supplier_id: string
+          total_amount: number
+          updated_at: string
+        }[]
       }
       get_sales_orders_secure: {
         Args: { _store_id?: string; _user_id?: string }

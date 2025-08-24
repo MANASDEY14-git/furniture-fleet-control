@@ -9,12 +9,14 @@ interface OrderDetailsDialogProps {
   viewingOrder: any;
   setViewingOrder: (order: any) => void;
   getStoreName: (storeId: string) => string;
+  canAccessPII?: boolean;
 }
 
 export default function OrderDetailsDialog({
   viewingOrder,
   setViewingOrder,
   getStoreName,
+  canAccessPII = false
 }: OrderDetailsDialogProps) {
   const { data: order, isLoading, error } = useSingleSalesOrder(
     viewingOrder?.sale_id || null
@@ -98,8 +100,16 @@ export default function OrderDetailsDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-foreground"><strong>Customer:</strong> {viewingOrder.customer_name || 'Walk-in'}</p>
-              <p className="text-foreground"><strong>Phone:</strong> {viewingOrder.customer_phone || 'N/A'}</p>
+              <p className="text-foreground"><strong>Customer:</strong> {
+                canAccessPII && viewingOrder.customer_name && viewingOrder.customer_name !== '***REDACTED***' 
+                  ? viewingOrder.customer_name 
+                  : (viewingOrder.customer_name === '***REDACTED***' ? '***REDACTED***' : 'Walk-in')
+              }</p>
+              <p className="text-foreground"><strong>Phone:</strong> {
+                canAccessPII && viewingOrder.customer_phone && viewingOrder.customer_phone !== '***REDACTED***' 
+                  ? viewingOrder.customer_phone 
+                  : (viewingOrder.customer_phone === '***REDACTED***' ? '***REDACTED***' : 'N/A')
+              }</p>
               <p className="text-foreground"><strong>Store:</strong> {getStoreName(viewingOrder.store_id)}</p>
             </div>
             <div>
@@ -108,10 +118,15 @@ export default function OrderDetailsDialog({
               <p className="text-foreground"><strong>Delivery:</strong> {viewingOrder.delivery_date ? new Date(viewingOrder.delivery_date).toLocaleDateString('en-GB') : 'Not Set'}</p>
             </div>
           </div>
-          {viewingOrder.customer_address && (
+          {canAccessPII && viewingOrder.customer_address && viewingOrder.customer_address !== '***REDACTED***' && (
             <div>
               <p className="text-foreground"><strong>Address:</strong></p>
               <p className="text-muted-foreground ml-4">{viewingOrder.customer_address}</p>
+            </div>
+          )}
+          {!canAccessPII && viewingOrder.customer_address === '***REDACTED***' && (
+            <div>
+              <p className="text-foreground"><strong>Address:</strong> ***REDACTED***</p>
             </div>
           )}
 

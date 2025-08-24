@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSalesOrders, useUpdateSalesOrderStatus } from '@/hooks/useSalesOrders';
+import { useSecureSalesOrders, useCanAccessCustomerPII } from '@/hooks/useSecureSalesOrders';
 import { useSalePaymentStatus, useRecordPayment } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -24,10 +25,12 @@ export default function Sales() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
 
-  const { data: salesOrders = [], isLoading: ordersLoading, refetch: refetchSalesOrders } = useSalesOrders();
+  // Use secure sales orders hook instead of regular one
+  const { data: secureOrders = [], isLoading: ordersLoading, refetch: refetchSalesOrders } = useSecureSalesOrders(selectedStore === 'all' ? undefined : selectedStore);
   const { data: salePaymentStatus = [], refetch: refetchSalePaymentStatus } = useSalePaymentStatus();
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: suppliers = [] } = useSuppliers();
+  const { data: canAccessPII = false } = useCanAccessCustomerPII();
   const updateOrderStatus = useUpdateSalesOrderStatus();
   const recordPayment = useRecordPayment();
 
@@ -200,12 +203,14 @@ export default function Sales() {
         handleStatusUpdate={handleStatusUpdate}
         setViewingOrder={setViewingOrder}
         setRecordingPayment={setRecordingPayment}
+        canAccessPII={canAccessPII}
       />
 
       <OrderDetailsDialog
         viewingOrder={viewingOrder}
         setViewingOrder={setViewingOrder}
         getStoreName={getStoreName}
+        canAccessPII={canAccessPII}
       />
 
       <PaymentRecordDialog

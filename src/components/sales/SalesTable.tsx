@@ -16,6 +16,7 @@ interface SalesTableProps {
   handleStatusUpdate: (orderId: string, newStatus: DeliveryStatus) => void;
   setViewingOrder: (order: any) => void;
   setRecordingPayment: (order: any) => void;
+  canAccessPII?: boolean;
 }
 
 export default function SalesTable({
@@ -24,7 +25,8 @@ export default function SalesTable({
   getSupplierName,
   handleStatusUpdate,
   setViewingOrder,
-  setRecordingPayment
+  setRecordingPayment,
+  canAccessPII = false
 }: SalesTableProps) {
   return (
     <Card className="futuristic-card">
@@ -54,7 +56,11 @@ export default function SalesTable({
                   <TableCell className="text-blue-100">{new Date(order.sale_date).toLocaleDateString('en-GB')}</TableCell>
                   <TableCell className="font-medium text-cyan-300">{order.order_number}</TableCell>
                   <TableCell className="text-blue-200">
-                    {order.customer_name || getSupplierName(order.supplier_id || '')}
+                    {canAccessPII && order.customer_name && order.customer_name !== '***REDACTED***' 
+                      ? order.customer_name 
+                      : (order.customer_name === '***REDACTED***' 
+                        ? '***REDACTED***' 
+                        : getSupplierName(order.supplier_id || ''))}
                   </TableCell>
                   <TableCell className="text-blue-200">{getStoreName(order.store_id)}</TableCell>
                   <TableCell className="text-right text-cyan-300 font-semibold">{formatCurrency(order.total_price)}</TableCell>
