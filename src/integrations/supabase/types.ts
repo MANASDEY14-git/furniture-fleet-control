@@ -1281,6 +1281,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_customer_pii: {
+        Args: { _user_id?: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
