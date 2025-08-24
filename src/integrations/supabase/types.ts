@@ -1279,6 +1279,29 @@ export type Database = {
           },
         ]
       }
+      sales_orders_secure: {
+        Row: {
+          advance_paid: number | null
+          balance_due: number | null
+          created_at: string | null
+          customer_address: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          date: string | null
+          delivered_at: string | null
+          delivery_date: string | null
+          delivery_status: string | null
+          description: string | null
+          id: string | null
+          order_number: string | null
+          status: string | null
+          store_id: string | null
+          supplier_id: string | null
+          total_amount: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_access_customer_pii: {
