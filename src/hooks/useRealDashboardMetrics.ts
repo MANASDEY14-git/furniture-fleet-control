@@ -7,10 +7,8 @@ export const useRealDashboardMetrics = () => {
   return useQuery({
     queryKey: ['real-dashboard-metrics'],
     queryFn: async () => {
-      // Get total sales with order count
-      const { data: salesData, error: salesError } = await supabase
-        .from('sales_orders')
-        .select('total_amount, id, date');
+      // Get total sales with order count using secure function
+      const { data: salesData, error: salesError } = await supabase.rpc('get_sales_orders_for_user');
       
       if (salesError) throw salesError;
       
@@ -50,12 +48,8 @@ export const useRealDashboardMetrics = () => {
       
       if (supplierLedgerError) throw supplierLedgerError;
       
-      // Get delivery status for fulfillment rate
-      const { data: deliveryData, error: deliveryError } = await supabase
-        .from('sales_orders')
-        .select('delivery_status');
-      
-      if (deliveryError) throw deliveryError;
+      // Get delivery status for fulfillment rate (use same secure data)
+      const deliveryData = salesData;
       
       // Get payment metrics
       const { data: paymentsData, error: paymentsError } = await supabase
