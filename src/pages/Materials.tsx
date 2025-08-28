@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Package2, Activity } from 'lucide-react';
+import { Plus, Package2, Activity, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,13 +7,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useMaterials } from '@/hooks/useMaterials';
 import MaterialForm from '@/components/MaterialForm';
 import MaterialStockMovementsDialog from '@/components/MaterialStockMovementsDialog';
+import MaterialCard from '@/components/materials/MaterialCard';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Materials() {
   const { data: materials = [], isLoading } = useMaterials();
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const channel = supabase
@@ -31,6 +34,58 @@ export default function Materials() {
   const filteredMaterials = materials.filter(material =>
     material.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4 p-4">
+        {/* Mobile Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold glow-text">Raw Materials</h1>
+          <p className="text-blue-300 text-sm">Manage your inventory</p>
+        </div>
+
+        {/* Mobile Search */}
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="Search materials..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-300/50"
+          />
+        </div>
+
+        {/* Mobile Materials Grid */}
+        <div className="space-y-3">
+          {isLoading ? (
+            <div className="text-center py-8">
+              <p className="text-blue-300">Loading materials...</p>
+            </div>
+          ) : filteredMaterials.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-blue-300">No materials found</p>
+            </div>
+          ) : (
+            filteredMaterials.map((material) => (
+              <MaterialCard key={material.id} material={material} />
+            ))
+          )}
+        </div>
+
+        {/* Floating Action Button */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <MaterialForm
+            trigger={
+              <Button size="lg" className="cyber-button text-white font-semibold rounded-full h-14 w-14 shadow-2xl">
+                <Plus className="w-6 h-6" />
+              </Button>
+            }
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

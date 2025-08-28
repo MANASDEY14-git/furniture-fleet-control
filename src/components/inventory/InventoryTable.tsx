@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { PaginationControls } from '@/components/ui/pagination';
 import ItemForm from '@/components/ItemForm';
+import InventoryCard from '@/components/inventory/InventoryCard';
 import { formatCurrency } from '@/utils/currencyUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Item } from '@/hooks/useItems';
 import type { Store } from '@/types';
 import type { Category } from '@/hooks/useCategories';
@@ -62,6 +64,7 @@ export default function InventoryTable({
 }: InventoryTableProps) {
   const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price' | 'age'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const isMobile = useIsMobile();
   const sortedItems = useMemo(() => {
     // Since filtering is handled by usePaginatedItems hook, we only need to sort
     const sorted = [...items];
@@ -79,8 +82,8 @@ export default function InventoryTable({
           comparison = a.selling_price - b.selling_price;
           break;
         case 'age':
-          const ageA = calculateStockAge(a.stock_receive_date);
-          const ageB = calculateStockAge(b.stock_receive_date);
+          const ageA = calculateStockAge(a.stock_received_date);
+          const ageB = calculateStockAge(b.stock_received_date);
           comparison = ageA - ageB;
           break;
       }
@@ -92,6 +95,53 @@ export default function InventoryTable({
 
   if (isLoading) {
     return <LoadingSkeleton type="table" rows={10} cols={8} />;
+  }
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center">
+          <p className="text-blue-300">Total Items: {sortedItems.length}</p>
+        </div>
+        
+        <div className="space-y-3">
+          {sortedItems.map((item) => {
+            const storeName = stores.find(store => store.id === item.store_id)?.name || 'Unknown Store';
+            const categoryName = categories.find(cat => cat.id === item.category_id)?.name || 'Unknown Category';
+            const isSelected = selectedItems.includes(item.id);
+
+            return (
+              <InventoryCard
+                key={item.id}
+                item={item}
+                isSelected={isSelected}
+                onSelectionChange={onItemSelection}
+                onDeleteItem={onDeleteItem}
+                storeName={storeName}
+                categoryName={categoryName}
+              />
+            );
+          })}
+        </div>
+
+        {sortedItems.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-blue-300">No items found matching your criteria</p>
+          </div>
+        )}
+
+        {pagination && onPageChange && (
+          <PaginationControls
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={onPageChange}
+            startItem={pagination.startItem}
+            endItem={pagination.endItem}
+            totalItems={pagination.totalItems}
+          />
+        )}
+      </div>
+    );
   }
 
   return (
@@ -153,7 +203,7 @@ export default function InventoryTable({
               const store = stores.find(s => s.id === item.store_id);
               const category = categories.find(c => c.id === item.category_id);
               const isLowStock = item.quantity_available < 1;
-              const stockAge = calculateStockAge(item.stock_receive_date);
+              const stockAge = calculateStockAge(item.stock_received_date);
               const stockAgeStatus = getStockAgeStatus(stockAge);
               
               return (
