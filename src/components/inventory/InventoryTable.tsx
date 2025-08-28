@@ -82,8 +82,8 @@ export default function InventoryTable({
           comparison = a.selling_price - b.selling_price;
           break;
         case 'age':
-          const ageA = calculateStockAge(a.stock_received_date);
-          const ageB = calculateStockAge(b.stock_received_date);
+          const ageA = calculateStockAge(a.stock_receive_date);
+          const ageB = calculateStockAge(b.stock_receive_date);
           comparison = ageA - ageB;
           break;
       }
@@ -203,7 +203,7 @@ export default function InventoryTable({
               const store = stores.find(s => s.id === item.store_id);
               const category = categories.find(c => c.id === item.category_id);
               const isLowStock = item.quantity_available < 1;
-              const stockAge = calculateStockAge(item.stock_received_date);
+              const stockAge = calculateStockAge(item.stock_receive_date);
               const stockAgeStatus = getStockAgeStatus(stockAge);
               
               return (
