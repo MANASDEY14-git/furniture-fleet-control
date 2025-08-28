@@ -1,10 +1,15 @@
 
-import { Search } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
 import StoreSelector from '@/components/StoreSelector';
 import SupplierSelector from '@/components/SupplierSelector';
 import DateFilterSelector from '@/components/DateFilterSelector';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useState } from 'react';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 interface SalesFiltersProps {
@@ -36,6 +41,126 @@ export default function SalesFilters({
   stores,
   storesLoading
 }: SalesFiltersProps) {
+  const isMobile = useIsMobile();
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
+  // Count active filters
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (searchTerm) count++;
+    if (selectedStore && selectedStore !== 'all') count++;
+    if (selectedSupplier && selectedSupplier !== 'all') count++;
+    if (dateFilter && dateFilter !== 'today' && dateFilter !== 'week' && dateFilter !== 'month' && dateFilter !== 'custom') count++;
+    return count;
+  };
+
+  const activeFiltersCount = getActiveFiltersCount();
+
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        {/* Always visible search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
+          <Input
+            placeholder="Search order number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+          />
+        </div>
+
+        {/* Collapsible filters */}
+        <Card className="futuristic-card">
+          <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-3 cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-cyan-400" />
+                    <CardTitle className="text-cyan-300 text-base">Filters</CardTitle>
+                    {activeFiltersCount > 0 && (
+                      <Badge className="bg-cyan-500/20 text-cyan-400 text-xs">
+                        {activeFiltersCount}
+                      </Badge>
+                    )}
+                  </div>
+                  {isFiltersOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </div>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0 space-y-4">
+                <StoreSelector 
+                  value={selectedStore} 
+                  onValueChange={setSelectedStore}
+                  stores={stores}
+                  isLoading={storesLoading}
+                  placeholder="All stores"
+                />
+                <SupplierSelector 
+                  value={selectedSupplier} 
+                  onValueChange={setSelectedSupplier}
+                  placeholder="All suppliers"
+                />
+                <DateFilterSelector
+                  dateFilter={dateFilter}
+                  onDateFilterChange={setDateFilter}
+                  customDateRange={customDateRange}
+                  onCustomDateRangeChange={setCustomDateRange}
+                />
+                
+                {/* Clear filters button */}
+                {activeFiltersCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedStore('all');
+                      setSelectedSupplier('all');
+                      setDateFilter('today');
+                      setCustomDateRange(null);
+                    }}
+                    className="w-full border-blue-500/30 text-blue-200"
+                  >
+                    Clear All Filters
+                  </Button>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+
+        {/* Active filter chips */}
+        {activeFiltersCount > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {searchTerm && (
+              <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
+                Search: {searchTerm}
+              </Badge>
+            )}
+            {selectedStore && selectedStore !== 'all' && (
+              <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
+                Store: {stores.find(s => s.store_id === selectedStore)?.store_name || selectedStore}
+              </Badge>
+            )}
+            {selectedSupplier && selectedSupplier !== 'all' && (
+              <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
+                Supplier: {selectedSupplier}
+              </Badge>
+            )}
+            {dateFilter && dateFilter !== 'today' && (
+              <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
+                Date: {dateFilter}
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Card className="futuristic-card">
       <CardContent className="pt-6">
