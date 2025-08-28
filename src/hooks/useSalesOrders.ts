@@ -80,7 +80,7 @@ export const useCreateSalesOrder = () => {
             date: data.date,
             sale_id: order.id,
             store_id: data.store_id,
-            description: `Advance payment for order ${data.order_number}`,
+            description: data.description ? `${data.description} (Advance payment for order ${data.order_number})` : `Advance payment for order ${data.order_number}`,
             reference_type: 'sales_order',
             reference_id: order.id
           }]);

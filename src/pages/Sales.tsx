@@ -155,6 +155,7 @@ export default function Sales() {
       date: new Date().toISOString().split('T')[0],
       description: description,
       store_id: recordingPayment.store_id,
+      order_description: recordingPayment.description,
     });
     
     setRecordingPayment(null);

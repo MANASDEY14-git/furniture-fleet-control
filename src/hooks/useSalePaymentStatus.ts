@@ -30,7 +30,15 @@ export const useRecordPayment = () => {
       date: string;
       description?: string;
       store_id: string;
+      order_description?: string;
     }) => {
+      // Get sales order description if not provided and use it in payment description
+      let finalDescription = paymentData.description || `Payment for sale`;
+      
+      if (!paymentData.description && paymentData.order_description) {
+        finalDescription = `${paymentData.order_description} (Payment)`;
+      }
+
       const { data, error } = await supabase
         .from('payments')
         .insert([{
@@ -38,7 +46,7 @@ export const useRecordPayment = () => {
           amount: paymentData.amount,
           type: 'Receipt',
           date: paymentData.date,
-          description: paymentData.description || `Payment for sale`,
+          description: finalDescription,
           store_id: paymentData.store_id,
           reference_type: 'sale',
           reference_id: paymentData.sale_id
