@@ -8,13 +8,9 @@ export const useSalePaymentStatus = () => {
   return useQuery({
     queryKey: ['sale-payment-status'],
     queryFn: async () => {
-      // Join sale_payment_status with sales_orders to get created_at
       const { data, error } = await supabase
         .from('sale_payment_status')
-        .select(`
-          *,
-          sales_orders!inner(created_at)
-        `)
+        .select('*')
         .order('sale_date', { ascending: false });
       
       if (error) throw error;

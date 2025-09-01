@@ -52,5 +52,4 @@ export interface SalePaymentStatus {
   total_price: number;
   total_paid: number;
   balance_due: number;
-  created_at?: string;
 }

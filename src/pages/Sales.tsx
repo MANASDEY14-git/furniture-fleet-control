@@ -122,10 +122,12 @@ export default function Sales() {
       });
     }
 
-    // Sort by creation timestamp (most recent first)
+    // Sort by creation timestamp (most recent first) using secure orders data
     filtered.sort((a, b) => {
-      const dateA = new Date((a as any).sales_orders?.created_at || a.sale_date);
-      const dateB = new Date((b as any).sales_orders?.created_at || b.sale_date);
+      const orderA = secureOrders.find(order => order.id === a.sale_id);
+      const orderB = secureOrders.find(order => order.id === b.sale_id);
+      const dateA = new Date(orderA?.created_at || a.sale_date);
+      const dateB = new Date(orderB?.created_at || b.sale_date);
       return dateB.getTime() - dateA.getTime();
     });
 
