@@ -16,6 +16,9 @@ import ItemForm from '@/components/ItemForm';
 import ExportButton from '@/components/ExportButton';
 import LowStockAlertsPanel from '@/components/LowStockAlertsPanel';
 import BulkOperationsPanel from '@/components/BulkOperationsPanel';
+import CompactAlertBanner from '@/components/mobile/CompactAlertBanner';
+import BulkActionsDrawer from '@/components/mobile/BulkActionsDrawer';
+import MobileFloatingActionButton from '@/components/mobile/MobileFloatingActionButton';
 import { ErrorBoundary, QueryErrorFallback } from '@/components/ui/error-boundary';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +38,7 @@ export default function Inventory() {
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [alertsPanelOpen, setAlertsPanelOpen] = useState(false);
   const [bulkPanelOpen, setBulkPanelOpen] = useState(false);
+  const [showAddItemForm, setShowAddItemForm] = useState(false);
 
   // Use paginated items for better performance
   const {
@@ -90,54 +94,44 @@ export default function Inventory() {
       <div className="space-y-4 md:space-y-6">
         <InventoryHeader lowStockItems={lowStockItems} />
 
-        {/* Mobile: Collapsible panels */}
+        {/* Mobile: Compact banners */}
         {isMobile ? (
           <div className="space-y-3">
-            {/* Alerts banner for mobile */}
-            {lowStockItems.length > 0 && (
-              <Drawer open={alertsPanelOpen} onOpenChange={setAlertsPanelOpen}>
-                <DrawerTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between h-12 text-left">
-                    <span className="flex items-center gap-2">
-                      <Package2 className="w-4 h-4 text-orange-400" />
-                      {lowStockItems.length} Low Stock Alert{lowStockItems.length > 1 ? 's' : ''}
-                    </span>
-                    <Filter className="w-4 h-4" />
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <DrawerHeader>
-                    <DrawerTitle>Low Stock Alerts</DrawerTitle>
-                  </DrawerHeader>
-                  <div className="px-4 pb-6">
-                    <AlertsPanel />
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            )}
+            {/* Compact alert banner */}
+            <CompactAlertBanner 
+              alertCount={lowStockItems.length}
+              onExpand={() => setAlertsPanelOpen(true)}
+            />
 
-            {/* Bulk operations for mobile */}
-            {selectedItems.length > 0 && (
-              <Drawer open={bulkPanelOpen} onOpenChange={setBulkPanelOpen}>
-                <DrawerTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between h-12">
-                    <span className="flex items-center gap-2">
-                      <Package2 className="w-4 h-4" />
-                      {selectedItems.length} Item{selectedItems.length > 1 ? 's' : ''} Selected
-                    </span>
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <DrawerHeader>
-                    <DrawerTitle>Bulk Operations</DrawerTitle>
-                  </DrawerHeader>
-                  <div className="px-4 pb-6">
-                    <BulkPanel />
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            )}
+            {/* Compact bulk actions banner */}
+            <BulkActionsDrawer 
+              selectedCount={selectedItems.length}
+              onExpand={() => setBulkPanelOpen(true)}
+            />
+
+            {/* Alert panel drawer */}
+            <Drawer open={alertsPanelOpen} onOpenChange={setAlertsPanelOpen}>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Low Stock Alerts</DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 pb-6 max-h-[70vh] overflow-y-auto">
+                  <AlertsPanel />
+                </div>
+              </DrawerContent>
+            </Drawer>
+
+            {/* Bulk operations drawer */}
+            <Drawer open={bulkPanelOpen} onOpenChange={setBulkPanelOpen}>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Bulk Operations</DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 pb-6 max-h-[70vh] overflow-y-auto">
+                  <BulkPanel />
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         ) : (
           /* Desktop: Side panels */
@@ -249,6 +243,17 @@ export default function Inventory() {
             )}
           </CardContent>
         </Card>
+
+        {/* Floating Action Button for mobile */}
+        {isMobile && (
+          <>
+            <MobileFloatingActionButton onClick={() => setShowAddItemForm(true)} />
+            <ItemForm
+              trigger={<div />}
+              onSuccess={() => setShowAddItemForm(false)}
+            />
+          </>
+        )}
       </div>
     </ErrorBoundary>
   );

@@ -121,11 +121,21 @@
   }
   
   .mobile-card-spacing {
-    @apply p-4 space-y-3;
+    @apply space-y-4;
   }
   
   .mobile-text-base {
     @apply text-base leading-relaxed;
+  }
+
+  /* Swipe gesture indicators */
+  .swipe-hint {
+    @apply relative overflow-hidden;
+  }
+  
+  .swipe-hint::after {
+    content: '';
+    @apply absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-transparent via-muted to-transparent opacity-30;
   }
 }
 
