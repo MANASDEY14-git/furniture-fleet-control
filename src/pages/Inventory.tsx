@@ -1,28 +1,23 @@
-
-import React, { useState, useEffect } from 'react';
-import { Plus, Package2, ShoppingCart, Search as SearchIcon, Filter, MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import InventoryHeader from '@/components/inventory/InventoryHeader';
-import InventoryTable from '@/components/inventory/InventoryTable';
-import StoreSelector from '@/components/StoreSelector';
-import { useDeleteItem } from '@/hooks/useItems';
+import React, { useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { usePaginatedItems } from '@/hooks/usePaginatedItems';
+import { useInfiniteItems } from '@/hooks/useInfiniteItems';
+import { useDeleteItem } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
-import ItemForm from '@/components/ItemForm';
-import ExportButton from '@/components/ExportButton';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { InfiniteScroll } from '@/components/ui/infinite-scroll';
+import { MobileSkeletonGrid } from '@/components/ui/mobile-skeleton';
+import InventoryHeader from '@/components/inventory/InventoryHeader';
+import InventoryTable from '@/components/inventory/InventoryTable';
+import InventoryCard from '@/components/inventory/InventoryCard';
 import LowStockAlertsPanel from '@/components/LowStockAlertsPanel';
 import BulkOperationsPanel from '@/components/BulkOperationsPanel';
 import CompactAlertBanner from '@/components/mobile/CompactAlertBanner';
 import BulkActionsDrawer from '@/components/mobile/BulkActionsDrawer';
 import MobileFloatingActionButton from '@/components/mobile/MobileFloatingActionButton';
 import { ErrorBoundary, QueryErrorFallback } from '@/components/ui/error-boundary';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Inventory() {
   const { data: stores = [] } = useStores();
@@ -33,226 +28,167 @@ export default function Inventory() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [storeFilter, setStoreFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
-  const [alertsPanelOpen, setAlertsPanelOpen] = useState(false);
-  const [bulkPanelOpen, setBulkPanelOpen] = useState(false);
-  const [showAddItemForm, setShowAddItemForm] = useState(false);
+  const [selectedStore, setSelectedStore] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showLowStock, setShowLowStock] = useState(false);
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
-  // Use paginated items for better performance
-  const {
-    items: paginatedItems,
-    isLoading: isPaginatedLoading,
-    error: paginatedError,
-    pagination,
-    goToPage,
-    resetToFirstPage,
-    refetch: refetchPaginated
-  } = usePaginatedItems({
-    pageSize: 25,
+  // Use different hooks for mobile vs desktop
+  const desktopQuery = usePaginatedItems({
     searchTerm,
-    storeId: storeFilter,
-    categoryId: categoryFilter,
-    showLowStockOnly
+    storeId: selectedStore,
+    categoryId: selectedCategory,
+    showLowStockOnly: showLowStock,
+    pageSize: 50
   });
 
-  // Reset to first page when filters change
-  useEffect(() => {
-    resetToFirstPage();
-  }, [searchTerm, storeFilter, categoryFilter, showLowStockOnly]);
+  const mobileQuery = useInfiniteItems({
+    searchTerm,
+    storeId: selectedStore,
+    categoryId: selectedCategory,
+    showLowStockOnly: showLowStock,
+    pageSize: 20
+  });
 
-
-  const handleDeleteItem = (id: string) => {
-    deleteItem.mutate(id);
+  // Use appropriate query based on device
+  const {
+    items,
+    isLoading,
+    refetch,
+    pagination,
+    goToPage
+  } = isMobile ? {
+    items: mobileQuery.items,
+    isLoading: mobileQuery.isLoading,
+    refetch: mobileQuery.refresh,
+    pagination: undefined,
+    goToPage: undefined
+  } : {
+    items: desktopQuery.items,
+    isLoading: desktopQuery.isLoading,
+    refetch: desktopQuery.refetch,
+    pagination: desktopQuery.pagination,
+    goToPage: desktopQuery.goToPage
   };
 
   const handleItemSelection = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems([...selectedItems, itemId]);
-    } else {
-      setSelectedItems(selectedItems.filter(id => id !== itemId));
+    setSelectedItems(prev => 
+      checked 
+        ? [...prev, itemId]
+        : prev.filter(id => id !== itemId)
+    );
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    try {
+      await deleteItem.mutateAsync(id);
+      setSelectedItems(prev => prev.filter(itemId => itemId !== id));
+    } catch (error) {
+      console.error('Error deleting item:', error);
     }
   };
 
-  const lowStockItems = paginatedItems.filter(item => item.quantity_available < 10);
+  const handleClearSelection = () => {
+    setSelectedItems([]);
+  };
 
-  // Mobile panels components
-  const AlertsPanel = () => (
-    <LowStockAlertsPanel />
-  );
+  const lowStockItems = items.filter(item => item.quantity_available < 5);
 
-  const BulkPanel = () => (
-    <BulkOperationsPanel 
-      selectedItems={selectedItems}
-      onSelectionChange={setSelectedItems}
-    />
-  );
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-muted-foreground">
+            Please log in to view inventory
+          </h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <ErrorBoundary>
-      <div className="space-y-4 md:space-y-6">
-        <InventoryHeader lowStockItems={lowStockItems} />
-
-        {/* Mobile: Compact banners */}
-        {isMobile ? (
-          <div className="space-y-3">
-            {/* Compact alert banner */}
-            <CompactAlertBanner 
-              alertCount={lowStockItems.length}
-              onExpand={() => setAlertsPanelOpen(true)}
-            />
-
-            {/* Compact bulk actions banner */}
-            <BulkActionsDrawer 
-              selectedCount={selectedItems.length}
-              onExpand={() => setBulkPanelOpen(true)}
-            />
-
-            {/* Alert panel drawer */}
-            <Drawer open={alertsPanelOpen} onOpenChange={setAlertsPanelOpen}>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Low Stock Alerts</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-6 max-h-[70vh] overflow-y-auto">
-                  <AlertsPanel />
+    <ErrorBoundary fallback={QueryErrorFallback}>
+      <div className="flex h-full bg-background">
+        {/* Main Content */}
+        <div className="flex-1 p-4 md:p-6 overflow-hidden">
+          {isMobile ? (
+            <PullToRefresh onRefresh={async () => { await refetch(); }}>
+              <div className="space-y-4">
+                {/* Mobile Header */}
+                <div className="flex items-center justify-between">
+                  <h1 className="text-xl font-bold">Inventory</h1>
+                  <MobileFloatingActionButton 
+                    onClick={() => console.log('Add new item')}
+                  />
                 </div>
-              </DrawerContent>
-            </Drawer>
 
-            {/* Bulk operations drawer */}
-            <Drawer open={bulkPanelOpen} onOpenChange={setBulkPanelOpen}>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Bulk Operations</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-6 max-h-[70vh] overflow-y-auto">
-                  <BulkPanel />
-                </div>
-              </DrawerContent>
-            </Drawer>
-          </div>
-        ) : (
-          /* Desktop: Side panels */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <AlertsPanel />
-            </div>
-            <div className="lg:col-span-2">
-              <BulkPanel />
-            </div>
-          </div>
-        )}
+                {/* Mobile Alert Banner */}
+                {lowStockItems.length > 0 && (
+                  <CompactAlertBanner 
+                    alertCount={lowStockItems.length}
+                    onExpand={() => console.log('Expand alerts')}
+                  />
+                )}
 
-        <Card className="simple-card">
-          <CardHeader className={`${isMobile ? 'pb-4' : ''} flex flex-row items-center justify-between`}>
-            <CardTitle className="text-lg md:text-xl font-semibold">Product Database</CardTitle>
-            
-            {/* Mobile: Header actions */}
-            {isMobile ? (
-              <div className="flex gap-2">
-                <ItemForm
-                  trigger={
-                    <Button size="sm" className="h-9 w-9 p-0">
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  }
-                />
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-9 w-9 p-0">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-80">
-                    <SheetHeader>
-                      <SheetTitle>Actions</SheetTitle>
-                    </SheetHeader>
-                    <div className="mt-6 space-y-4">
-                      <ExportButton 
-                        data={paginatedItems} 
-                        filename="inventory" 
-                        type="items"
-                      />
+                {/* Mobile Items with Infinite Scroll */}
+                {isLoading ? (
+                  <MobileSkeletonGrid count={6} />
+                ) : (
+                  <InfiniteScroll
+                    hasMore={mobileQuery.hasMore}
+                    isLoading={mobileQuery.isLoadingMore}
+                    onLoadMore={mobileQuery.loadMore}
+                  >
+                    <div className="space-y-3">
+                      {items.map((item) => {
+                        const storeName = stores.find(store => store.id === item.store_id)?.name || 'Unknown Store';
+                        const categoryName = categories.find(cat => cat.id === item.category_id)?.name || 'Unknown Category';
+                        const isSelected = selectedItems.includes(item.id);
+
+                        return (
+                          <InventoryCard
+                            key={item.id}
+                            item={item}
+                            isSelected={isSelected}
+                            onSelectionChange={handleItemSelection}
+                            onDeleteItem={handleDeleteItem}
+                            storeName={storeName}
+                            categoryName={categoryName}
+                          />
+                        );
+                      })}
                     </div>
-                  </SheetContent>
-                </Sheet>
+                  </InfiniteScroll>
+                )}
               </div>
-            ) : (
-              /* Desktop: Header actions */
-              <div className="flex gap-2">
-                <ExportButton 
-                  data={paginatedItems} 
-                  filename="inventory" 
-                  type="items"
-                />
-                <ItemForm
-                  trigger={
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Item
-                    </Button>
-                  }
-                />
-              </div>
-            )}
-          </CardHeader>
-          
-          <CardContent className={isMobile ? 'px-4 pb-4' : ''}>
-            {/* Search and filters section */}
-            <div className={`mb-6 space-y-4 ${isMobile ? 'space-y-3' : ''}`}>
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search items, variants, attributes, SKU..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border border-border bg-background text-foreground placeholder-muted-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring ${isMobile ? 'text-base' : ''}`}
-                />
-              </div>
-              
-              <div className="flex gap-4 flex-wrap">
-                <StoreSelector
-                  value={storeFilter}
-                  onValueChange={setStoreFilter}
+            </PullToRefresh>
+          ) : (
+            // Desktop Layout
+            <div className="h-full flex flex-col">
+              {/* Desktop Table */}
+              <div className="flex-1 overflow-hidden">
+                <InventoryTable
+                  items={items}
                   stores={stores}
-                  placeholder="All stores"
+                  categories={categories}
+                  selectedItems={selectedItems}
+                  onItemSelection={handleItemSelection}
+                  onDeleteItem={handleDeleteItem}
+                  isLoading={isLoading}
+                  pagination={pagination}
+                  onPageChange={goToPage}
                 />
               </div>
             </div>
-            
-            {paginatedError ? (
-              <QueryErrorFallback 
-                error={paginatedError} 
-                retry={refetchPaginated} 
-              />
-            ) : (
-              <InventoryTable
-                items={paginatedItems}
-                stores={stores}
-                categories={categories}
-                selectedItems={selectedItems}
-                onItemSelection={handleItemSelection}
-                onDeleteItem={handleDeleteItem}
-                isLoading={isPaginatedLoading}
-                pagination={pagination}
-                onPageChange={goToPage}
-              />
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </div>
 
-        {/* Floating Action Button for mobile */}
-        {isMobile && (
-          <>
-            <MobileFloatingActionButton onClick={() => setShowAddItemForm(true)} />
-            <ItemForm
-              trigger={<div />}
-              onSuccess={() => setShowAddItemForm(false)}
-            />
-          </>
+        {/* Mobile Drawers */}
+        {isMobile && showBulkActions && (
+          <BulkActionsDrawer 
+            selectedCount={selectedItems.length}
+            onExpand={() => console.log('Expand bulk actions')}
+          />
         )}
       </div>
     </ErrorBoundary>
