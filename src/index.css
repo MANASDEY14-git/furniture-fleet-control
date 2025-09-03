@@ -95,7 +95,7 @@
 /* Simple design system components */
 @layer components {
   .simple-card {
-    @apply bg-card border-border shadow-sm;
+    @apply bg-card border border-border shadow-sm rounded-lg;
   }
   
   .data-grid {
@@ -113,6 +113,19 @@
   /* Simple dropdown styling */
   .dropdown-content {
     @apply bg-popover border-border shadow-sm;
+  }
+
+  /* Mobile optimizations */
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .mobile-card-spacing {
+    @apply p-4 space-y-3;
+  }
+  
+  .mobile-text-base {
+    @apply text-base leading-relaxed;
   }
 }
 

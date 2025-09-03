@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useItems';
+import { useIsMobile } from '@/hooks/use-mobile';
 import ItemBasicInfoForm from '@/components/ItemBasicInfoForm';
-
 import ItemAttributesTab from '@/components/ItemAttributesTab';
 
 interface ItemFormProps {
@@ -18,6 +18,7 @@ interface ItemFormProps {
 export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const isMobile = useIsMobile();
 
   const createItem = useCreateItem();
   const updateItem = useUpdateItem();
@@ -51,24 +52,24 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] futuristic-card">
-        <DialogHeader>
-          <DialogTitle className="text-cyan-300 glow-text flex items-center gap-2">
+      <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] m-2' : 'max-w-4xl max-h-[90vh]'} simple-card`}>
+        <DialogHeader className={isMobile ? 'pb-4' : ''}>
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <Package className="w-5 h-5" />
             {item ? 'Edit Item' : 'Add New Item'}
           </DialogTitle>
-          <DialogDescription className="text-blue-300">
+          <DialogDescription>
             {item ? 'Update item details and manage variants.' : 'Create a new item with basic information and variants.'}
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[calc(90vh-120px)] overflow-y-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pr-4">
-            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50">
-              <TabsTrigger value="basic" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
+        <ScrollArea className={`${isMobile ? 'max-h-[calc(95vh-120px)]' : 'max-h-[calc(90vh-120px)]'} overflow-y-auto`}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className={`w-full ${isMobile ? '' : 'pr-4'}`}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="basic" className="text-sm">
                 Basic Info
               </TabsTrigger>
-              <TabsTrigger value="attributes" className="text-blue-200 data-[state=active]:bg-cyan-900/50 data-[state=active]:text-cyan-300">
+              <TabsTrigger value="attributes" className="text-sm">
                 <Settings className="w-4 h-4 mr-1" />
                 Attributes
               </TabsTrigger>

@@ -15,6 +15,7 @@ import {
 import { Package, Trash2, Edit, AlertTriangle } from 'lucide-react';
 import { useItems, useUpdateItem, useDeleteItem } from '@/hooks/useItems';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface BulkOperationsPanelProps {
   selectedItems: string[];
@@ -26,6 +27,7 @@ export default function BulkOperationsPanel({ selectedItems, onSelectionChange }
   const [priceMultiplier, setPriceMultiplier] = useState('1.1');
   const [quantityChange, setQuantityChange] = useState('0');
   const [isProcessing, setIsProcessing] = useState(false);
+  const isMobile = useIsMobile();
   
   const { data: items = [] } = useItems();
   const updateItem = useUpdateItem();
@@ -120,24 +122,24 @@ export default function BulkOperationsPanel({ selectedItems, onSelectionChange }
   };
 
   return (
-    <Card className="futuristic-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-cyan-300 glow-text">
+    <Card className="simple-card">
+      <CardHeader className={isMobile ? 'pb-3' : ''}>
+        <CardTitle className="flex items-center gap-2">
           <Package className="h-5 w-5" />
           Bulk Operations
           {selectedItems.length > 0 && (
-            <span className="text-sm text-blue-300">({selectedItems.length} selected)</span>
+            <span className="text-sm text-muted-foreground">({selectedItems.length} selected)</span>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className={`${isMobile ? 'pt-0 space-y-3' : 'space-y-4'}`}>
         <div className="flex items-center space-x-2">
           <Checkbox
             id="select-all"
             checked={selectedItems.length === items.length && items.length > 0}
             onCheckedChange={handleSelectAll}
           />
-          <Label htmlFor="select-all" className="text-blue-200">
+          <Label htmlFor="select-all" className="text-foreground">
             Select All Items ({items.length})
           </Label>
         </div>
@@ -145,31 +147,30 @@ export default function BulkOperationsPanel({ selectedItems, onSelectionChange }
         {selectedItems.length > 0 && (
           <>
             <div className="space-y-2">
-              <Label className="text-blue-200">Operation Type</Label>
+              <Label className="text-foreground">Operation Type</Label>
               <Select value={operation} onValueChange={(value: any) => setOperation(value)}>
-                <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="futuristic-card">
-                  <SelectItem value="price-update" className="text-blue-100">Update Prices</SelectItem>
-                  <SelectItem value="quantity-update" className="text-blue-100">Update Quantities</SelectItem>
-                  <SelectItem value="delete" className="text-blue-100">Delete Items</SelectItem>
+                <SelectContent>
+                  <SelectItem value="price-update">Update Prices</SelectItem>
+                  <SelectItem value="quantity-update">Update Quantities</SelectItem>
+                  <SelectItem value="delete">Delete Items</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {operation === 'price-update' && (
               <div className="space-y-2">
-                <Label className="text-blue-200">Price Multiplier</Label>
+                <Label className="text-foreground">Price Multiplier</Label>
                 <Input
                   type="number"
                   step="0.1"
                   value={priceMultiplier}
                   onChange={(e) => setPriceMultiplier(e.target.value)}
                   placeholder="1.1 for 10% increase"
-                  className="neon-border bg-slate-800/50 text-blue-100"
                 />
-                <p className="text-xs text-blue-400">
+                <p className="text-xs text-muted-foreground">
                   Example: 1.1 = 10% increase, 0.9 = 10% decrease
                 </p>
               </div>
@@ -177,24 +178,23 @@ export default function BulkOperationsPanel({ selectedItems, onSelectionChange }
 
             {operation === 'quantity-update' && (
               <div className="space-y-2">
-                <Label className="text-blue-200">Quantity Change</Label>
+                <Label className="text-foreground">Quantity Change</Label>
                 <Input
                   type="number"
                   value={quantityChange}
                   onChange={(e) => setQuantityChange(e.target.value)}
                   placeholder="10 to add, -5 to subtract"
-                  className="neon-border bg-slate-800/50 text-blue-100"
                 />
-                <p className="text-xs text-blue-400">
+                <p className="text-xs text-muted-foreground">
                   Positive numbers add stock, negative numbers subtract
                 </p>
               </div>
             )}
 
             {operation === 'delete' && (
-              <div className="flex items-center gap-2 p-3 bg-red-900/20 rounded-lg border border-red-500/30">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
-                <p className="text-sm text-red-300">
+              <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
+                <p className="text-sm text-destructive">
                   This will permanently delete {selectedItems.length} items. This action cannot be undone.
                 </p>
               </div>
@@ -203,9 +203,10 @@ export default function BulkOperationsPanel({ selectedItems, onSelectionChange }
             <Button
               onClick={handleBulkOperation}
               disabled={isProcessing}
-              className={`w-full cyber-button text-white ${
-                operation === 'delete' ? 'bg-red-600 hover:bg-red-700' : ''
+              className={`w-full ${
+                operation === 'delete' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''
               }`}
+              size={isMobile ? "lg" : "default"}
             >
               {isProcessing ? 'Processing...' : `Apply to ${selectedItems.length} Items`}
             </Button>
