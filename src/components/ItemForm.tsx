@@ -52,25 +52,25 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[95vh] m-2' : 'max-w-4xl max-h-[90vh]'} simple-card`}>
-        <DialogHeader className={isMobile ? 'pb-4' : ''}>
-          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-            <Package className="w-5 h-5" />
+      <DialogContent className={`${isMobile ? 'fixed inset-0 m-0 max-w-full max-h-full rounded-none border-0' : 'max-w-4xl max-h-[90vh]'} simple-card`}>
+        <DialogHeader className={isMobile ? 'sticky top-0 z-10 bg-background border-b pb-4 px-6 pt-6' : ''}>
+          <DialogTitle className={`flex items-center gap-2 font-semibold ${isMobile ? 'text-xl' : 'text-lg'}`}>
+            <Package className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} />
             {item ? 'Edit Item' : 'Add New Item'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={isMobile ? 'text-base' : ''}>
             {item ? 'Update item details and manage variants.' : 'Create a new item with basic information and variants.'}
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className={`${isMobile ? 'max-h-[calc(95vh-120px)]' : 'max-h-[calc(90vh-120px)]'} overflow-y-auto`}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className={`w-full ${isMobile ? '' : 'pr-4'}`}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="basic" className="text-sm">
+        <ScrollArea className={`${isMobile ? 'flex-1 overflow-y-auto' : 'max-h-[calc(90vh-120px)] overflow-y-auto'}`}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className={`w-full ${isMobile ? 'px-6 pb-6' : 'pr-4'}`}>
+            <TabsList className={`grid w-full grid-cols-2 ${isMobile ? 'h-12 text-base' : ''}`}>
+              <TabsTrigger value="basic" className={`${isMobile ? 'text-base py-3' : 'text-sm'}`}>
                 Basic Info
               </TabsTrigger>
-              <TabsTrigger value="attributes" className="text-sm">
-                <Settings className="w-4 h-4 mr-1" />
+              <TabsTrigger value="attributes" className={`${isMobile ? 'text-base py-3' : 'text-sm'}`}>
+                <Settings className={`${isMobile ? 'w-5 h-5 mr-2' : 'w-4 h-4 mr-1'}`} />
                 Attributes
               </TabsTrigger>
             </TabsList>

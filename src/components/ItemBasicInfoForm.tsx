@@ -50,28 +50,28 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
   const stockAge = calculateStockAge();
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-blue-200">Item Name *</Label>
+    <form onSubmit={handleSubmit} className="space-y-6 md:space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-4">
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="name" className="text-foreground text-base md:text-sm font-medium">Item Name *</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({...formData, name: e.target.value})}
             required
-            className="neon-border bg-slate-800/50 text-blue-100"
+            className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="category" className="text-blue-200">Category *</Label>
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="category" className="text-foreground text-base md:text-sm font-medium">Category *</Label>
           <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})} required>
-            <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+            <SelectTrigger className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-500/30">
+            <SelectContent>
               {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id} className="text-blue-100 focus:bg-blue-800/30">
+                <SelectItem key={category.id} value={category.id} className="text-base md:text-sm py-3 md:py-2">
                   {category.name}
                 </SelectItem>
               ))}
@@ -79,15 +79,15 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="store" className="text-blue-200">Store *</Label>
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="store" className="text-foreground text-base md:text-sm font-medium">Store *</Label>
           <Select value={formData.store_id} onValueChange={(value) => setFormData({...formData, store_id: value})} required>
-            <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+            <SelectTrigger className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary">
               <SelectValue placeholder="Select store" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-500/30">
+            <SelectContent>
               {stores.map((store) => (
-                <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
+                <SelectItem key={store.id} value={store.id} className="text-base md:text-sm py-3 md:py-2">
                   {store.name}
                 </SelectItem>
               ))}
@@ -95,8 +95,8 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="supplier" className="text-blue-200">Supplier</Label>
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="supplier" className="text-foreground text-base md:text-sm font-medium">Supplier</Label>
           <SupplierSelector 
             value={formData.supplier_id} 
             onValueChange={(value) => setFormData({...formData, supplier_id: value})}
@@ -104,8 +104,8 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="quantity" className="text-blue-200">Quantity Available *</Label>
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="quantity" className="text-foreground text-base md:text-sm font-medium">Quantity Available *</Label>
           <Input
             id="quantity"
             type="number"
@@ -113,12 +113,12 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
             onChange={(e) => setFormData({...formData, quantity_available: parseInt(e.target.value) || 0})}
             required
             min="0"
-            className="neon-border bg-slate-800/50 text-blue-100"
+            className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="costPrice" className="text-blue-200">Cost Price *</Label>
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="costPrice" className="text-foreground text-base md:text-sm font-medium">Cost Price *</Label>
           <Input
             id="costPrice"
             type="number"
@@ -127,12 +127,12 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
             onChange={(e) => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})}
             required
             min="0"
-            className="neon-border bg-slate-800/50 text-blue-100"
+            className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="sellingPrice" className="text-blue-200">Selling Price *</Label>
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="sellingPrice" className="text-foreground text-base md:text-sm font-medium">Selling Price *</Label>
           <Input
             id="sellingPrice"
             type="number"
@@ -141,33 +141,33 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
             onChange={(e) => setFormData({...formData, selling_price: parseFloat(e.target.value) || 0})}
             required
             min="0"
-            className="neon-border bg-slate-800/50 text-blue-100"
+            className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="stockDate" className="text-blue-200">Stock Received Date</Label>
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="stockDate" className="text-foreground text-base md:text-sm font-medium">Stock Received Date</Label>
           <Input
             id="stockDate"
             type="date"
             value={formData.stock_receive_date}
             onChange={(e) => setFormData({...formData, stock_receive_date: e.target.value})}
-            className="neon-border bg-slate-800/50 text-blue-100"
+            className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
           {formData.stock_receive_date && (
-            <p className="text-sm text-cyan-300">
+            <p className="text-sm text-muted-foreground">
               Stock Age: {stockAge} days
-              {stockAge > 90 && <span className="text-orange-400 ml-2">(Aging Stock)</span>}
-              {stockAge > 180 && <span className="text-red-400 ml-2">(Old Stock)</span>}
+              {stockAge > 90 && <span className="text-orange-500 ml-2">(Aging Stock)</span>}
+              {stockAge > 180 && <span className="text-destructive ml-2">(Old Stock)</span>}
             </p>
           )}
         </div>
       </div>
 
-      <div className="flex gap-2 pt-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 pt-6 md:pt-4 border-t bg-background sticky bottom-0 -mx-6 px-6 py-4 md:relative md:mx-0 md:px-0 md:py-0 md:border-t-0 md:bg-transparent">
         <Button 
           type="submit" 
-          className="flex-1 cyber-button text-white font-semibold"
+          className="h-12 md:h-10 text-base md:text-sm font-semibold flex-1 order-2 sm:order-1"
           disabled={isLoading}
         >
           {isLoading ? 'Saving...' : (item ? 'Update Item' : 'Add Item')}
@@ -176,7 +176,7 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
           type="button" 
           variant="outline" 
           onClick={onCancel}
-          className="bg-slate-700 text-blue-100 border-blue-500/30 hover:bg-slate-600"
+          className="h-12 md:h-10 text-base md:text-sm order-1 sm:order-2 sm:w-auto"
         >
           Cancel
         </Button>
