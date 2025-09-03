@@ -1,34 +1,126 @@
 
 import React from 'react';
-import { Package, AlertTriangle } from 'lucide-react';
-import type { Item } from '@/hooks/useItems';
+import { Search, Filter, Package } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useIsMobile } from '@/hooks/use-mobile';
+import type { Store } from '@/hooks/useStores';
+import type { Category } from '@/hooks/useCategories';
 
 interface InventoryHeaderProps {
-  lowStockItems: Item[];
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  selectedStore: string;
+  onStoreChange: (value: string) => void;
+  selectedCategory: string;
+  onCategoryChange: (value: string) => void;
+  showLowStock: boolean;
+  onShowLowStockChange: (value: boolean) => void;
+  stores: Store[];
+  categories: Category[];
+  selectedItems: string[];
+  onClearSelection: () => void;
 }
 
-export default function InventoryHeader({ lowStockItems }: InventoryHeaderProps) {
+export default function InventoryHeader({
+  searchTerm,
+  onSearchChange,
+  selectedStore,
+  onStoreChange,
+  selectedCategory,
+  onCategoryChange,
+  showLowStock,
+  onShowLowStockChange,
+  stores,
+  categories,
+  selectedItems,
+  onClearSelection
+}: InventoryHeaderProps) {
+  const isMobile = useIsMobile();
+
   return (
-    <>
-      <div className="flex items-center gap-3">
-        <Package className="w-8 h-8 text-cyan-400" />
-        <div>
-          <h1 className="text-3xl font-bold glow-text">Inventory Control</h1>
-          <p className="text-blue-300">Manage your product inventory</p>
+    <div className="space-y-4">
+      {/* Title and selection info */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Package className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Inventory</h1>
         </div>
+        {selectedItems.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {selectedItems.length} selected
+            </span>
+            <button 
+              onClick={onClearSelection}
+              className="text-xs text-primary hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+        )}
       </div>
 
-      {lowStockItems.length > 0 && (
-        <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-5 h-5 text-orange-400" />
-            <h3 className="text-orange-300 font-semibold">Low Stock Alert</h3>
-          </div>
-          <p className="text-orange-200 text-sm">
-            {lowStockItems.length} item(s) are running low on stock (less than 1 unit)
-          </p>
+      {/* Search and Filters */}
+      <div className={`${isMobile ? 'space-y-3' : 'flex items-center gap-4'}`}>
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search items..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-9"
+          />
         </div>
-      )}
-    </>
+
+        {/* Filters */}
+        <div className={`${isMobile ? 'grid grid-cols-2 gap-3' : 'flex items-center gap-4'}`}>
+          {/* Store Filter */}
+          <Select value={selectedStore} onValueChange={onStoreChange}>
+            <SelectTrigger className={isMobile ? 'w-full' : 'w-[160px]'}>
+              <SelectValue placeholder="All Stores" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stores</SelectItem>
+              {stores.map((store) => (
+                <SelectItem key={store.id} value={store.id}>
+                  {store.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Category Filter */}
+          <Select value={selectedCategory} onValueChange={onCategoryChange}>
+            <SelectTrigger className={isMobile ? 'w-full' : 'w-[160px]'}>
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Low Stock Toggle */}
+          <div className={`flex items-center gap-2 ${isMobile ? 'col-span-2' : ''}`}>
+            <Switch
+              id="low-stock"
+              checked={showLowStock}
+              onCheckedChange={onShowLowStockChange}
+            />
+            <Label htmlFor="low-stock" className="text-sm">
+              Show low stock only
+            </Label>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

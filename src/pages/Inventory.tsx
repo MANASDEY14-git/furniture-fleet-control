@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Package } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePaginatedItems } from '@/hooks/usePaginatedItems';
 import { useInfiniteItems } from '@/hooks/useInfiniteItems';
@@ -116,15 +117,21 @@ export default function Inventory() {
           {isMobile ? (
             <PullToRefresh onRefresh={async () => { await refetch(); }}>
               <div className="space-y-4">
-                {/* Mobile Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <h1 className="text-xl font-bold text-foreground">Inventory</h1>
-                  {selectedItems.length > 0 && (
-                    <span className="text-sm text-muted-foreground">
-                      {selectedItems.length} selected
-                    </span>
-                  )}
-                </div>
+                {/* Mobile Header with Filters */}
+                <InventoryHeader
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  selectedStore={selectedStore}
+                  onStoreChange={setSelectedStore}
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={setSelectedCategory}
+                  showLowStock={showLowStock}
+                  onShowLowStockChange={setShowLowStock}
+                  stores={stores}
+                  categories={categories}
+                  selectedItems={selectedItems}
+                  onClearSelection={handleClearSelection}
+                />
 
                 {/* Mobile Alert Banner */}
                 {lowStockItems.length > 0 && (
@@ -169,6 +176,35 @@ export default function Inventory() {
           ) : (
             // Desktop Layout
             <div className="h-full flex flex-col">
+              {/* Desktop Header with Add Button */}
+              <div className="flex items-center justify-between mb-6">
+                <InventoryHeader
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  selectedStore={selectedStore}
+                  onStoreChange={setSelectedStore}
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={setSelectedCategory}
+                  showLowStock={showLowStock}
+                  onShowLowStockChange={setShowLowStock}
+                  stores={stores}
+                  categories={categories}
+                  selectedItems={selectedItems}
+                  onClearSelection={handleClearSelection}
+                />
+                <ItemForm 
+                  trigger={
+                    <button className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md text-sm font-medium inline-flex items-center gap-2">
+                      <Package className="w-4 h-4" />
+                      Add Item
+                    </button>
+                  }
+                  onSuccess={() => {
+                    refetch();
+                  }}
+                />
+              </div>
+              
               {/* Desktop Table */}
               <div className="flex-1 overflow-hidden">
                 <InventoryTable
