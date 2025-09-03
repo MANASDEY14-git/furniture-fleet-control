@@ -16,6 +16,7 @@ import MobileBulkOperationsSheet from '@/components/mobile/MobileBulkOperationsS
 import CompactAlertBanner from '@/components/mobile/CompactAlertBanner';
 import BulkActionsDrawer from '@/components/mobile/BulkActionsDrawer';
 import MobileFloatingActionButton from '@/components/mobile/MobileFloatingActionButton';
+import ItemForm from '@/components/ItemForm';
 import { ErrorBoundary, QueryErrorFallback } from '@/components/ui/error-boundary';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -32,6 +33,7 @@ export default function Inventory() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showLowStock, setShowLowStock] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [showAddItem, setShowAddItem] = useState(false);
 
   // Use different hooks for mobile vs desktop
   const desktopQuery = usePaginatedItems({
@@ -199,11 +201,16 @@ export default function Inventory() {
             )}
             
             {/* Floating Action Button */}
-            <div className="fixed bottom-6 right-6 z-50">
-              <MobileFloatingActionButton 
-                onClick={() => console.log('Add new item')}
-              />
-            </div>
+            <ItemForm 
+              trigger={
+                <MobileFloatingActionButton 
+                  onClick={() => {}}
+                />
+              }
+              onSuccess={() => {
+                refetch();
+              }}
+            />
             
             {/* Bulk Operations Sheet */}
             <MobileBulkOperationsSheet
