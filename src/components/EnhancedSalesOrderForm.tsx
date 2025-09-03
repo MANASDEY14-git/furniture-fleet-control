@@ -1,14 +1,16 @@
-
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { useIsMobile } from '@/hooks/use-mobile';
 import SupplierSelector from '@/components/SupplierSelector';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
@@ -48,6 +50,7 @@ interface EnhancedSalesOrderFormProps {
 }
 
 export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFormProps) {
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [isWalkInCustomer, setIsWalkInCustomer] = useState(false);
   const [formData, setFormData] = useState({
@@ -278,6 +281,319 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
     setIsWalkInCustomer(false);
   };
 
+  if (isMobile) {
+    // Mobile Sheet Layout
+    return (
+      <Sheet open={open} onOpenChange={(newOpen) => {
+        setOpen(newOpen);
+        if (!newOpen) resetForm();
+      }}>
+        <SheetTrigger asChild>
+          {trigger}
+        </SheetTrigger>
+        <SheetContent side="bottom" className="h-[95vh] p-0 rounded-t-lg">
+          <div className="flex flex-col h-full">
+            {/* Mobile Header */}
+            <SheetHeader className="px-6 py-4 border-b bg-background">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ShoppingCart className="w-6 h-6 text-primary" />
+                  <div>
+                    <SheetTitle className="text-xl font-semibold">
+                      Create Sales Order
+                    </SheetTitle>
+                    <SheetDescription className="text-base mt-1">
+                      Create a new sales order with customer details and items.
+                    </SheetDescription>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setOpen(false)}
+                  className="h-8 w-8"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </SheetHeader>
+
+            {/* Mobile Content */}
+            <ScrollArea className="flex-1 px-6 pb-6">
+              <form onSubmit={handleSubmit} className="space-y-6 pt-6">
+                {/* Basic Order Info */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Order Details</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="orderNumber" className="text-sm font-medium">Order Number *</Label>
+                    <Input
+                      id="orderNumber"
+                      value={formData.orderNumber}
+                      onChange={(e) => setFormData({...formData, orderNumber: e.target.value})}
+                      required
+                      className="h-12 text-base"
+                      placeholder="Enter order number"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="store" className="text-sm font-medium">Store *</Label>
+                      <select
+                        value={formData.storeId}
+                        onChange={(e) => setFormData({...formData, storeId: e.target.value})}
+                        required
+                        className="w-full h-12 px-3 rounded-md border border-input bg-background text-base"
+                      >
+                        <option value="">Select Store</option>
+                        {stores.map((store) => (
+                          <option key={store.id} value={store.id}>{store.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date" className="text-sm font-medium">Date *</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({...formData, date: e.target.value})}
+                        required
+                        className="h-12 text-base"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Customer Information</h3>
+                  
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="walkInCustomer"
+                      checked={isWalkInCustomer}
+                      onCheckedChange={(checked) => {
+                        setIsWalkInCustomer(checked as boolean);
+                        if (checked) {
+                          setFormData({...formData, supplierId: ''});
+                        }
+                      }}
+                    />
+                    <Label htmlFor="walkInCustomer" className="text-base">Walk-in Customer</Label>
+                  </div>
+
+                  {!isWalkInCustomer && (
+                    <div className="space-y-2">
+                      <Label htmlFor="supplier" className="text-sm font-medium">Supplier *</Label>
+                      <SupplierSelector 
+                        value={formData.supplierId} 
+                        onValueChange={(value) => setFormData({...formData, supplierId: value})}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="customerName" className="text-sm font-medium">Customer Name</Label>
+                      <Input
+                        id="customerName"
+                        value={formData.customerName}
+                        onChange={(e) => setFormData({...formData, customerName: e.target.value})}
+                        className="h-12 text-base"
+                        placeholder="Customer name"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="customerPhone" className="text-sm font-medium">Phone</Label>
+                        <Input
+                          id="customerPhone"
+                          value={formData.customerPhone}
+                          onChange={(e) => setFormData({...formData, customerPhone: e.target.value})}
+                          className="h-12 text-base"
+                          placeholder="Phone number"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="deliveryDate" className="text-sm font-medium">Delivery Date</Label>
+                        <Input
+                          id="deliveryDate"
+                          type="date"
+                          value={formData.deliveryDate}
+                          onChange={(e) => setFormData({...formData, deliveryDate: e.target.value})}
+                          className="h-12 text-base"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="customerAddress" className="text-sm font-medium">Customer Address</Label>
+                      <Textarea
+                        id="customerAddress"
+                        value={formData.customerAddress}
+                        onChange={(e) => setFormData({...formData, customerAddress: e.target.value})}
+                        className="text-base min-h-[80px]"
+                        placeholder="Full delivery address"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Section */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold text-foreground">Items</h3>
+                    <Button 
+                      type="button" 
+                      onClick={addItem}
+                      size="sm"
+                      className="h-10"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {items.map((item) => (
+                      <Card key={item.id} className="p-4">
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium">Item</Label>
+                            <select
+                              value={item.itemId}
+                              onChange={(e) => updateItem(item.id, 'itemId', e.target.value)}
+                              className="w-full h-12 px-3 rounded-md border border-input bg-background text-base"
+                            >
+                              <option value="">Select Item</option>
+                              {filteredItems.map((availableItem) => (
+                                <option key={availableItem.id} value={availableItem.id}>
+                                  {availableItem.name} (Available: {availableItem.quantity_available})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">Qty</Label>
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                                className="h-12 text-base"
+                                min="0"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">Price</Label>
+                              <Input
+                                type="number"
+                                value={item.unitPrice}
+                                onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                className="h-12 text-base"
+                                min="0"
+                                step="0.01"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">Total</Label>
+                              <Input
+                                value={item.totalPrice.toFixed(2)}
+                                readOnly
+                                className="h-12 text-base bg-muted"
+                              />
+                            </div>
+                          </div>
+
+                          {items.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeItem(item.id)}
+                              className="w-full h-10"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove Item
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payment Section */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Payment Details</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="advancePaid" className="text-sm font-medium">Advance Paid</Label>
+                    <Input
+                      id="advancePaid"
+                      type="number"
+                      value={formData.advancePaid}
+                      onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
+                      className="h-12 text-base"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div className="bg-muted rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Total Amount:</span>
+                      <span className="font-semibold">₹{getTotalAmount().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Advance Paid:</span>
+                      <span>₹{formData.advancePaid.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-base font-semibold border-t pt-2">
+                      <span>Balance Due:</span>
+                      <span>₹{getBalanceDue().toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="sticky bottom-0 bg-background border-t pt-4 -mx-6 px-6">
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 text-base font-semibold"
+                    disabled={createSalesOrder.isPending}
+                  >
+                    {createSalesOrder.isPending ? 'Creating Order...' : 'Create Sales Order'}
+                  </Button>
+                </div>
+              </form>
+            </ScrollArea>
+          </div>
+        </SheetContent>
+
+        {/* Customization Dialog */}
+        <ProductCustomizationDialog
+          open={customizationDialog.open}
+          onOpenChange={(open) => setCustomizationDialog({ ...customizationDialog, open })}
+          itemId={customizationDialog.itemId}
+          itemName={customizationDialog.itemName}
+          quantity={customizationDialog.quantity}
+          onCustomizationComplete={(customizations) => {
+            handleCustomizationComplete(customizationDialog.orderItemId, customizations);
+            setCustomizationDialog({ ...customizationDialog, open: false });
+          }}
+        />
+      </Sheet>
+    );
+  }
+
+  // Desktop Dialog Layout
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {
       setOpen(newOpen);
@@ -459,65 +775,64 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                                  onChange={(e) => updateItem(item.id, 'itemId', e.target.value)}
                                  className="w-full p-2 rounded border bg-slate-800 text-blue-100 border-blue-500/30 min-w-[200px]"
                                >
-                                 <option value="">Select item</option>
+                                 <option value="">Select Item</option>
                                  {filteredItems.map((availableItem) => (
                                    <option key={availableItem.id} value={availableItem.id}>
                                      {availableItem.name}
                                    </option>
                                  ))}
                                </select>
-                               {item.itemId && <CustomizableItemIndicator itemId={item.itemId} />}
                              </div>
-                            </TableCell>
-                          <TableCell className="text-cyan-300">
-                            {item.availableStock}
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={item.quantity || ''}
-                              onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                              className="neon-border bg-slate-800/50 text-blue-100 w-24"
-                              min="1"
-                            />
-                            {item.quantity > item.availableStock && (
-                              <p className="text-xs text-orange-400 mt-1">Low stock warning</p>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.unitPrice || ''}
-                              onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
-                              className="neon-border bg-slate-800/50 text-blue-100 w-28"
-                              min="0"
-                            />
-                          </TableCell>
-                           <TableCell className="text-cyan-300 font-semibold">
-                             ₹{item.totalPrice.toFixed(2)}
+                           </TableCell>
+                           <TableCell className="text-blue-100">
+                             {item.availableStock}
                            </TableCell>
                            <TableCell>
-                             <CustomizableItemRow
-                               itemId={item.itemId}
-                               itemName={item.itemName}
-                               quantity={item.quantity}
-                               customizations={item.customizations}
-                               onCustomize={() => openCustomizationDialog(item)}
+                             <Input
+                               type="number"
+                               value={item.quantity}
+                               onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                               className="neon-border bg-slate-800/50 text-blue-100 w-20"
+                               min="0"
                              />
                            </TableCell>
                            <TableCell>
-                            <Button
-                              type="button"
-                              onClick={() => removeItem(item.id)}
-                              disabled={items.length === 1}
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
+                             <Input
+                               type="number"
+                               value={item.unitPrice}
+                               onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                               className="neon-border bg-slate-800/50 text-blue-100 w-24"
+                               min="0"
+                               step="0.01"
+                             />
+                           </TableCell>
+                           <TableCell className="text-blue-100 font-semibold">
+                             ₹{item.totalPrice.toFixed(2)}
+                           </TableCell>
+                           <TableCell>
+                             <Button
+                               type="button"
+                               variant="outline"
+                               size="sm"
+                               onClick={() => openCustomizationDialog(item)}
+                               disabled={!item.itemId || item.quantity <= 0}
+                             >
+                               Customize
+                             </Button>
+                           </TableCell>
+                           <TableCell>
+                             {items.length > 1 && (
+                               <Button
+                                 type="button"
+                                 variant="destructive"
+                                 size="sm"
+                                 onClick={() => removeItem(item.id)}
+                                 className="hover:bg-red-600"
+                               >
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             )}
+                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -526,59 +841,77 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
               </div>
 
               {/* Payment Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="advancePaid" className="text-blue-200">Advance Paid</Label>
-                  <Input
-                    id="advancePaid"
-                    type="number"
-                    step="0.01"
-                    value={formData.advancePaid || ''}
-                    onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
-                    className="neon-border bg-slate-800/50 text-blue-100"
-                    min="0"
-                    max={getTotalAmount()}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <div className="neon-border bg-gradient-to-r from-blue-400/10 to-cyan-400/10 rounded-md p-4 space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-blue-200">Total Amount:</span>
-                      <span className="text-cyan-300 font-bold">₹{getTotalAmount().toLocaleString('en-IN')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-200">Advance Paid:</span>
-                      <span className="text-green-400 font-bold">₹{formData.advancePaid.toLocaleString('en-IN')}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-blue-500/30 pt-2">
-                      <span className="text-blue-200">Balance Due:</span>
-                      <span className="text-orange-400 font-bold">₹{getBalanceDue().toLocaleString('en-IN')}</span>
-                    </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-blue-200">Payment Summary</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="advancePaid" className="text-blue-200">Advance Paid</Label>
+                    <Input
+                      id="advancePaid"
+                      type="number"
+                      value={formData.advancePaid}
+                      onChange={(e) => setFormData({...formData, advancePaid: parseFloat(e.target.value) || 0})}
+                      className="neon-border bg-slate-800/50 text-blue-100"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
                   </div>
+                  
+                  <Card className="cyber-panel">
+                    <CardContent className="pt-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-blue-200">
+                          <span>Total Amount:</span>
+                          <span className="text-cyan-300 font-semibold">₹{getTotalAmount().toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-blue-200">
+                          <span>Advance Paid:</span>
+                          <span>₹{formData.advancePaid.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-orange-300 font-semibold border-t border-blue-500/30 pt-2">
+                          <span>Balance Due:</span>
+                          <span>₹{getBalanceDue().toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full cyber-button text-white font-semibold" 
-                disabled={createSalesOrder.isPending || !formData.storeId || (!isWalkInCustomer && !formData.supplierId) || !formData.orderNumber}
-              >
-                {createSalesOrder.isPending ? 'Creating Order...' : 'Create Sales Order'}
-              </Button>
+              {/* Submit Button */}
+              <div className="flex justify-end gap-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setOpen(false)}
+                  className="border-blue-500/30 text-blue-200 hover:bg-blue-500/10"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="cyber-button text-white font-semibold"
+                  disabled={createSalesOrder.isPending}
+                >
+                  {createSalesOrder.isPending ? 'Creating Order...' : 'Create Sales Order'}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
-        
+
+        {/* Customization Dialog */}
         <ProductCustomizationDialog
           open={customizationDialog.open}
           onOpenChange={(open) => setCustomizationDialog({ ...customizationDialog, open })}
           itemId={customizationDialog.itemId}
           itemName={customizationDialog.itemName}
           quantity={customizationDialog.quantity}
-          onCustomizationComplete={(customizations) => 
-            handleCustomizationComplete(customizationDialog.orderItemId, customizations)
-          }
+          onCustomizationComplete={(customizations) => {
+            handleCustomizationComplete(customizationDialog.orderItemId, customizations);
+            setCustomizationDialog({ ...customizationDialog, open: false });
+          }}
         />
       </DialogContent>
     </Dialog>
