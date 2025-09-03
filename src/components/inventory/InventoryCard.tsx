@@ -125,20 +125,20 @@ export default function InventoryCard({
       >
         {/* Header with selection and title */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3 flex-1">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
             <Checkbox
               checked={isSelected}
               onCheckedChange={(checked) => {
                 hapticFeedback('light');
                 onSelectionChange(item.id, checked as boolean);
               }}
-              className="touch-target"
+              className="touch-target flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground text-base leading-tight mb-1 truncate" title={item.name}>
+              <h3 className="font-semibold text-foreground text-base leading-tight mb-1 break-words" title={item.name}>
                 {item.name}
               </h3>
-              <p className="text-sm text-muted-foreground">{categoryName}</p>
+              <p className="text-sm text-muted-foreground truncate" title={categoryName}>{categoryName}</p>
             </div>
           </div>
 

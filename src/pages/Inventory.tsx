@@ -12,7 +12,7 @@ import InventoryHeader from '@/components/inventory/InventoryHeader';
 import InventoryTable from '@/components/inventory/InventoryTable';
 import InventoryCard from '@/components/inventory/InventoryCard';
 import LowStockAlertsPanel from '@/components/LowStockAlertsPanel';
-import BulkOperationsPanel from '@/components/BulkOperationsPanel';
+import MobileBulkOperationsSheet from '@/components/mobile/MobileBulkOperationsSheet';
 import CompactAlertBanner from '@/components/mobile/CompactAlertBanner';
 import BulkActionsDrawer from '@/components/mobile/BulkActionsDrawer';
 import MobileFloatingActionButton from '@/components/mobile/MobileFloatingActionButton';
@@ -115,11 +115,13 @@ export default function Inventory() {
             <PullToRefresh onRefresh={async () => { await refetch(); }}>
               <div className="space-y-4">
                 {/* Mobile Header */}
-                <div className="flex items-center justify-between">
-                  <h1 className="text-xl font-bold">Inventory</h1>
-                  <MobileFloatingActionButton 
-                    onClick={() => console.log('Add new item')}
-                  />
+                <div className="flex items-center justify-between mb-4">
+                  <h1 className="text-xl font-bold text-foreground">Inventory</h1>
+                  {selectedItems.length > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {selectedItems.length} selected
+                    </span>
+                  )}
                 </div>
 
                 {/* Mobile Alert Banner */}
@@ -183,12 +185,35 @@ export default function Inventory() {
           )}
         </div>
 
-        {/* Mobile Drawers */}
-        {isMobile && showBulkActions && (
-          <BulkActionsDrawer 
-            selectedCount={selectedItems.length}
-            onExpand={() => console.log('Expand bulk actions')}
-          />
+        {/* Mobile Drawers and FAB */}
+        {isMobile && (
+          <>
+            {/* Bulk Actions Drawer */}
+            {selectedItems.length > 0 && (
+              <div className="fixed bottom-20 left-4 right-4 z-40">
+                <BulkActionsDrawer 
+                  selectedCount={selectedItems.length}
+                  onExpand={() => setShowBulkActions(true)}
+                />
+              </div>
+            )}
+            
+            {/* Floating Action Button */}
+            <div className="fixed bottom-6 right-6 z-50">
+              <MobileFloatingActionButton 
+                onClick={() => console.log('Add new item')}
+              />
+            </div>
+            
+            {/* Bulk Operations Sheet */}
+            <MobileBulkOperationsSheet
+              isOpen={showBulkActions}
+              onClose={() => setShowBulkActions(false)}
+              selectedItems={selectedItems}
+              items={items}
+              onClearSelection={handleClearSelection}
+            />
+          </>
         )}
       </div>
     </ErrorBoundary>
