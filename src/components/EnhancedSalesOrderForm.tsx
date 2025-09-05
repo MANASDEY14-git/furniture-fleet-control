@@ -291,10 +291,10 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
         <SheetTrigger asChild>
           {trigger}
         </SheetTrigger>
-        <SheetContent side="bottom" className="h-[95vh] p-0 rounded-t-lg">
+        <SheetContent side="bottom" className="h-[95vh] p-0 rounded-t-lg mobile-sheet-content">
           <div className="flex flex-col h-full">
             {/* Mobile Header */}
-            <SheetHeader className="px-6 py-4 border-b bg-background">
+            <SheetHeader className="px-6 py-4 border-b bg-background border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <ShoppingCart className="w-6 h-6 text-primary" />
@@ -319,7 +319,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
             </SheetHeader>
 
             {/* Mobile Content */}
-            <ScrollArea className="flex-1 px-6 pb-6">
+            <ScrollArea className="flex-1 px-6 pb-6 bg-background">
               <form onSubmit={handleSubmit} className="space-y-6 pt-6">
                 {/* Basic Order Info */}
                 <div className="space-y-4">
@@ -460,7 +460,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
 
                   <div className="space-y-3">
                     {items.map((item) => (
-                      <Card key={item.id} className="p-4">
+                      <Card key={item.id} className="p-4 bg-card border-border">
                         <div className="space-y-3">
                           <div className="space-y-2">
                             <Label className="text-sm font-medium">Item</Label>
@@ -563,7 +563,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                 </div>
 
                 {/* Submit Button */}
-                <div className="sticky bottom-0 bg-background border-t pt-4 -mx-6 px-6">
+                <div className="sticky bottom-0 bg-background border-t border-border pt-4 -mx-6 px-6">
                   <Button 
                     type="submit" 
                     className="w-full h-12 text-base font-semibold"
