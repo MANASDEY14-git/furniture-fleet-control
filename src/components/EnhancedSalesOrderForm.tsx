@@ -731,7 +731,7 @@ export default function EnhancedSalesOrderForm({ trigger }: EnhancedSalesOrderFo
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    className="neon-border bg-slate-800/50 text-blue-100 resize-none"
+                    className="neon-border bg-slate-800/50 text-black resize-none"
                     placeholder="Enter order description or special instructions (optional)"
                     rows={3}
                   />
