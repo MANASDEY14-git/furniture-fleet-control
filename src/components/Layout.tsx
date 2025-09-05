@@ -71,8 +71,10 @@ export default function Layout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { signOut, user } = useAuth();
-
+  const {
+    signOut,
+    user
+  } = useAuth();
   const handleSignOut = async () => {
     await signOut();
   };
@@ -135,7 +137,7 @@ export default function Layout({
 
       {/* Main content */}
       <div className="lg:pl-72">
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-500/30 bg-slate-800/90 backdrop-blur-xl px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-blue-500/30 bg-slate-800/90 backdrop-blur-xl shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 px-[3px]">
           <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(true)} className="text-blue-200 hover:text-blue-100 lg:hidden">
             <Menu className="h-6 w-6" />
           </Button>
