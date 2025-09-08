@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, X, ShoppingCart } from 'lucide-react';
+import { Plus, Trash2, X, ShoppingCart, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SupplierSelector from '@/components/SupplierSelector';
 import { useItems } from '@/hooks/useItems';
@@ -412,15 +415,53 @@ export default function EnhancedSalesOrderForm({
                   <div className="space-y-3">
                     {items.map(item => <Card key={item.id} className="p-4 bg-card border-border">
                         <div className="space-y-3">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium">Item</Label>
-                            <select value={item.itemId} onChange={e => updateItem(item.id, 'itemId', e.target.value)} className="w-full h-12 px-3 rounded-md border border-input bg-background text-base">
-                              <option value="">Select Item</option>
-                              {filteredItems.map(availableItem => <option key={availableItem.id} value={availableItem.id}>
-                                  {availableItem.name} (Available: {availableItem.quantity_available})
-                                </option>)}
-                            </select>
-                          </div>
+                           <div className="space-y-2">
+                             <Label className="text-sm font-medium">Item</Label>
+                             <Popover>
+                               <PopoverTrigger asChild>
+                                 <Button
+                                   variant="outline"
+                                   role="combobox"
+                                   className={cn(
+                                     "w-full h-12 justify-between text-base",
+                                     !item.itemId && "text-muted-foreground"
+                                   )}
+                                 >
+                                   {item.itemId
+                                     ? filteredItems.find((availableItem) => availableItem.id === item.itemId)?.name
+                                     : "Select item..."}
+                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                 </Button>
+                               </PopoverTrigger>
+                               <PopoverContent className="w-full p-0" align="start">
+                                 <Command>
+                                   <CommandInput placeholder="Search items..." className="h-9" />
+                                   <CommandList>
+                                     <CommandEmpty>No items found.</CommandEmpty>
+                                     <CommandGroup>
+                                       {filteredItems.map((availableItem) => (
+                                         <CommandItem
+                                           key={availableItem.id}
+                                           value={availableItem.name}
+                                           onSelect={() => {
+                                             updateItem(item.id, 'itemId', availableItem.id);
+                                           }}
+                                         >
+                                           <Check
+                                             className={cn(
+                                               "mr-2 h-4 w-4",
+                                               item.itemId === availableItem.id ? "opacity-100" : "opacity-0"
+                                             )}
+                                           />
+                                           {availableItem.name} (Available: {availableItem.quantity_available})
+                                         </CommandItem>
+                                       ))}
+                                     </CommandGroup>
+                                   </CommandList>
+                                 </Command>
+                               </PopoverContent>
+                             </Popover>
+                           </div>
 
                           <div className="grid grid-cols-3 gap-2">
                             <div className="space-y-2">
@@ -638,12 +679,50 @@ export default function EnhancedSalesOrderForm({
                       {items.map(item => <TableRow key={item.id} className="border-blue-500/20">
                            <TableCell>
                              <div className="space-y-2">
-                               <select value={item.itemId} onChange={e => updateItem(item.id, 'itemId', e.target.value)} className="w-full p-2 rounded border bg-slate-800 text-blue-100 border-blue-500/30 min-w-[200px]">
-                                 <option value="">Select Item</option>
-                                 {filteredItems.map(availableItem => <option key={availableItem.id} value={availableItem.id}>
-                                     {availableItem.name}
-                                   </option>)}
-                               </select>
+                               <Popover>
+                                 <PopoverTrigger asChild>
+                                   <Button
+                                     variant="outline"
+                                     role="combobox"
+                                     className={cn(
+                                       "w-full justify-between min-w-[200px] bg-slate-800 text-blue-100 border-blue-500/30",
+                                       !item.itemId && "text-muted-foreground"
+                                     )}
+                                   >
+                                     {item.itemId
+                                       ? filteredItems.find((availableItem) => availableItem.id === item.itemId)?.name
+                                       : "Select item..."}
+                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                   </Button>
+                                 </PopoverTrigger>
+                                 <PopoverContent className="w-full p-0" align="start">
+                                   <Command>
+                                     <CommandInput placeholder="Search items..." className="h-9" />
+                                     <CommandList>
+                                       <CommandEmpty>No items found.</CommandEmpty>
+                                       <CommandGroup>
+                                         {filteredItems.map((availableItem) => (
+                                           <CommandItem
+                                             key={availableItem.id}
+                                             value={availableItem.name}
+                                             onSelect={() => {
+                                               updateItem(item.id, 'itemId', availableItem.id);
+                                             }}
+                                           >
+                                             <Check
+                                               className={cn(
+                                                 "mr-2 h-4 w-4",
+                                                 item.itemId === availableItem.id ? "opacity-100" : "opacity-0"
+                                               )}
+                                             />
+                                             {availableItem.name} (Available: {availableItem.quantity_available})
+                                           </CommandItem>
+                                         ))}
+                                       </CommandGroup>
+                                     </CommandList>
+                                   </Command>
+                                 </PopoverContent>
+                               </Popover>
                              </div>
                            </TableCell>
                            <TableCell className="text-blue-100">
