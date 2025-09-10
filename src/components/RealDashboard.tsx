@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, ShoppingCart, Package, DollarSign, AlertTriangle, Users, Truck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrendingUp, TrendingDown, ShoppingCart, Package, DollarSign, AlertTriangle, Users, Truck, Brain, BarChart3 } from 'lucide-react';
 import { useRealDashboardMetrics } from '@/hooks/useRealDashboardMetrics';
 import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
 import { formatCurrency } from '@/utils/currencyUtils';
 import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
 import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
+import AIInsightsLayout from '@/components/ai/AIInsightsLayout';
 
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -59,10 +62,10 @@ export default function RealDashboard() {
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
             <div className="space-y-2">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
-                Furniture ERP Dashboard
+                AI-Powered ERP Dashboard
               </h1>
               <p className="text-base md:text-lg text-muted-foreground">
-                Welcome back! Here's what's happening with your business today.
+                Welcome back! Here's what's happening with your AI-enhanced business today.
               </p>
             </div>
             <div className="text-left lg:text-right space-y-2">
@@ -77,12 +80,27 @@ export default function RealDashboard() {
                 })}
               </p>
               <p className="text-muted-foreground text-sm">
-                {stores.length} Active Stores
+                {stores.length} Active Stores • AI Enhanced
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Main Dashboard Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 simple-card">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Business Overview
+          </TabsTrigger>
+          <TabsTrigger value="ai-insights" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            AI Insights
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-8">
 
       {/* Core Metrics - 2x2 Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -177,11 +195,17 @@ export default function RealDashboard() {
         <EnhancedMetricsGrid metrics={metrics} isLoading={metricsLoading} />
       </div>
 
-      {/* Analytics Charts */}
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-foreground">Advanced Analytics</h2>
-        <BusinessAnalyticsSection metrics={metrics} isLoading={metricsLoading} />
-      </div>
+          {/* Analytics Charts */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-foreground">Advanced Analytics</h2>
+            <BusinessAnalyticsSection metrics={metrics} isLoading={metricsLoading} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ai-insights">
+          <AIInsightsLayout />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
