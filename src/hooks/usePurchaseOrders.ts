@@ -50,26 +50,7 @@ export const useCreatePurchaseOrder = () => {
         throw new Error(errors[0].error.message);
       }
 
-      // Update inventory for each item
-      for (const item of data.items) {
-        // Update main item quantity
-        const { data: currentItem, error: fetchError } = await supabase
-          .from('items')
-          .select('quantity_available')
-          .eq('id', item.item_id)
-          .single();
-
-        if (!fetchError) {
-          await supabase
-            .from('items')
-            .update({ 
-              quantity_available: (currentItem.quantity_available || 0) + item.quantity,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', item.item_id);
-        }
-      }
-
+      // Stock is automatically updated by database triggers
       return results.map(result => result.data);
     },
     onSuccess: () => {
