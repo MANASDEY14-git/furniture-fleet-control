@@ -115,6 +115,62 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          account_type: string | null
+          bank_name: string
+          branch_name: string | null
+          created_at: string | null
+          current_balance: number | null
+          id: string
+          ifsc_code: string | null
+          is_active: boolean | null
+          opening_balance: number | null
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          account_type?: string | null
+          bank_name: string
+          branch_name?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          id?: string
+          ifsc_code?: string | null
+          is_active?: boolean | null
+          opening_balance?: number | null
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          account_type?: string | null
+          bank_name?: string
+          branch_name?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          id?: string
+          ifsc_code?: string | null
+          is_active?: boolean | null
+          opening_balance?: number | null
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bom: {
         Row: {
           created_at: string | null
@@ -593,44 +649,96 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          bank_account_id: string | null
+          bank_charges: number | null
+          card_last_four: string | null
+          cheque_date: string | null
+          cheque_number: string | null
+          cleared_at: string | null
           created_at: string | null
           date: string
           description: string | null
           id: string
+          net_amount: number | null
+          notes: string | null
+          payment_gateway: string | null
+          payment_method:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          payment_status: string | null
           reference_id: string | null
           reference_type: string | null
           sale_id: string | null
           store_id: string | null
           supplier_id: string | null
+          transaction_reference: string | null
           type: string
+          upi_id: string | null
         }
         Insert: {
           amount: number
+          bank_account_id?: string | null
+          bank_charges?: number | null
+          card_last_four?: string | null
+          cheque_date?: string | null
+          cheque_number?: string | null
+          cleared_at?: string | null
           created_at?: string | null
           date: string
           description?: string | null
           id?: string
+          net_amount?: number | null
+          notes?: string | null
+          payment_gateway?: string | null
+          payment_method?:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          payment_status?: string | null
           reference_id?: string | null
           reference_type?: string | null
           sale_id?: string | null
           store_id?: string | null
           supplier_id?: string | null
+          transaction_reference?: string | null
           type: string
+          upi_id?: string | null
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
+          bank_charges?: number | null
+          card_last_four?: string | null
+          cheque_date?: string | null
+          cheque_number?: string | null
+          cleared_at?: string | null
           created_at?: string | null
           date?: string
           description?: string | null
           id?: string
+          net_amount?: number | null
+          notes?: string | null
+          payment_gateway?: string | null
+          payment_method?:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          payment_status?: string | null
           reference_id?: string | null
           reference_type?: string | null
           sale_id?: string | null
           store_id?: string | null
           supplier_id?: string | null
+          transaction_reference?: string | null
           type?: string
+          upi_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_sale_id_fkey"
             columns: ["sale_id"]
@@ -1229,6 +1337,35 @@ export type Database = {
       }
     }
     Views: {
+      bank_transaction_ledger: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          amount: number | null
+          bank_charges: number | null
+          bank_name: string | null
+          card_last_four: string | null
+          cheque_date: string | null
+          cheque_number: string | null
+          cleared_at: string | null
+          created_at: string | null
+          date: string | null
+          description: string | null
+          id: string | null
+          net_amount: number | null
+          payment_gateway: string | null
+          payment_method:
+            | Database["public"]["Enums"]["payment_method_type"]
+            | null
+          payment_status: string | null
+          store_name: string | null
+          supplier_name: string | null
+          transaction_reference: string | null
+          type: string | null
+          upi_id: string | null
+        }
+        Relationships: []
+      }
       payment_summary: {
         Row: {
           net_balance: number | null
@@ -1374,6 +1511,15 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "employee" | "sales_representative"
+      payment_method_type:
+        | "cash"
+        | "upi"
+        | "bank_transfer"
+        | "debit_card"
+        | "credit_card"
+        | "cheque"
+        | "online_wallet"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1502,6 +1648,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "employee", "sales_representative"],
+      payment_method_type: [
+        "cash",
+        "upi",
+        "bank_transfer",
+        "debit_card",
+        "credit_card",
+        "cheque",
+        "online_wallet",
+        "other",
+      ],
     },
   },
 } as const

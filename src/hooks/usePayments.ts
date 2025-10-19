@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export type PaymentMethod = 'cash' | 'upi' | 'bank_transfer' | 'debit_card' | 'credit_card' | 'cheque' | 'online_wallet' | 'other';
+
 export interface Payment {
   id: string;
   store_id: string;
@@ -12,6 +14,19 @@ export interface Payment {
   date: string;
   description?: string;
   created_at: string;
+  payment_method?: PaymentMethod;
+  bank_account_id?: string;
+  transaction_reference?: string;
+  upi_id?: string;
+  card_last_four?: string;
+  payment_gateway?: string;
+  cheque_number?: string;
+  cheque_date?: string;
+  bank_charges?: number;
+  net_amount?: number;
+  payment_status?: 'pending' | 'completed' | 'failed' | 'cancelled';
+  cleared_at?: string;
+  notes?: string;
 }
 
 export interface CreatePaymentData {
@@ -21,6 +36,17 @@ export interface CreatePaymentData {
   type: 'Payment' | 'Receipt';
   date: string;
   description?: string;
+  payment_method?: PaymentMethod;
+  bank_account_id?: string;
+  transaction_reference?: string;
+  upi_id?: string;
+  card_last_four?: string;
+  payment_gateway?: string;
+  cheque_number?: string;
+  cheque_date?: string;
+  bank_charges?: number;
+  payment_status?: 'pending' | 'completed' | 'failed' | 'cancelled';
+  notes?: string;
 }
 
 export const usePayments = () => {
