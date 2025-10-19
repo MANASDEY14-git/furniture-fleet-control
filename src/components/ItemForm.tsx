@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Package, Settings, X } from 'lucide-react';
+import { Package, Layers, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useItems';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ItemBasicInfoForm from '@/components/ItemBasicInfoForm';
-import ItemAttributesTab from '@/components/ItemAttributesTab';
+import ItemComponentDetailsTab from '@/components/ItemComponentDetailsTab';
 
 interface ItemFormProps {
   item?: Item;
@@ -90,9 +90,9 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
                   <TabsTrigger value="basic" className="text-base py-3 font-medium">
                     Basic Info
                   </TabsTrigger>
-                  <TabsTrigger value="attributes" className="text-base py-3 font-medium">
-                    <Settings className="w-5 h-5 mr-2" />
-                    Attributes
+                  <TabsTrigger value="components" className="text-base py-3 font-medium">
+                    <Layers className="w-5 h-5 mr-2" />
+                    Components
                   </TabsTrigger>
                 </TabsList>
 
@@ -106,8 +106,8 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
                     />
                   </TabsContent>
 
-                  <TabsContent value="attributes" className="mt-6">
-                    <ItemAttributesTab />
+                  <TabsContent value="components" className="mt-6">
+                    <ItemComponentDetailsTab itemId={item?.id} />
                   </TabsContent>
                 </ScrollArea>
               </Tabs>
@@ -141,9 +141,9 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
               <TabsTrigger value="basic" className="text-sm">
                 Basic Info
               </TabsTrigger>
-              <TabsTrigger value="attributes" className="text-sm">
-                <Settings className="w-4 h-4 mr-1" />
-                Attributes
+              <TabsTrigger value="components" className="text-sm">
+                <Layers className="w-4 h-4 mr-1" />
+                Components
               </TabsTrigger>
             </TabsList>
 
@@ -156,8 +156,8 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
               />
             </TabsContent>
 
-            <TabsContent value="attributes" className="mt-6">
-              <ItemAttributesTab />
+            <TabsContent value="components" className="mt-6">
+              <ItemComponentDetailsTab itemId={item?.id} />
             </TabsContent>
           </Tabs>
         </ScrollArea>
