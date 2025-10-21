@@ -8,6 +8,7 @@ interface InfiniteItemsConfig {
   searchTerm?: string;
   storeId?: string;
   categoryId?: string;
+  supplierId?: string;
   showLowStockOnly?: boolean;
 }
 
@@ -23,7 +24,8 @@ export const useInfiniteItems = (config: InfiniteItemsConfig = {}) => {
     pageSize = 20, 
     searchTerm = '', 
     storeId, 
-    categoryId, 
+    categoryId,
+    supplierId, 
     showLowStockOnly = false 
   } = config;
 
@@ -44,7 +46,8 @@ export const useInfiniteItems = (config: InfiniteItemsConfig = {}) => {
       pageSize, 
       searchTerm, 
       storeId, 
-      categoryId, 
+      categoryId,
+      supplierId, 
       showLowStockOnly
     ],
     queryFn: async (): Promise<ItemsPage> => {
@@ -96,7 +99,7 @@ export const useInfiniteItems = (config: InfiniteItemsConfig = {}) => {
     setAllItems([]);
     setCurrentOffset(0);
     setHasMore(true);
-  }, [searchTerm, storeId, categoryId, showLowStockOnly]);
+  }, [searchTerm, storeId, categoryId, supplierId, showLowStockOnly]);
 
   const loadMore = useCallback(() => {
     if (currentPage && hasMore && !isLoading) {
