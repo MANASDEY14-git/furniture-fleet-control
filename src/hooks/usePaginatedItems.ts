@@ -8,6 +8,7 @@ interface PaginatedItemsConfig {
   searchTerm?: string;
   storeId?: string;
   categoryId?: string;
+  supplierId?: string;
   showLowStockOnly?: boolean;
 }
 
@@ -16,7 +17,8 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
     pageSize = 50, 
     searchTerm = '', 
     storeId, 
-    categoryId, 
+    categoryId,
+    supplierId, 
     showLowStockOnly = false 
   } = config;
 

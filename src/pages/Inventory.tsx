@@ -6,6 +6,7 @@ import { useInfiniteItems } from '@/hooks/useInfiniteItems';
 import { useDeleteItem } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
+import { useSuppliers } from '@/hooks/useSuppliers';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { InfiniteScroll } from '@/components/ui/infinite-scroll';
 import { MobileSkeletonGrid } from '@/components/ui/mobile-skeleton';
@@ -24,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function Inventory() {
   const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
+  const { data: suppliers = [] } = useSuppliers();
   const deleteItem = useDeleteItem();
   const { session } = useAuth();
   const isMobile = useIsMobile();
@@ -32,6 +34,7 @@ export default function Inventory() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [showLowStock, setShowLowStock] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -41,6 +44,7 @@ export default function Inventory() {
     searchTerm,
     storeId: selectedStore,
     categoryId: selectedCategory,
+    supplierId: selectedSupplier,
     showLowStockOnly: showLowStock,
     pageSize: 50
   });
@@ -49,6 +53,7 @@ export default function Inventory() {
     searchTerm,
     storeId: selectedStore,
     categoryId: selectedCategory,
+    supplierId: selectedSupplier,
     showLowStockOnly: showLowStock,
     pageSize: 20
   });
@@ -125,10 +130,13 @@ export default function Inventory() {
                   onStoreChange={setSelectedStore}
                   selectedCategory={selectedCategory}
                   onCategoryChange={setSelectedCategory}
+                  selectedSupplier={selectedSupplier}
+                  onSupplierChange={setSelectedSupplier}
                   showLowStock={showLowStock}
                   onShowLowStockChange={setShowLowStock}
                   stores={stores}
                   categories={categories}
+                  suppliers={suppliers}
                   selectedItems={selectedItems}
                   onClearSelection={handleClearSelection}
                 />
@@ -185,10 +193,13 @@ export default function Inventory() {
                   onStoreChange={setSelectedStore}
                   selectedCategory={selectedCategory}
                   onCategoryChange={setSelectedCategory}
+                  selectedSupplier={selectedSupplier}
+                  onSupplierChange={setSelectedSupplier}
                   showLowStock={showLowStock}
                   onShowLowStockChange={setShowLowStock}
                   stores={stores}
                   categories={categories}
+                  suppliers={suppliers}
                   selectedItems={selectedItems}
                   onClearSelection={handleClearSelection}
                 />

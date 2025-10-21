@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Store } from '@/hooks/useStores';
 import type { Category } from '@/hooks/useCategories';
+import type { Supplier } from '@/hooks/useSuppliers';
 
 interface InventoryHeaderProps {
   searchTerm: string;
@@ -16,10 +17,13 @@ interface InventoryHeaderProps {
   onStoreChange: (value: string) => void;
   selectedCategory: string;
   onCategoryChange: (value: string) => void;
+  selectedSupplier: string;
+  onSupplierChange: (value: string) => void;
   showLowStock: boolean;
   onShowLowStockChange: (value: boolean) => void;
   stores: Store[];
   categories: Category[];
+  suppliers: Supplier[];
   selectedItems: string[];
   onClearSelection: () => void;
 }
@@ -31,10 +35,13 @@ export default function InventoryHeader({
   onStoreChange,
   selectedCategory,
   onCategoryChange,
+  selectedSupplier,
+  onSupplierChange,
   showLowStock,
   onShowLowStockChange,
   stores,
   categories,
+  suppliers,
   selectedItems,
   onClearSelection
 }: InventoryHeaderProps) {
@@ -103,6 +110,21 @@ export default function InventoryHeader({
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Supplier Filter */}
+          <Select value={selectedSupplier} onValueChange={onSupplierChange}>
+            <SelectTrigger className={isMobile ? 'w-full' : 'w-[160px]'}>
+              <SelectValue placeholder="All Suppliers" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Suppliers</SelectItem>
+              {suppliers.map((supplier) => (
+                <SelectItem key={supplier.id} value={supplier.id}>
+                  {supplier.name}
                 </SelectItem>
               ))}
             </SelectContent>
