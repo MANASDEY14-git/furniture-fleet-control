@@ -38,6 +38,7 @@ export const usePaginatedItems = (config: PaginatedItemsConfig = {}) => {
         search_term: searchTerm || null,
         store_id_filter: storeId && storeId !== 'all' ? storeId : null,
         category_id_filter: categoryId && categoryId !== 'all' ? categoryId : null,
+        supplier_id_filter: supplierId && supplierId !== 'all' ? supplierId : null,
         show_low_stock_only: showLowStockOnly,
         page_size: pageSize,
         page_offset: (currentPage - 1) * pageSize

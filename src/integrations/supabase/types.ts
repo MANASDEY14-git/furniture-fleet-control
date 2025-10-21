@@ -1487,6 +1487,7 @@ export type Database = {
           search_term?: string
           show_low_stock_only?: boolean
           store_id_filter?: string
+          supplier_id_filter?: string
         }
         Returns: {
           category_id: string
