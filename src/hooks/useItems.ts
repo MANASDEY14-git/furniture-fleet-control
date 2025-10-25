@@ -16,6 +16,8 @@ export interface Item {
   last_restocked_date?: string;
   created_at: string;
   updated_at: string;
+  total_quantity?: number;
+  has_variants?: boolean;
 }
 
 export interface CreateItemData {

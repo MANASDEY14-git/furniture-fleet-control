@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Package, Layers, X } from 'lucide-react';
+import { Package, Layers, X, Package2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,7 @@ import { useItems, useCreateItem, useUpdateItem, type Item } from '@/hooks/useIt
 import { useIsMobile } from '@/hooks/use-mobile';
 import ItemBasicInfoForm from '@/components/ItemBasicInfoForm';
 import ItemComponentDetailsTab from '@/components/ItemComponentDetailsTab';
+import ItemVariantManager from '@/components/ItemVariantManager';
 
 interface ItemFormProps {
   item?: Item;
@@ -86,9 +87,13 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
             {/* Mobile Content */}
             <div className="flex-1 overflow-hidden">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 h-12">
+                <TabsList className="grid w-full grid-cols-3 mx-6 mt-4 h-12">
                   <TabsTrigger value="basic" className="text-base py-3 font-medium">
                     Basic Info
+                  </TabsTrigger>
+                  <TabsTrigger value="variants" className="text-base py-3 font-medium">
+                    <Package2 className="w-5 h-5 mr-2" />
+                    Variants
                   </TabsTrigger>
                   <TabsTrigger value="components" className="text-base py-3 font-medium">
                     <Layers className="w-5 h-5 mr-2" />
@@ -104,6 +109,10 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
                       onCancel={handleCancel}
                       isLoading={isLoading}
                     />
+                  </TabsContent>
+
+                  <TabsContent value="variants" className="mt-6">
+                    <ItemVariantManager itemId={item?.id} itemName={item?.name} />
                   </TabsContent>
 
                   <TabsContent value="components" className="mt-6">
@@ -137,9 +146,13 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
         
         <ScrollArea className="max-h-[calc(90vh-120px)] overflow-y-auto pr-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic" className="text-sm">
                 Basic Info
+              </TabsTrigger>
+              <TabsTrigger value="variants" className="text-sm">
+                <Package2 className="w-4 h-4 mr-1" />
+                Variants
               </TabsTrigger>
               <TabsTrigger value="components" className="text-sm">
                 <Layers className="w-4 h-4 mr-1" />
@@ -154,6 +167,10 @@ export default function ItemForm({ item, trigger, onSuccess }: ItemFormProps) {
                 onCancel={handleCancel}
                 isLoading={isLoading}
               />
+            </TabsContent>
+
+            <TabsContent value="variants" className="mt-6">
+              <ItemVariantManager itemId={item?.id} itemName={item?.name} />
             </TabsContent>
 
             <TabsContent value="components" className="mt-6">
