@@ -55,6 +55,7 @@ export const useCreateSalesOrder = () => {
         order_id: order.id,
         item_id: item.item_id,
         item_name: item.item_name,
+        variant_id: item.variant_id || null,
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.total_price

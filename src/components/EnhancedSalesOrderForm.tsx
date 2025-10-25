@@ -19,12 +19,14 @@ import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
 import { useEnhancedBOMByItem } from '@/hooks/useEnhancedBOM';
+import { useItemVariants } from '@/hooks/useItemVariants';
 import { DeliveryStatus } from '@/types';
 import ProductCustomizationDialog from '@/components/sales/ProductCustomizationDialog';
 import CustomizableItemIndicator from '@/components/CustomizableItemIndicator';
 import CustomizableItemRow from '@/components/CustomizableItemRow';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import VariantSelector from '@/components/sales/VariantSelector';
 interface ProductCustomization {
   componentId: string;
   componentName: string;
@@ -36,6 +38,8 @@ interface OrderItem {
   id: string;
   itemId: string;
   itemName: string;
+  variantId?: string;
+  variantName?: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -69,6 +73,8 @@ export default function EnhancedSalesOrderForm({
     id: '1',
     itemId: '',
     itemName: '',
+    variantId: undefined,
+    variantName: undefined,
     quantity: 0,
     unitPrice: 0,
     totalPrice: 0,
@@ -100,6 +106,8 @@ export default function EnhancedSalesOrderForm({
       id: Date.now().toString(),
       itemId: '',
       itemName: '',
+      variantId: undefined,
+      variantName: undefined,
       quantity: 0,
       unitPrice: 0,
       totalPrice: 0,
@@ -108,6 +116,7 @@ export default function EnhancedSalesOrderForm({
       customizations: []
     }]);
   };
+
   const removeItem = (id: string) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
@@ -127,6 +136,13 @@ export default function EnhancedSalesOrderForm({
             updatedItem.unitPrice = selectedItem?.selling_price || 0;
             updatedItem.availableStock = selectedItem?.quantity_available || 0;
             updatedItem.customizations = [];
+            // Reset variant when item changes
+            updatedItem.variantId = undefined;
+            updatedItem.variantName = undefined;
+          }
+          if (field === 'variantId') {
+            // When variant is selected, fetch variant details dynamically
+            updatedItem.variantId = value;
           }
           if (field === 'quantity' || field === 'unitPrice') {
             updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
@@ -460,8 +476,25 @@ export default function EnhancedSalesOrderForm({
                                    </CommandList>
                                  </Command>
                                </PopoverContent>
-                             </Popover>
+                              </Popover>
                            </div>
+
+                           {/* Variant Selector for Mobile */}
+                           {item.itemId && filteredItems.find(i => i.id === item.itemId)?.has_variants && (
+                             <VariantSelector
+                               itemId={item.itemId}
+                               value={item.variantId}
+                               onValueChange={(variantId, variantName, price, stock) => {
+                                 updateItem(item.id, 'variantId', variantId);
+                                 setItems(prevItems => prevItems.map(prevItem => 
+                                   prevItem.id === item.id 
+                                     ? { ...prevItem, variantName, unitPrice: price, availableStock: stock, totalPrice: prevItem.quantity * price }
+                                     : prevItem
+                                 ));
+                               }}
+                               className="space-y-2"
+                             />
+                           )}
 
                           <div className="grid grid-cols-3 gap-2">
                             <div className="space-y-2">
@@ -721,9 +754,26 @@ export default function EnhancedSalesOrderForm({
                                        </CommandGroup>
                                      </CommandList>
                                    </Command>
-                                 </PopoverContent>
-                               </Popover>
-                             </div>
+                                  </PopoverContent>
+                                </Popover>
+                                
+                                {/* Variant Selector for Desktop */}
+                                {item.itemId && filteredItems.find(i => i.id === item.itemId)?.has_variants && (
+                                  <VariantSelector
+                                    itemId={item.itemId}
+                                    value={item.variantId}
+                                    onValueChange={(variantId, variantName, price, stock) => {
+                                      updateItem(item.id, 'variantId', variantId);
+                                      setItems(prevItems => prevItems.map(prevItem => 
+                                        prevItem.id === item.id 
+                                          ? { ...prevItem, variantName, unitPrice: price, availableStock: stock, totalPrice: prevItem.quantity * price }
+                                          : prevItem
+                                      ));
+                                    }}
+                                    className="space-y-1 mt-2"
+                                  />
+                                )}
+                              </div>
                            </TableCell>
                            <TableCell className="text-blue-100">
                              {item.availableStock}

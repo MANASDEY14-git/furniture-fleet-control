@@ -85,6 +85,7 @@ export interface SalesOrderItem {
   order_id: string;
   item_id: string;
   item_name: string;
+  variant_id?: string | null;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -105,6 +106,7 @@ export interface CreateSalesOrderData {
   items: {
     item_id: string;
     item_name: string;
+    variant_id?: string | null;
     quantity: number;
     unit_price: number;
     total_price: number;
