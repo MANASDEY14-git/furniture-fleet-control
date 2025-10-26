@@ -90,11 +90,12 @@ export const formatDataForExport = (data: any[], type: 'sales' | 'purchases' | '
     
     case 'payments':
       return data.map(item => ({
-        Date: new Date(item.date).toLocaleDateString(),
-        Type: item.type,
-        Amount: item.amount,
+        Date: item.date ? new Date(item.date).toLocaleDateString() : '',
+        Type: item.type || '',
+        Amount: item.amount || 0,
         Description: item.description || '',
-        'Created At': new Date(item.created_at).toLocaleString()
+        'Payment Method': item.payment_method || '',
+        'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : ''
       }));
     
     case 'supplier-ledger':
