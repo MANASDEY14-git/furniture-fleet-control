@@ -207,6 +207,7 @@ export default function EnhancedSalesOrderForm({
         items: validItems.map(item => ({
           item_id: item.itemId,
           item_name: item.itemName,
+          variant_id: item.variantId || null,
           quantity: item.quantity,
           unit_price: item.unitPrice,
           total_price: item.totalPrice
