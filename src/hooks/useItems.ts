@@ -41,9 +41,7 @@ export const useItems = () => {
     queryKey: ['items'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('items')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('search_items_enhanced', { search_term: '' });
       
       if (error) throw error;
       return data as Item[];
