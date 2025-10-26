@@ -363,6 +363,56 @@ export type Database = {
         }
         Relationships: []
       }
+      item_variants: {
+        Row: {
+          attributes: Json | null
+          cost_price: number
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          parent_item_id: string
+          quantity_available: number
+          selling_price: number
+          sku: string | null
+          updated_at: string | null
+          variant_name: string
+        }
+        Insert: {
+          attributes?: Json | null
+          cost_price?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          parent_item_id: string
+          quantity_available?: number
+          selling_price?: number
+          sku?: string | null
+          updated_at?: string | null
+          variant_name: string
+        }
+        Update: {
+          attributes?: Json | null
+          cost_price?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          parent_item_id?: string
+          quantity_available?: number
+          selling_price?: number
+          sku?: string | null
+          updated_at?: string | null
+          variant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_variants_parent_item_id_fkey"
+            columns: ["parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           category_id: string | null
@@ -1009,6 +1059,7 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
@@ -1019,6 +1070,7 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1029,6 +1081,7 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit_price?: number
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -1050,6 +1103,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1137,7 +1197,7 @@ export type Database = {
           action: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           record_id: string | null
           table_name: string
           user_agent: string | null
@@ -1147,7 +1207,7 @@ export type Database = {
           action: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string | null
           table_name: string
           user_agent?: string | null
@@ -1157,7 +1217,7 @@ export type Database = {
           action?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string | null
           table_name?: string
           user_agent?: string | null
@@ -1418,10 +1478,7 @@ export type Database = {
       }
     }
     Functions: {
-      can_access_customer_pii: {
-        Args: { _user_id?: string }
-        Returns: boolean
-      }
+      can_access_customer_pii: { Args: { _user_id?: string }; Returns: boolean }
       get_sales_orders_for_user: {
         Args: { _store_id?: string }
         Returns: {
@@ -1475,10 +1532,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      ping: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      ping: { Args: never; Returns: undefined }
       search_items_enhanced: {
         Args: {
           category_id_filter?: string
@@ -1493,6 +1547,7 @@ export type Database = {
           category_id: string
           cost_price: number
           created_at: string
+          has_variants: boolean
           id: string
           last_restocked_date: string
           name: string
@@ -1502,13 +1557,11 @@ export type Database = {
           store_id: string
           supplier_id: string
           total_count: number
+          total_quantity: number
           updated_at: string
         }[]
       }
-      user_has_store_access: {
-        Args: { _store_id: string }
-        Returns: boolean
-      }
+      user_has_store_access: { Args: { _store_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "manager" | "employee" | "sales_representative"
