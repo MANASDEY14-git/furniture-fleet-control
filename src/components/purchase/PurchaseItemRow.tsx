@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableCell, TableRow } from '@/components/ui/table';
+import { useItemVariants } from '@/hooks/useItemVariants';
 
 import { Item } from '@/types';
 
@@ -11,6 +12,8 @@ interface PurchaseItem {
   id: string;
   itemId: string;
   itemName: string;
+  variantId?: string;
+  variantName?: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -38,6 +41,10 @@ export default function PurchaseItemRow({
   onRemoveItem,
   canRemove
 }: PurchaseItemRowProps) {
+  const selectedItem = availableItems.find(i => i.id === item.itemId);
+  const { data: variants = [] } = useItemVariants(item.itemId);
+  const hasVariants = variants.length > 0;
+
   return (
     <TableRow className="border-blue-500/20">
       <TableCell>
@@ -46,7 +53,15 @@ export default function PurchaseItemRow({
             <input
               type="checkbox"
               checked={item.isNewItem}
-              onChange={(e) => onUpdateItem(item.id, 'isNewItem', e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                onUpdateItem(item.id, 'isNewItem', checked);
+                if (checked) {
+                  // Clear item and variant when switching to new item
+                  onUpdateItem(item.id, 'itemId', '');
+                  onUpdateItem(item.id, 'variantId', '');
+                }
+              }}
               className="rounded border-blue-500/30"
             />
             <span className="text-sm text-blue-200">New Item</span>
@@ -77,21 +92,53 @@ export default function PurchaseItemRow({
               </Select>
             </div>
           ) : (
-            <Select
-              value={item.itemId}
-              onValueChange={(value) => onUpdateItem(item.id, 'itemId', value)}
-            >
-              <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100 min-w-[200px]">
-                <SelectValue placeholder="Select item" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-blue-500/30">
-                {availableItems.map((availableItem) => (
-                  <SelectItem key={availableItem.id} value={availableItem.id} className="text-blue-100 focus:bg-blue-800/30">
-                    {availableItem.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Select
+                value={item.itemId}
+                onValueChange={(value) => {
+                  onUpdateItem(item.id, 'itemId', value);
+                  // Clear variant when item changes
+                  onUpdateItem(item.id, 'variantId', '');
+                }}
+              >
+                <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100 min-w-[200px]">
+                  <SelectValue placeholder="Select item" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-blue-500/30">
+                  {availableItems.map((availableItem) => (
+                    <SelectItem key={availableItem.id} value={availableItem.id} className="text-blue-100 focus:bg-blue-800/30">
+                      {availableItem.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Show variant selector if item has variants */}
+              {hasVariants && item.itemId && (
+                <Select
+                  value={item.variantId || ''}
+                  onValueChange={(value) => {
+                    onUpdateItem(item.id, 'variantId', value || undefined);
+                    const variant = variants.find(v => v.id === value);
+                    onUpdateItem(item.id, 'variantName', variant?.variant_name || '');
+                  }}
+                >
+                  <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
+                    <SelectValue placeholder="Select variant (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-blue-500/30">
+                    <SelectItem value="" className="text-blue-100 focus:bg-blue-800/30">
+                      Parent Item (No variant)
+                    </SelectItem>
+                    {variants.map((variant) => (
+                      <SelectItem key={variant.id} value={variant.id} className="text-blue-100 focus:bg-blue-800/30">
+                        {variant.variant_name} {variant.sku && `(${variant.sku})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           )}
         </div>
       </TableCell>

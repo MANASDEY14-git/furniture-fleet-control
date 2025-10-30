@@ -869,6 +869,7 @@ export type Database = {
           store_id: string | null
           supplier_id: string | null
           total_cost: number
+          variant_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -883,6 +884,7 @@ export type Database = {
           store_id?: string | null
           supplier_id?: string | null
           total_cost: number
+          variant_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -897,6 +899,7 @@ export type Database = {
           store_id?: string | null
           supplier_id?: string | null
           total_cost?: number
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -918,6 +921,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
             referencedColumns: ["id"]
           },
         ]

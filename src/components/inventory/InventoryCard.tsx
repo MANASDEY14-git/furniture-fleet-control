@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Edit, Trash2, AlertTriangle, ShoppingCart, Package, Calendar } from 'lucide-react';
+import { Edit, Trash2, AlertTriangle, ShoppingCart, Package, Calendar, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,8 @@ import ItemForm from '@/components/ItemForm';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { cn } from '@/lib/utils';
 import type { Item } from '@/hooks/useItems';
+import { useItemVariants } from '@/hooks/useItemVariants';
+import VariantDetailsSheet from './VariantDetailsSheet';
 
 interface InventoryCardProps {
   item: Item;
@@ -88,6 +90,12 @@ export default function InventoryCard({
     hapticFeedback('medium');
   }, [hapticFeedback]);
 
+  const { data: variants = [] } = useItemVariants(item.id);
+  const hasVariants = variants.length > 0;
+  const totalStock = hasVariants 
+    ? item.quantity_available + variants.reduce((sum, v) => sum + v.quantity_available, 0)
+    : item.quantity_available;
+
   const isLowStock = item.quantity_available < 5;
   const stockAge = calculateStockAge(item.stock_receive_date);
   const stockAgeStatus = getStockAgeStatus(stockAge);
@@ -124,7 +132,7 @@ export default function InventoryCard({
         )}
       >
         {/* Header with selection and title */}
-        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3 flex-1 min-w-0">
             <Checkbox
               checked={isSelected}
@@ -138,7 +146,14 @@ export default function InventoryCard({
               <h3 className="font-semibold text-foreground text-base leading-tight mb-1 break-words" title={item.name}>
                 {item.name}
               </h3>
-              <p className="text-sm text-muted-foreground truncate" title={categoryName}>{categoryName}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground truncate" title={categoryName}>{categoryName}</p>
+                {hasVariants && (
+                  <Badge variant="secondary" className="text-xs">
+                    {variants.length} variant{variants.length !== 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
@@ -160,13 +175,13 @@ export default function InventoryCard({
           <div className="space-y-1">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Package className="w-3 h-3" />
-              <span>Quantity</span>
+              <span>Total Stock</span>
             </div>
             <p className={cn(
               "text-sm font-semibold",
               isLowStock ? "text-destructive" : "text-foreground"
             )}>
-              {item.quantity_available}
+              {hasVariants ? `${totalStock} (${item.quantity_available} + ${variants.reduce((sum, v) => sum + v.quantity_available, 0)})` : totalStock}
             </p>
           </div>
 
@@ -205,17 +220,34 @@ export default function InventoryCard({
 
         {/* Action buttons with better touch targets */}
         <div className="flex gap-3">
+          {hasVariants && (
+            <VariantDetailsSheet
+              trigger={
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 h-10 text-sm touch-target"
+                >
+                  <ChevronRight className="w-4 h-4 mr-2" />
+                  View Variants
+                </Button>
+              }
+              itemName={item.name}
+              variants={variants}
+            />
+          )}
+
           <ItemForm
             item={item}
             trigger={
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex-1 h-10 text-sm touch-target"
+                className={cn("h-10 text-sm touch-target", hasVariants ? "w-10 p-0" : "flex-1")}
                 onClick={handleEdit}
               >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
+                <Edit className="w-4 h-4" />
+                {!hasVariants && <span className="ml-2">Edit</span>}
               </Button>
             }
           />

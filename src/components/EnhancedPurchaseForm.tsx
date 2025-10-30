@@ -23,6 +23,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
     invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
     itemId: '',
+    variantId: '',
     quantity: 0,
     totalCost: 0,
   });
@@ -73,6 +74,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
       store_id: formData.storeId,
       supplier_id: formData.supplierId,
       item_id: isNewItem ? '' : formData.itemId,
+      variant_id: isNewItem ? '' : formData.variantId || undefined,
       item_name: isNewItem ? newItemData.name : filteredItems.find(i => i.id === formData.itemId)?.name || '',
       invoice_number: formData.invoiceNumber,
       quantity: formData.quantity,
@@ -99,6 +101,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
       invoiceNumber: '',
       date: new Date().toISOString().split('T')[0],
       itemId: '',
+      variantId: '',
       quantity: 0,
       totalCost: 0,
     });
@@ -149,6 +152,7 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
                 isNewItem={isNewItem}
                 formData={{
                   itemId: formData.itemId,
+                  variantId: formData.variantId,
                   quantity: formData.quantity,
                   totalCost: formData.totalCost,
                 }}

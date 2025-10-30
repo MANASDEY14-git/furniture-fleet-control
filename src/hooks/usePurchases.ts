@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +23,7 @@ export const useCreatePurchase = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: CreatePurchaseData & { createNewItem?: boolean; itemData?: any; variantId?: string }) => {
+    mutationFn: async (data: CreatePurchaseData & { createNewItem?: boolean; itemData?: any; variant_id?: string }) => {
       // If creating a new item, add it to inventory first
       if (data.createNewItem && data.itemData) {
         const { data: newItem, error: itemError } = await supabase
@@ -54,6 +53,7 @@ export const useCreatePurchase = () => {
         .insert([{
           store_id: data.store_id,
           item_id: data.item_id,
+          variant_id: data.variant_id || null,
           item_name: data.item_name,
           supplier_id: data.supplier_id,
           invoice_number: data.invoice_number,
@@ -74,6 +74,7 @@ export const useCreatePurchase = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] });
       queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['item-variants'] });
       toast({
         title: "Success",
         description: "Purchase recorded successfully",
