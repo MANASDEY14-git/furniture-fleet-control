@@ -56,6 +56,7 @@ export default function EnhancedSalesOrderForm({
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [isWalkInCustomer, setIsWalkInCustomer] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     orderNumber: '',
     storeId: '',
@@ -99,7 +100,8 @@ export default function EnhancedSalesOrderForm({
   const filteredItems = availableItems.filter(item => {
     const matchesSupplier = isWalkInCustomer || !formData.supplierId || item.supplier_id === formData.supplierId;
     const matchesStore = !formData.storeId || item.store_id === formData.storeId;
-    return matchesSupplier && matchesStore;
+    const matchesSearch = !searchTerm || item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSupplier && matchesStore && matchesSearch;
   });
   const addItem = () => {
     setItems([...items, {
@@ -450,33 +452,45 @@ export default function EnhancedSalesOrderForm({
                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                  </Button>
                                </PopoverTrigger>
-                               <PopoverContent className="w-full p-0" align="start">
-                                 <Command>
-                                   <CommandInput placeholder="Search items..." className="h-9" />
-                                   <CommandList>
-                                     <CommandEmpty>No items found.</CommandEmpty>
-                                     <CommandGroup>
-                                       {filteredItems.map((availableItem) => (
-                                         <CommandItem
-                                           key={availableItem.id}
-                                           value={availableItem.name}
-                                           onSelect={() => {
-                                             updateItem(item.id, 'itemId', availableItem.id);
-                                           }}
-                                         >
-                                           <Check
-                                             className={cn(
-                                               "mr-2 h-4 w-4",
-                                               item.itemId === availableItem.id ? "opacity-100" : "opacity-0"
-                                             )}
-                                           />
-                                           {availableItem.name} (Available: {availableItem.quantity_available})
-                                         </CommandItem>
-                                       ))}
-                                     </CommandGroup>
-                                   </CommandList>
-                                 </Command>
-                               </PopoverContent>
+                                <PopoverContent className="w-full p-0" align="start">
+                                  <Command shouldFilter={false}>
+                                    <CommandInput 
+                                      placeholder="Search items..." 
+                                      className="h-9"
+                                      value={searchTerm}
+                                      onValueChange={setSearchTerm}
+                                    />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        {formData.storeId && formData.supplierId 
+                                          ? "No items found for this store and supplier."
+                                          : formData.storeId
+                                          ? "No items found for this store."
+                                          : "Please select a store first."}
+                                      </CommandEmpty>
+                                      <CommandGroup heading={filteredItems.length > 0 ? `${filteredItems.length} items available` : undefined}>
+                                        {filteredItems.map((availableItem) => (
+                                          <CommandItem
+                                            key={availableItem.id}
+                                            value={availableItem.id}
+                                            onSelect={() => {
+                                              updateItem(item.id, 'itemId', availableItem.id);
+                                              setSearchTerm('');
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                item.itemId === availableItem.id ? "opacity-100" : "opacity-0"
+                                              )}
+                                            />
+                                            {availableItem.name} (Stock: {availableItem.quantity_available})
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
                               </Popover>
                            </div>
 
@@ -729,33 +743,45 @@ export default function EnhancedSalesOrderForm({
                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                    </Button>
                                  </PopoverTrigger>
-                                 <PopoverContent className="w-full p-0" align="start">
-                                   <Command>
-                                     <CommandInput placeholder="Search items..." className="h-9" />
-                                     <CommandList>
-                                       <CommandEmpty>No items found.</CommandEmpty>
-                                       <CommandGroup>
-                                         {filteredItems.map((availableItem) => (
-                                           <CommandItem
-                                             key={availableItem.id}
-                                             value={availableItem.name}
-                                             onSelect={() => {
-                                               updateItem(item.id, 'itemId', availableItem.id);
-                                             }}
-                                           >
-                                             <Check
-                                               className={cn(
-                                                 "mr-2 h-4 w-4",
-                                                 item.itemId === availableItem.id ? "opacity-100" : "opacity-0"
-                                               )}
-                                             />
-                                             {availableItem.name} (Available: {availableItem.quantity_available})
-                                           </CommandItem>
-                                         ))}
-                                       </CommandGroup>
-                                     </CommandList>
-                                   </Command>
-                                  </PopoverContent>
+                                  <PopoverContent className="w-full p-0" align="start">
+                                    <Command shouldFilter={false}>
+                                      <CommandInput 
+                                        placeholder="Search items..." 
+                                        className="h-9"
+                                        value={searchTerm}
+                                        onValueChange={setSearchTerm}
+                                      />
+                                      <CommandList>
+                                        <CommandEmpty>
+                                          {formData.storeId && formData.supplierId 
+                                            ? "No items found for this store and supplier."
+                                            : formData.storeId
+                                            ? "No items found for this store."
+                                            : "Please select a store first."}
+                                        </CommandEmpty>
+                                        <CommandGroup heading={filteredItems.length > 0 ? `${filteredItems.length} items available` : undefined}>
+                                          {filteredItems.map((availableItem) => (
+                                            <CommandItem
+                                              key={availableItem.id}
+                                              value={availableItem.id}
+                                              onSelect={() => {
+                                                updateItem(item.id, 'itemId', availableItem.id);
+                                                setSearchTerm('');
+                                              }}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  item.itemId === availableItem.id ? "opacity-100" : "opacity-0"
+                                                )}
+                                              />
+                                              {availableItem.name} (Stock: {availableItem.quantity_available})
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      </CommandList>
+                                    </Command>
+                                   </PopoverContent>
                                 </Popover>
                                 
                                 {/* Variant Selector for Desktop */}
