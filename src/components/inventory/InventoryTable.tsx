@@ -98,19 +98,19 @@ function ItemRowWithVariants({
           />
         </TableCell>
         <TableCell className="font-medium text-blue-100 max-w-xs">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {hasVariants && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 text-blue-400 hover:text-blue-300"
+                className="h-6 w-6 p-0 flex-shrink-0 text-blue-400 hover:text-blue-300"
                 onClick={() => onToggleExpand(item.id)}
               >
                 <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
               </Button>
             )}
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className="truncate" title={item.name}>{item.name}</span>
                 {isLowStock && (
                   <AlertTriangle className="w-4 h-4 text-orange-400 flex-shrink-0" />
