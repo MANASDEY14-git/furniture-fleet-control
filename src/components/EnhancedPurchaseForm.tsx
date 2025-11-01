@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { useItems } from '@/hooks/useItems';
 import { useCreatePurchase } from '@/hooks/usePurchases';
@@ -122,10 +122,15 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
         {trigger}
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto futuristic-card" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle className="text-cyan-300 glow-text">Enhanced Purchase Entry</DialogTitle>
+          <DialogDescription className="text-blue-300">
+            Record a single item purchase from your selected supplier and store.
+          </DialogDescription>
+        </DialogHeader>
         <Card className="border-none shadow-none">
           <CardHeader>
-            <CardTitle className="text-cyan-300 glow-text">Enhanced Purchase Entry</CardTitle>
-            <div className="flex items-center space-x-2 mt-4">
+            <div className="flex items-center space-x-2">
               <Switch
                 id="new-item-mode"
                 checked={isNewItem}

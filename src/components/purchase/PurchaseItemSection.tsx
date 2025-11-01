@@ -71,14 +71,14 @@ export default function PurchaseItemSection({
               <div className="space-y-2">
                 <Label className="text-blue-200">Variant (Optional)</Label>
                 <Select
-                  value={formData.variantId || ''}
-                  onValueChange={(value) => onFormDataChange({ variantId: value || '' })}
+                  value={formData.variantId || 'none'}
+                  onValueChange={(value) => onFormDataChange({ variantId: value === 'none' ? '' : value })}
                 >
                   <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue placeholder="Select variant or leave empty for parent item" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-blue-500/30">
-                    <SelectItem value="" className="text-blue-100 focus:bg-blue-800/30">
+                    <SelectItem value="none" className="text-blue-100 focus:bg-blue-800/30">
                       Parent Item (No variant)
                     </SelectItem>
                     {variants.map((variant) => (

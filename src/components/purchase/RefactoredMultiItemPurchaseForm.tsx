@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
@@ -228,6 +228,9 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
       <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto futuristic-card" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-cyan-300 glow-text">Create Multi-Item Purchase</DialogTitle>
+          <DialogDescription className="text-blue-300">
+            Create a purchase order with multiple items from your selected supplier and store.
+          </DialogDescription>
         </DialogHeader>
         <Card className="border-none shadow-none">
           <CardContent className="pt-6">

@@ -116,9 +116,10 @@ export default function PurchaseItemRow({
               {/* Show variant selector if item has variants */}
               {hasVariants && item.itemId && (
                 <Select
-                  value={item.variantId || ''}
+                  value={item.variantId || 'none'}
                   onValueChange={(value) => {
-                    onUpdateItem(item.id, 'variantId', value || undefined);
+                    const actualValue = value === 'none' ? undefined : value;
+                    onUpdateItem(item.id, 'variantId', actualValue);
                     const variant = variants.find(v => v.id === value);
                     onUpdateItem(item.id, 'variantName', variant?.variant_name || '');
                   }}
@@ -127,7 +128,7 @@ export default function PurchaseItemRow({
                     <SelectValue placeholder="Select variant (optional)" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-blue-500/30">
-                    <SelectItem value="" className="text-blue-100 focus:bg-blue-800/30">
+                    <SelectItem value="none" className="text-blue-100 focus:bg-blue-800/30">
                       Parent Item (No variant)
                     </SelectItem>
                     {variants.map((variant) => (
