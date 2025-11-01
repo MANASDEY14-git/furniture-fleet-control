@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SupplierSelector from '@/components/SupplierSelector';
-import { useItems } from '@/hooks/useItems';
+import { useQuery } from '@tanstack/react-query';
 import { useStores } from '@/hooks/useStores';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
 import { useEnhancedBOMByItem } from '@/hooks/useEnhancedBOM';
@@ -83,9 +83,22 @@ export default function EnhancedSalesOrderForm({
     isCustomizable: false,
     customizations: []
   }]);
-  const {
-    data: availableItems = []
-  } = useItems();
+  const { data: availableItems = [], isLoading: itemsLoading, error: itemsError } = useQuery({
+    queryKey: ['items-search', formData.storeId, formData.supplierId, searchTerm, isWalkInCustomer],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('search_items_enhanced', {
+        search_term: searchTerm || null,
+        store_id_filter: formData.storeId || null,
+        supplier_id_filter: isWalkInCustomer || !formData.supplierId ? null : formData.supplierId,
+        page_size: 200,
+        page_offset: 0,
+      });
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+    enabled: !!formData.storeId,
+    staleTime: 0,
+  });
   const {
     data: stores = []
   } = useStores();
@@ -100,8 +113,16 @@ export default function EnhancedSalesOrderForm({
   const filteredItems = availableItems.filter(item => {
     const matchesSupplier = isWalkInCustomer || !formData.supplierId || item.supplier_id === formData.supplierId;
     const matchesStore = !formData.storeId || item.store_id === formData.storeId;
-    const matchesSearch = !searchTerm || item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTerm || (item.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSupplier && matchesStore && matchesSearch;
+  });
+  console.debug('[EnhancedSalesOrderForm] filters', {
+    storeId: formData.storeId,
+    supplierId: formData.supplierId,
+    isWalkInCustomer,
+    searchTerm,
+    availableCount: Array.isArray(availableItems) ? availableItems.length : 0,
+    filteredCount: Array.isArray(filteredItems) ? filteredItems.length : 0,
   });
   const addItem = () => {
     setItems([...items, {
