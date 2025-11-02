@@ -466,12 +466,10 @@ export default function EnhancedSalesOrderForm({
                                      "w-full h-12 justify-between text-base",
                                      !item.itemId && "text-muted-foreground"
                                    )}
-                                 >
-                                   {item.itemId
-                                     ? filteredItems.find((availableItem) => availableItem.id === item.itemId)?.name
-                                     : "Select item..."}
-                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                 </Button>
+                                  >
+                                    {item.itemName || "Select item..."}{item.variantName ? ` - ${item.variantName}` : ''}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
                                </PopoverTrigger>
                                 <PopoverContent className="w-full p-0" align="start">
                                   <Command shouldFilter={false}>
@@ -757,12 +755,10 @@ export default function EnhancedSalesOrderForm({
                                        "w-full justify-between min-w-[200px] bg-slate-800 text-blue-100 border-blue-500/30",
                                        !item.itemId && "text-muted-foreground"
                                      )}
-                                   >
-                                     {item.itemId
-                                       ? filteredItems.find((availableItem) => availableItem.id === item.itemId)?.name
-                                       : "Select item..."}
-                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                   </Button>
+                                    >
+                                      {item.itemName || "Select item..."}{item.variantName ? ` - ${item.variantName}` : ''}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
                                  </PopoverTrigger>
                                   <PopoverContent className="w-full p-0" align="start">
                                     <Command shouldFilter={false}>
