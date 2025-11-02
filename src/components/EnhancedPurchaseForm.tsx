@@ -1,11 +1,12 @@
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { useItems } from '@/hooks/useItems';
+import { supabase } from '@/integrations/supabase/client';
 import { useCreatePurchase } from '@/hooks/usePurchases';
 import PurchaseFormHeader from '@/components/purchase/PurchaseFormHeader';
 import PurchaseItemSection from '@/components/purchase/PurchaseItemSection';
@@ -34,14 +35,26 @@ export default function EnhancedPurchaseForm({ trigger }: EnhancedPurchaseFormPr
     sellingPrice: 0,
   });
 
-  const { data: availableItems = [] } = useItems();
-  const createPurchase = useCreatePurchase();
-
-  const filteredItems = availableItems.filter(item => {
-    const matchesSupplier = !formData.supplierId || item.supplier_id === formData.supplierId;
-    const matchesStore = !formData.storeId || item.store_id === formData.storeId;
-    return matchesSupplier && matchesStore;
+  const { data: availableItems = [], isLoading: itemsLoading } = useQuery({
+    queryKey: ['purchase-available-items', formData.supplierId, formData.storeId],
+    queryFn: async () => {
+      console.debug('[PurchaseForm] Filters', { supplierId: formData.supplierId, storeId: formData.storeId });
+      const { data, error } = await supabase.rpc('search_items_enhanced', {
+        search_term: '',
+        supplier_id_filter: formData.supplierId || null,
+        store_id_filter: formData.storeId || null,
+        show_low_stock_only: false,
+        page_size: 1000,
+        page_offset: 0
+      });
+      if (error) throw error;
+      console.debug('[PurchaseForm] items count', data?.length || 0);
+      return data || [];
+    },
   });
+  
+  const createPurchase = useCreatePurchase();
+  const filteredItems = availableItems;
 
   const handleFormDataChange = (updates: Partial<typeof formData>) => {
     // Reset item selection when supplier or store changes

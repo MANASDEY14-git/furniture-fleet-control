@@ -104,12 +104,16 @@ export default function PurchaseItemRow({
                 <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100 min-w-[200px]">
                   <SelectValue placeholder="Select item" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-blue-500/30">
-                  {availableItems.map((availableItem) => (
-                    <SelectItem key={availableItem.id} value={availableItem.id} className="text-blue-100 focus:bg-blue-800/30">
-                      {availableItem.name}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="z-50 bg-slate-800 border-blue-500/30">
+                  {availableItems.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">No items for selected supplier/store</div>
+                  ) : (
+                    availableItems.map((availableItem) => (
+                      <SelectItem key={availableItem.id} value={availableItem.id} className="text-blue-100 focus:bg-blue-800/30">
+                        {availableItem.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
 
@@ -127,7 +131,7 @@ export default function PurchaseItemRow({
                   <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue placeholder="Select variant (optional)" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-blue-500/30">
+                  <SelectContent className="z-50 bg-slate-800 border-blue-500/30">
                     <SelectItem value="none" className="text-blue-100 focus:bg-blue-800/30">
                       Parent Item (No variant)
                     </SelectItem>

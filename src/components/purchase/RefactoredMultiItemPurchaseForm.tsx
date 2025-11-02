@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useItems } from '@/hooks/useItems';
 import { useStores } from '@/hooks/useStores';
 import { useCategories } from '@/hooks/useCategories';
 import { useCreatePurchaseOrder } from '@/hooks/usePurchaseOrders';
@@ -54,17 +54,27 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
     }
   ]);
 
-  const { data: availableItems = [] } = useItems();
+  const { data: availableItems = [], isLoading: itemsLoading } = useQuery({
+    queryKey: ['purchase-items', formData.supplierId, formData.storeId],
+    queryFn: async () => {
+      console.debug('[MultiPurchase] Filters', { supplierId: formData.supplierId, storeId: formData.storeId });
+      const { data, error } = await supabase.rpc('search_items_enhanced', {
+        search_term: '',
+        supplier_id_filter: formData.supplierId || null,
+        store_id_filter: formData.storeId || null,
+        show_low_stock_only: false,
+        page_size: 1000,
+        page_offset: 0
+      });
+      if (error) throw error;
+      console.debug('[MultiPurchase] items count', data?.length || 0);
+      return data || [];
+    },
+  });
+
   const { data: stores = [] } = useStores();
   const { data: categories = [] } = useCategories();
   const createPurchase = useCreatePurchaseOrder();
-
-  // Filter items based on selected supplier and store
-  const filteredItems = availableItems.filter(item => {
-    const matchesSupplier = !formData.supplierId || item.supplier_id === formData.supplierId;
-    const matchesStore = !formData.storeId || item.store_id === formData.storeId;
-    return matchesSupplier && matchesStore;
-  });
 
   const addItem = () => {
     setItems([...items, {
@@ -94,7 +104,7 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
         const updatedItem = { ...item, [field]: value };
         
         if (field === 'itemId') {
-          const selectedItem = filteredItems.find(i => i.id === value);
+          const selectedItem = availableItems.find(i => i.id === value);
           updatedItem.itemName = selectedItem?.name || '';
         }
         
@@ -243,7 +253,7 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
 
               <PurchaseItemsTable
                 items={items}
-                availableItems={filteredItems}
+                availableItems={availableItems}
                 categories={categories}
                 onAddItem={addItem}
                 onUpdateItem={updateItem}
