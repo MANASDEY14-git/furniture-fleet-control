@@ -87,7 +87,9 @@ export default function Sales() {
     let filtered = salePaymentStatus.filter(order => {
       const matchesStore = selectedStore === 'all' || order.store_id === selectedStore;
       const matchesSupplier = selectedSupplier === 'all' || order.supplier_id === selectedSupplier;
-      const matchesSearch = order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = searchTerm === '' || 
+        order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()));
       return matchesStore && matchesSupplier && matchesSearch;
     });
 

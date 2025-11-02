@@ -63,7 +63,7 @@ export default function SalesFilters({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
           <Input
-            placeholder="Search order number..."
+            placeholder="Search order # or customer..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
@@ -168,7 +168,7 @@ export default function SalesFilters({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
             <Input
-              placeholder="Search order number..."
+              placeholder="Search order # or customer..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
