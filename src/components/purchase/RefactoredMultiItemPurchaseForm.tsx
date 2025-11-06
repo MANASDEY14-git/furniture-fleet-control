@@ -172,7 +172,7 @@ export default function RefactoredMultiItemPurchaseForm({ trigger }: RefactoredM
             store_id: formData.storeId,
             cost_price: item.newItemCostPrice,
             selling_price: item.newItemSellingPrice,
-            quantity_available: item.quantity
+            quantity_available: 0 // Stock will be added by purchase trigger
           }])
           .select()
           .single();
