@@ -1067,6 +1067,7 @@ export type Database = {
           item_name: string
           order_id: string
           quantity: number
+          stock_deducted: boolean | null
           total_price: number
           unit_price: number
           variant_id: string | null
@@ -1078,6 +1079,7 @@ export type Database = {
           item_name: string
           order_id: string
           quantity: number
+          stock_deducted?: boolean | null
           total_price: number
           unit_price: number
           variant_id?: string | null
@@ -1089,6 +1091,7 @@ export type Database = {
           item_name?: string
           order_id?: string
           quantity?: number
+          stock_deducted?: boolean | null
           total_price?: number
           unit_price?: number
           variant_id?: string | null
