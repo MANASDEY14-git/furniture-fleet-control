@@ -26,6 +26,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import StoreSelector from '@/components/StoreSelector';
 import { formatCurrency } from '@/utils/currencyUtils';
 import ExportButton from '@/components/ExportButton';
+import { PaginationControls } from '@/components/ui/pagination';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function EnhancedPaymentsPage() {
@@ -33,6 +34,8 @@ export default function EnhancedPaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
   const isMobile = useIsMobile();
 
   const { data: payments = [], isLoading: paymentsLoading, refetch: refetchPayments } = usePayments();
@@ -98,6 +101,22 @@ export default function EnhancedPaymentsPage() {
       return matchesStore && matchesSearch;
     });
   }, [payments, selectedStore, searchTerm]);
+
+  const filteredOutstandingBalances = useMemo(() => {
+    return salePaymentStatus.filter(sale => {
+      if (sale.balance_due <= 0) return false;
+      const matchesStore = selectedStore === 'all' || sale.store_id === selectedStore;
+      const matchesSearch = sale.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           sale.customer_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesStore && matchesSearch;
+    });
+  }, [salePaymentStatus, selectedStore, searchTerm]);
+
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+  const paginatedPayments = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredPayments.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPayments, currentPage]);
 
   const summary = useMemo(() => {
     if (paymentSummary.length === 0) return { totalReceipts: 0, totalPayments: 0, netBalance: 0 };
@@ -241,7 +260,7 @@ export default function EnhancedPaymentsPage() {
           {isMobile ? (
             // Mobile Card Layout
             <div className="space-y-4">
-              {filteredPayments.map((payment) => (
+              {paginatedPayments.map((payment) => (
                 <Card key={payment.id} className="bg-slate-800/50 border-blue-500/30">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">
@@ -397,11 +416,9 @@ export default function EnhancedPaymentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayments.map((payment) => (
-                    <TableRow key={payment.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
-                      <TableCell className="text-blue-100">
-                        {new Date(payment.date).toLocaleDateString('en-GB')}
-                      </TableCell>
+                  {paginatedPayments.map((payment) => (
+                    <TableRow key={payment.id} className="border-blue-500/20">
+                      <TableCell className="text-blue-200">{new Date(payment.date).toLocaleDateString('en-GB')}</TableCell>
                       <TableCell>
                         <Badge variant={payment.type === 'Receipt' ? 'default' : 'destructive'}>
                           {payment.type === 'Receipt' ? (
@@ -412,19 +429,12 @@ export default function EnhancedPaymentsPage() {
                           {payment.type}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-blue-200">
-                        {getStoreName(payment.store_id)}
-                      </TableCell>
-                      <TableCell className="text-blue-200">
-                        {payment.description || 'No description'}
-                      </TableCell>
+                      <TableCell className="text-blue-200">{getStoreName(payment.store_id)}</TableCell>
+                      <TableCell className="text-blue-200">{payment.description || '-'}</TableCell>
                       <TableCell className={`text-right font-semibold ${
                         payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400'
                       }`}>
                         {payment.type === 'Receipt' ? '+' : '-'}{formatCurrency(payment.amount)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">Completed</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Dialog>
@@ -479,6 +489,17 @@ export default function EnhancedPaymentsPage() {
               <p className="text-blue-300">No payments found matching your criteria</p>
             </div>
           )}
+          {filteredPayments.length > 0 && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              showInfo={true}
+              startItem={(currentPage - 1) * itemsPerPage + 1}
+              endItem={Math.min(currentPage * itemsPerPage, filteredPayments.length)}
+              totalItems={filteredPayments.length}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -494,8 +515,7 @@ export default function EnhancedPaymentsPage() {
           {isMobile ? (
             // Mobile Card Layout
             <div className="space-y-4">
-              {salePaymentStatus
-                .filter(sale => sale.balance_due > 0)
+              {filteredOutstandingBalances
                 .slice(0, 10)
                 .map((sale) => (
                   <Card key={sale.sale_id} className="bg-slate-800/50 border-blue-500/30">
@@ -543,8 +563,7 @@ export default function EnhancedPaymentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {salePaymentStatus
-                    .filter(sale => sale.balance_due > 0)
+                  {filteredOutstandingBalances
                     .slice(0, 10)
                     .map((sale) => (
                       <TableRow key={sale.sale_id} className="border-blue-500/20">
@@ -558,6 +577,11 @@ export default function EnhancedPaymentsPage() {
                     ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+          {filteredOutstandingBalances.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-blue-300">No outstanding balances found matching your criteria</p>
             </div>
           )}
         </CardContent>
