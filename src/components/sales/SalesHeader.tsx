@@ -62,7 +62,7 @@ export default function SalesHeader({
         <EnhancedSalesOrderForm trigger={<Button className="cyber-button text-white font-semibold">
               <Plus className="w-4 h-4 mr-2" />
               Create Order
-            </Button>} />
+            </Button>} className="text-stone-950" />
       </div>
     </div>;
 }
