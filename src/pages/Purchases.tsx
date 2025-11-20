@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Plus, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,30 +18,35 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
-
 export default function Purchases() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStore, setSelectedStore] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
-  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [customDateRange, setCustomDateRange] = useState<{
+    from: Date;
+    to: Date;
+  } | null>(null);
   const isMobile = useIsMobile();
-
-  const { data: purchases = [], isLoading } = usePurchases();
-  const { data: stores = [] } = useStores();
-  const { data: suppliers = [] } = useSuppliers();
-
+  const {
+    data: purchases = [],
+    isLoading
+  } = usePurchases();
+  const {
+    data: stores = []
+  } = useStores();
+  const {
+    data: suppliers = []
+  } = useSuppliers();
   const filteredPurchases = useMemo(() => {
     return purchases.filter(purchase => {
-      const matchesSearch = purchase.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           purchase.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = purchase.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) || purchase.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStore = selectedStore === 'all' || purchase.store_id === selectedStore;
       const matchesSupplier = selectedSupplier === 'all' || purchase.supplier_id === selectedSupplier;
-      
+
       // Date filtering logic
       const purchaseDate = new Date(purchase.date);
       let matchesDate = true;
-      
       if (dateFilter === 'today') {
         const today = new Date();
         matchesDate = purchaseDate.toDateString() === today.toDateString();
@@ -57,34 +61,25 @@ export default function Purchases() {
       } else if (dateFilter === 'custom' && customDateRange) {
         matchesDate = purchaseDate >= customDateRange.from && purchaseDate <= customDateRange.to;
       }
-      
       return matchesSearch && matchesStore && matchesSupplier && matchesDate;
     });
   }, [purchases, searchTerm, selectedStore, selectedSupplier, dateFilter, customDateRange]);
-
   const getStoreName = (storeId: string) => {
     return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
-
   const getSupplierName = (supplierId: string) => {
     return suppliers.find(supplier => supplier.id === supplierId)?.name || 'Unknown Supplier';
   };
-
   const getTotalAmount = () => {
     return filteredPurchases.reduce((sum, purchase) => sum + (purchase.total_cost || 0), 0);
   };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
+    return <div className="flex items-center justify-center h-64">
         <div className="text-lg glow-text">Loading purchases...</div>
-      </div>
-    );
+      </div>;
   }
-
   if (isMobile) {
-    return (
-      <div className="space-y-4 p-4">
+    return <div className="space-y-4 p-4">
         {/* Mobile Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold glow-text">Purchases</h1>
@@ -108,12 +103,7 @@ export default function Purchases() {
         </div>
 
         {/* Mobile Search */}
-        <Input
-          placeholder="Search purchases..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-300/50"
-        />
+        <Input placeholder="Search purchases..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-300/50" />
 
         {/* Mobile Filters Drawer */}
         <Drawer>
@@ -136,11 +126,9 @@ export default function Purchases() {
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-blue-500/30">
                     <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Stores</SelectItem>
-                    {stores.map((store) => (
-                      <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
+                    {stores.map(store => <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
                         {store.name}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -152,23 +140,16 @@ export default function Purchases() {
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-blue-500/30">
                     <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Suppliers</SelectItem>
-                    {suppliers.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id} className="text-blue-100 focus:bg-blue-800/30">
+                    {suppliers.map(supplier => <SelectItem key={supplier.id} value={supplier.id} className="text-blue-100 focus:bg-blue-800/30">
                         {supplier.name}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm text-blue-200">Date Range</label>
                 <div className="bg-slate-800/50 p-3 rounded-md border border-blue-500/30">
-                  <DateFilterSelector
-                    dateFilter={dateFilter}
-                    onDateFilterChange={setDateFilter}
-                    customDateRange={customDateRange}
-                    onCustomDateRangeChange={setCustomDateRange}
-                  />
+                  <DateFilterSelector dateFilter={dateFilter} onDateFilterChange={setDateFilter} customDateRange={customDateRange} onCustomDateRangeChange={setCustomDateRange} />
                 </div>
               </div>
             </div>
@@ -177,42 +158,22 @@ export default function Purchases() {
 
         {/* Mobile Purchase Cards */}
         <div className="space-y-3">
-          {isLoading ? (
-            <div className="text-center py-8">
+          {isLoading ? <div className="text-center py-8">
               <p className="text-blue-300">Loading purchases...</p>
-            </div>
-          ) : filteredPurchases.length === 0 ? (
-            <div className="text-center py-8">
+            </div> : filteredPurchases.length === 0 ? <div className="text-center py-8">
               <p className="text-blue-300">No purchases found</p>
-            </div>
-          ) : (
-            filteredPurchases.map((purchase) => (
-              <PurchaseCard
-                key={purchase.id}
-                purchase={purchase}
-                storeName={getStoreName(purchase.store_id || '')}
-                supplierName={getSupplierName(purchase.supplier_id || '')}
-              />
-            ))
-          )}
+            </div> : filteredPurchases.map(purchase => <PurchaseCard key={purchase.id} purchase={purchase} storeName={getStoreName(purchase.store_id || '')} supplierName={getSupplierName(purchase.supplier_id || '')} />)}
         </div>
 
         {/* Floating Action Buttons */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-          <RefactoredMultiItemPurchaseForm
-            trigger={
-              <Button size="lg" className="cyber-button text-white font-semibold rounded-full h-12 w-12 shadow-2xl">
+          <RefactoredMultiItemPurchaseForm trigger={<Button size="lg" className="cyber-button text-white font-semibold rounded-full h-12 w-12 shadow-2xl">
                 <Plus className="w-5 h-5" />
-              </Button>
-            }
-          />
+              </Button>} />
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -220,35 +181,23 @@ export default function Purchases() {
           <p className="text-blue-300">Track and manage all purchase orders</p>
         </div>
         <div className="flex gap-2">
-          <ExportButton 
-            data={filteredPurchases.map(purchase => ({
-              'Date': new Date(purchase.date).toLocaleDateString('en-GB'),
-              'Invoice Number': purchase.invoice_number || 'N/A',
-              'Item': purchase.item_name,
-              'Supplier': getSupplierName(purchase.supplier_id || ''),
-              'Store': getStoreName(purchase.store_id || ''),
-              'Quantity': purchase.quantity,
-              'Total Cost': purchase.total_cost
-            }))} 
-            filename="purchases" 
-            type="purchases"
-          />
-          <EnhancedPurchaseForm
-            trigger={
-              <Button className="cyber-button text-white font-semibold">
+          <ExportButton data={filteredPurchases.map(purchase => ({
+          'Date': new Date(purchase.date).toLocaleDateString('en-GB'),
+          'Invoice Number': purchase.invoice_number || 'N/A',
+          'Item': purchase.item_name,
+          'Supplier': getSupplierName(purchase.supplier_id || ''),
+          'Store': getStoreName(purchase.store_id || ''),
+          'Quantity': purchase.quantity,
+          'Total Cost': purchase.total_cost
+        }))} filename="purchases" type="purchases" />
+          <EnhancedPurchaseForm trigger={<Button className="cyber-button font-semibold text-zinc-950">
                 <Plus className="w-4 h-4 mr-2" />
                 Single Item
-              </Button>
-            }
-          />
-          <RefactoredMultiItemPurchaseForm
-            trigger={
-              <Button className="cyber-button text-white font-semibold">
+              </Button>} />
+          <RefactoredMultiItemPurchaseForm trigger={<Button className="cyber-button font-semibold text-stone-950">
                 <Plus className="w-4 h-4 mr-2" />
                 Multi Item
-              </Button>
-            }
-          />
+              </Button>} />
         </div>
       </div>
 
@@ -288,12 +237,7 @@ export default function Purchases() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm text-blue-200">Search</label>
-              <Input
-                placeholder="Search purchases..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="neon-border bg-slate-800/50 text-blue-100"
-              />
+              <Input placeholder="Search purchases..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="neon-border bg-slate-800/50 text-blue-100" />
             </div>
             <div className="space-y-2">
               <label className="text-sm text-blue-200">Store</label>
@@ -303,11 +247,9 @@ export default function Purchases() {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-blue-500/30">
                   <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Stores</SelectItem>
-                  {stores.map((store) => (
-                    <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
+                  {stores.map(store => <SelectItem key={store.id} value={store.id} className="text-blue-100 focus:bg-blue-800/30">
                       {store.name}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -319,23 +261,16 @@ export default function Purchases() {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-blue-500/30">
                   <SelectItem value="all" className="text-blue-100 focus:bg-blue-800/30">All Suppliers</SelectItem>
-                  {suppliers.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id} className="text-blue-100 focus:bg-blue-800/30">
+                  {suppliers.map(supplier => <SelectItem key={supplier.id} value={supplier.id} className="text-blue-100 focus:bg-blue-800/30">
                       {supplier.name}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <label className="text-sm text-blue-200">Date Range</label>
               <div className="bg-slate-800/50 p-3 rounded-md border border-blue-500/30">
-                <DateFilterSelector
-                  dateFilter={dateFilter}
-                  onDateFilterChange={setDateFilter}
-                  customDateRange={customDateRange}
-                  onCustomDateRangeChange={setCustomDateRange}
-                />
+                <DateFilterSelector dateFilter={dateFilter} onDateFilterChange={setDateFilter} customDateRange={customDateRange} onCustomDateRangeChange={setCustomDateRange} />
               </div>
             </div>
           </div>
@@ -365,8 +300,7 @@ export default function Purchases() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPurchases.map((purchase) => (
-                  <TableRow key={purchase.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
+                {filteredPurchases.map(purchase => <TableRow key={purchase.id} className="border-blue-500/20 hover:bg-blue-800/20 transition-colors">
                     <TableCell className="text-blue-100">
                       {new Date(purchase.date).toLocaleDateString('en-GB')}
                     </TableCell>
@@ -389,18 +323,14 @@ export default function Purchases() {
                     <TableCell>
                       <Badge className="bg-green-500/20 text-green-400">Completed</Badge>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
           </div>
-          {filteredPurchases.length === 0 && (
-            <div className="text-center py-8">
+          {filteredPurchases.length === 0 && <div className="text-center py-8">
               <p className="text-blue-300">No purchases found matching your criteria</p>
-            </div>
-          )}
+            </div>}
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
