@@ -24,10 +24,12 @@ import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
 import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import StoreSelector from '@/components/StoreSelector';
+import DateFilterSelector from '@/components/DateFilterSelector';
 import { formatCurrency } from '@/utils/currencyUtils';
 import ExportButton from '@/components/ExportButton';
 import { PaginationControls } from '@/components/ui/pagination';
 import { supabase } from '@/integrations/supabase/client';
+import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 export default function EnhancedPaymentsPage() {
   const [selectedStore, setSelectedStore] = useState('all');
@@ -35,6 +37,8 @@ export default function EnhancedPaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const itemsPerPage = 25;
   const isMobile = useIsMobile();
 
@@ -93,14 +97,43 @@ export default function EnhancedPaymentsPage() {
     };
   }, [refetchPayments, refetchPaymentSummary, refetchSalePaymentStatus]);
 
+  // Helper function to check if date is within selected range
+  const isDateInRange = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (dateFilter === 'today') {
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+      return checkDate.getTime() === today.getTime();
+    } else if (dateFilter === 'week') {
+      const weekAgo = new Date(today);
+      weekAgo.setDate(today.getDate() - 7);
+      return date >= weekAgo && date <= today;
+    } else if (dateFilter === 'month') {
+      const monthAgo = new Date(today);
+      monthAgo.setMonth(today.getMonth() - 1);
+      return date >= monthAgo && date <= today;
+    } else if (dateFilter === 'custom' && customDateRange) {
+      const from = new Date(customDateRange.from);
+      const to = new Date(customDateRange.to);
+      from.setHours(0, 0, 0, 0);
+      to.setHours(23, 59, 59, 999);
+      return date >= from && date <= to;
+    }
+    return true;
+  };
+
   const filteredPayments = useMemo(() => {
     return payments.filter(payment => {
       const matchesStore = selectedStore === 'all' || payment.store_id === selectedStore;
       const matchesSearch = payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            payment.type.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesStore && matchesSearch;
+      const matchesDate = isDateInRange(payment.date);
+      return matchesStore && matchesSearch && matchesDate;
     });
-  }, [payments, selectedStore, searchTerm]);
+  }, [payments, selectedStore, searchTerm, dateFilter, customDateRange]);
 
   const filteredOutstandingBalances = useMemo(() => {
     return salePaymentStatus.filter(sale => {
@@ -226,7 +259,7 @@ export default function EnhancedPaymentsPage() {
                 Filters {filtersExpanded ? '▼' : '▶'}
               </Button>
             )}
-            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${isMobile && !filtersExpanded ? 'hidden' : ''}`}>
+            <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${isMobile && !filtersExpanded ? 'hidden' : ''}`}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
                 <Input
@@ -242,6 +275,15 @@ export default function EnhancedPaymentsPage() {
                 stores={stores}
                 isLoading={false}
                 placeholder="All stores"
+              />
+              <DateFilterSelector
+                dateFilter={dateFilter}
+                onDateFilterChange={(value) => {
+                  setDateFilter(value);
+                  setCurrentPage(1);
+                }}
+                customDateRange={customDateRange}
+                onCustomDateRangeChange={setCustomDateRange}
               />
             </div>
           </div>
