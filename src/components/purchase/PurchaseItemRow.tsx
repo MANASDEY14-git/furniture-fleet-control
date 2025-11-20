@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { useItemVariants } from '@/hooks/useItemVariants';
+import ExistingItemSelector from './ExistingItemSelector';
 
 import { Item } from '@/types';
 
@@ -93,29 +94,15 @@ export default function PurchaseItemRow({
             </div>
           ) : (
             <div className="space-y-2">
-              <Select
-                value={item.itemId}
-                onValueChange={(value) => {
+              <ExistingItemSelector
+                itemId={item.itemId}
+                filteredItems={availableItems}
+                onItemIdChange={(value) => {
                   onUpdateItem(item.id, 'itemId', value);
                   // Clear variant when item changes
                   onUpdateItem(item.id, 'variantId', '');
                 }}
-              >
-                <SelectTrigger className="neon-border bg-slate-800/50 text-blue-100 min-w-[200px]">
-                  <SelectValue placeholder="Select item" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-slate-800 border-blue-500/30">
-                  {availableItems.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">No items for selected supplier/store</div>
-                  ) : (
-                    availableItems.map((availableItem) => (
-                      <SelectItem key={availableItem.id} value={availableItem.id} className="text-blue-100 focus:bg-blue-800/30">
-                        {availableItem.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              />
 
               {/* Show variant selector if item has variants */}
               {hasVariants && item.itemId && (

@@ -5,7 +5,12 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Item } from '@/hooks/useItems';
+
+interface Item {
+  id: string;
+  name: string;
+  quantity_available: number;
+}
 
 interface ExistingItemSelectorProps {
   itemId: string;
