@@ -1492,6 +1492,33 @@ export type Database = {
     }
     Functions: {
       can_access_customer_pii: { Args: { _user_id?: string }; Returns: boolean }
+      get_bank_transactions: {
+        Args: { _store_id?: string }
+        Returns: {
+          account_name: string
+          account_number: string
+          amount: number
+          bank_charges: number
+          bank_name: string
+          card_last_four: string
+          cheque_date: string
+          cheque_number: string
+          cleared_at: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          net_amount: number
+          payment_gateway: string
+          payment_method: Database["public"]["Enums"]["payment_method_type"]
+          payment_status: string
+          store_name: string
+          supplier_name: string
+          transaction_reference: string
+          type: string
+          upi_id: string
+        }[]
+      }
       get_sales_orders_for_user: {
         Args: { _store_id?: string }
         Returns: {
@@ -1577,7 +1604,12 @@ export type Database = {
       user_has_store_access: { Args: { _store_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "manager" | "employee" | "sales_representative"
+      app_role:
+        | "admin"
+        | "manager"
+        | "employee"
+        | "sales_representative"
+        | "accountant"
       payment_method_type:
         | "cash"
         | "upi"
@@ -1714,7 +1746,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "manager", "employee", "sales_representative"],
+      app_role: [
+        "admin",
+        "manager",
+        "employee",
+        "sales_representative",
+        "accountant",
+      ],
       payment_method_type: [
         "cash",
         "upi",
