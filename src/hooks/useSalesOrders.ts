@@ -149,3 +149,51 @@ export const useUpdateSalesOrderStatus = () => {
     },
   });
 };
+
+export const useCancelSalesOrder = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ 
+      orderId, 
+      cancellationReason 
+    }: { 
+      orderId: string; 
+      cancellationReason: string;
+    }) => {
+      const { data, error } = await supabase
+        .from('sales_orders')
+        .update({ 
+          delivery_status: 'Cancelled',
+          cancellation_reason: cancellationReason,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['secure-sales-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+      queryClient.invalidateQueries({ queryKey: ['material-stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['sale-payment-status'] });
+      toast({ 
+        title: "Order Cancelled", 
+        description: "Stock has been restored to inventory" 
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to cancel order: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+};

@@ -11,6 +11,8 @@ import { DeliveryStatus } from '@/types';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState } from 'react';
+import { CancelOrderDialog } from './CancelOrderDialog';
+import { useCancelSalesOrder } from '@/hooks/useSalesOrders';
 
 interface SalesTableProps {
   filteredOrders: any[];
@@ -27,7 +29,7 @@ function MobileOrderCard({
   order, 
   getStoreName, 
   getSupplierName, 
-  handleStatusUpdate, 
+  handleStatusChange, 
   setViewingOrder, 
   setRecordingPayment, 
   canAccessPII 
@@ -35,7 +37,7 @@ function MobileOrderCard({
   order: any;
   getStoreName: (storeId: string) => string;
   getSupplierName: (supplierId: string) => string;
-  handleStatusUpdate: (orderId: string, newStatus: DeliveryStatus) => void;
+  handleStatusChange: (orderId: string, newStatus: DeliveryStatus, order: any) => void;
   setViewingOrder: (order: any) => void;
   setRecordingPayment: (order: any) => void;
   canAccessPII: boolean;
@@ -105,7 +107,8 @@ function MobileOrderCard({
                 <p className="text-blue-300 font-medium text-sm">Update Status</p>
                 <Select 
                   value={order.delivery_status} 
-                  onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.sale_id, value)}
+                  onValueChange={(value: DeliveryStatus) => handleStatusChange(order.sale_id, value, order)}
+                  disabled={order.delivery_status === 'Cancelled'}
                 >
                   <SelectTrigger className="w-full neon-border bg-slate-800/50 text-blue-100">
                     <SelectValue>
@@ -160,6 +163,25 @@ export default function SalesTable({
   canAccessPII = false
 }: SalesTableProps) {
   const isMobile = useIsMobile();
+  const [cancellingOrder, setCancellingOrder] = useState<any>(null);
+  const cancelOrderMutation = useCancelSalesOrder();
+
+  const handleStatusChange = (orderId: string, newStatus: DeliveryStatus, order: any) => {
+    if (newStatus === 'Cancelled') {
+      setCancellingOrder(order);
+    } else {
+      handleStatusUpdate(orderId, newStatus);
+    }
+  };
+
+  const handleCancelConfirm = (reason: string) => {
+    if (cancellingOrder) {
+      cancelOrderMutation.mutate({
+        orderId: cancellingOrder.sale_id,
+        cancellationReason: reason
+      });
+    }
+  };
 
   if (isMobile) {
     return (
@@ -182,7 +204,7 @@ export default function SalesTable({
                 order={order}
                 getStoreName={getStoreName}
                 getSupplierName={getSupplierName}
-                handleStatusUpdate={handleStatusUpdate}
+                handleStatusChange={handleStatusChange}
                 setViewingOrder={setViewingOrder}
                 setRecordingPayment={setRecordingPayment}
                 canAccessPII={canAccessPII}
@@ -241,10 +263,11 @@ export default function SalesTable({
                   <TableCell className="text-blue-200">
                     {order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : 'Not Set'}
                   </TableCell>
-                  <TableCell>
+                   <TableCell>
                     <Select 
                       value={order.delivery_status} 
-                      onValueChange={(value: DeliveryStatus) => handleStatusUpdate(order.sale_id, value)}
+                      onValueChange={(value: DeliveryStatus) => handleStatusChange(order.sale_id, value, order)}
+                      disabled={order.delivery_status === 'Cancelled'}
                     >
                       <SelectTrigger className="w-36 neon-border bg-slate-800/50 text-blue-100">
                         <SelectValue>
@@ -292,6 +315,14 @@ export default function SalesTable({
           </div>
         )}
       </CardContent>
+      
+      <CancelOrderDialog
+        open={!!cancellingOrder}
+        onOpenChange={(open) => !open && setCancellingOrder(null)}
+        onConfirm={handleCancelConfirm}
+        orderNumber={cancellingOrder?.order_number || ''}
+        itemCount={0}
+      />
     </Card>
   );
 }

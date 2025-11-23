@@ -1131,6 +1131,8 @@ export type Database = {
         Row: {
           advance_paid: number | null
           balance_due: number | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           created_at: string
           customer_address: string | null
           customer_name: string | null
@@ -1151,6 +1153,8 @@ export type Database = {
         Insert: {
           advance_paid?: number | null
           balance_due?: number | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_address?: string | null
           customer_name?: string | null
@@ -1171,6 +1175,8 @@ export type Database = {
         Update: {
           advance_paid?: number | null
           balance_due?: number | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_address?: string | null
           customer_name?: string | null

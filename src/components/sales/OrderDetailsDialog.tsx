@@ -4,9 +4,11 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { useSingleSalesOrder } from '@/hooks/useSingleSalesOrder';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import StatusBadge from '@/components/StatusBadge';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AlertTriangle } from 'lucide-react';
 
 interface OrderDetailsDialogProps {
   viewingOrder: any;
@@ -123,6 +125,24 @@ export default function OrderDetailsDialog({
 
   const content = (
     <div className="space-y-4">
+      {/* Cancellation Alert */}
+      {order.delivery_status === 'Cancelled' && order.cancelled_at && (
+        <Alert className="border-destructive/50 bg-destructive/10">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertDescription className="ml-2">
+            <p className="font-semibold text-destructive">This order was cancelled</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Cancelled on: {new Date(order.cancelled_at).toLocaleString('en-GB')}
+            </p>
+            {order.cancellation_reason && (
+              <p className="text-sm mt-2">
+                <span className="font-medium">Reason:</span> {order.cancellation_reason}
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Customer and Order Info */}
       {isMobile ? (
         <div className="space-y-4">
