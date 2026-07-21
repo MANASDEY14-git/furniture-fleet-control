@@ -141,6 +141,53 @@ export default function BusinessAnalyticsSection({ metrics, isLoading }: Busines
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Best-Selling Products */}
+        <Card className="simple-card">
+          <CardHeader>
+            <CardTitle className="text-foreground">Best-Selling Products</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {metrics?.bestSellingProducts?.length > 0 ? (
+                metrics.bestSellingProducts.map((product: any, index: number) => (
+                  <div key={index} className="flex justify-between items-center border-b border-border pb-2 last:border-0 last:pb-0">
+                    <span className="font-medium text-foreground">{product.name}</span>
+                    <span className="text-muted-foreground">{product.quantity} sold</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">No sales data available</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Slow-Moving Inventory */}
+        <Card className="simple-card">
+          <CardHeader>
+            <CardTitle className="text-foreground">Slow-Moving Inventory</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {metrics?.slowMovingInventory?.length > 0 ? (
+                metrics.slowMovingInventory.map((item: any, index: number) => (
+                  <div key={index} className="flex justify-between items-center border-b border-border pb-2 last:border-0 last:pb-0">
+                    <span className="font-medium text-foreground">{item.name}</span>
+                    <div className="text-right">
+                      <p className="text-sm text-foreground">{item.quantity_available} in stock</p>
+                      <p className="text-xs text-muted-foreground">{item.sales} sold</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">No inventory data available</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

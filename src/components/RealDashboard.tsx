@@ -106,8 +106,24 @@ export default function RealDashboard() {
           {/* Delivery Alerts - Prominent position at top */}
           <DeliveryAlertsCard />
 
-      {/* Core Metrics - 2x2 Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Core Metrics - 3x2 Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="simple-card">
+          <CardContent className="p-8">
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-secondary rounded-lg flex-shrink-0">
+                <DollarSign className="w-8 h-8 text-foreground" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-medium text-muted-foreground mb-2">Today's Sales</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {formatCurrency(metrics?.todaysSales || 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="simple-card">
           <CardContent className="p-8">
             <div className="flex items-center gap-6">
@@ -115,7 +131,23 @@ export default function RealDashboard() {
                 <TrendingUp className="w-8 h-8 text-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-base font-medium text-muted-foreground mb-2">Total Sales</p>
+                <p className="text-base font-medium text-muted-foreground mb-2">Weekly Sales</p>
+                <p className="text-3xl font-bold text-foreground">
+                  {formatCurrency(metrics?.weeklySales || 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="simple-card">
+          <CardContent className="p-8">
+            <div className="flex items-center gap-6">
+              <div className="p-4 bg-secondary rounded-lg flex-shrink-0">
+                <BarChart3 className="w-8 h-8 text-foreground" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-medium text-muted-foreground mb-2">Total Sales (All Time)</p>
                 <p className="text-3xl font-bold text-foreground">
                   {formatCurrency(metrics?.totalSales || 0)}
                 </p>

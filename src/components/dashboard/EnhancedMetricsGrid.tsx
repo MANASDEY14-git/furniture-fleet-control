@@ -100,6 +100,37 @@ export default function EnhancedMetricsGrid({ metrics, isLoading }: EnhancedMetr
       icon: <TrendingUp />,
       description: 'Total receipts received',
       trend: null
+    },
+    {
+      title: 'Customer Lifetime Value',
+      value: formatCurrency(metrics?.customerLifetimeValue || 0),
+      icon: <DollarSign />,
+      description: 'Average revenue per customer',
+      trend: null
+    },
+    {
+      title: 'Repeat Customers',
+      value: metrics?.repeatCustomers || 0,
+      icon: <TrendingUp />,
+      description: 'Customers with > 1 order',
+      trend: null
+    },
+    {
+      title: 'Delivery Delays',
+      value: metrics?.deliveryDelays || 0,
+      icon: <AlertTriangle />,
+      description: 'Overdue deliveries',
+      trend: {
+        value: (metrics?.deliveryDelays || 0) === 0 ? 1 : -1,
+        label: (metrics?.deliveryDelays || 0) === 0 ? 'Good' : 'Needs attention'
+      }
+    },
+    {
+      title: 'Pending Orders',
+      value: metrics?.pendingOrders || 0,
+      icon: <Package />,
+      description: 'Orders awaiting delivery',
+      trend: null
     }
   ];
 

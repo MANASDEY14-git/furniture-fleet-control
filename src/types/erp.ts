@@ -36,6 +36,16 @@ export interface DashboardMetrics {
   lowStockCount: number;
   outstandingBalance: number;
   supplierPayable: number;
+  
+  // New KPIs
+  todaysSales: number;
+  weeklySales: number;
+  deliveryDelays: number;
+  pendingOrders: number;
+  customerLifetimeValue: number;
+  repeatCustomers: number;
+  bestSellingProducts: { name: string; quantity: number }[];
+  slowMovingInventory: { name: string; quantity_available: number; sales: number }[];
 }
 
 export interface SalePaymentStatus {
