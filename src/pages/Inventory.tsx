@@ -125,8 +125,8 @@ export default function Inventory() {
                 <InventoryHeader
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
-                  selectedStore={selectedStore}
-                  onStoreChange={setSelectedStore}
+                  selectedStore={activeStoreId}
+                  onStoreChange={() => {}}
                   selectedCategory={selectedCategory}
                   onCategoryChange={setSelectedCategory}
                   selectedSupplier={selectedSupplier}
@@ -188,8 +188,8 @@ export default function Inventory() {
                 <InventoryHeader
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
-                  selectedStore={selectedStore}
-                  onStoreChange={setSelectedStore}
+                  selectedStore={activeStoreId}
+                  onStoreChange={() => {}}
                   selectedCategory={selectedCategory}
                   onCategoryChange={setSelectedCategory}
                   selectedSupplier={selectedSupplier}

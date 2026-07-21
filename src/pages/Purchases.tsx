@@ -121,20 +121,7 @@ export default function Purchases() {
               <DrawerTitle className="text-foreground">Filter Options</DrawerTitle>
             </DrawerHeader>
             <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Store</label>
-                <Select value={selectedStore} onValueChange={setSelectedStore}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Stores</SelectItem>
-                    {stores.map(store => <SelectItem key={store.id} value={store.id}>
-                        {store.name}
-                      </SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">Supplier</label>
                 <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
@@ -271,20 +258,7 @@ export default function Purchases() {
               <label className="text-sm text-muted-foreground">Search</label>
               <Input placeholder="Search purchases..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Store</label>
-              <Select value={selectedStore} onValueChange={setSelectedStore}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Stores</SelectItem>
-                  {stores.map(store => <SelectItem key={store.id} value={store.id}>
-                      {store.name}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">Supplier</label>
               <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>

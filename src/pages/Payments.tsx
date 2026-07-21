@@ -169,7 +169,7 @@ export default function Payments() {
     }
   };
 
-  const activeFiltersCount = (selectedStore !== 'all' ? 1 : 0) + 
+  const activeFiltersCount = (activeStoreId !== 'all' ? 1 : 0) + 
                              (selectedSupplier !== 'all' ? 1 : 0) + 
                              (dateFilter !== 'month' ? 1 : 0) +
                              (searchTerm ? 1 : 0);
