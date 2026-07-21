@@ -4,7 +4,7 @@ import { useUpdateSalesOrderStatus } from '@/hooks/useSalesOrders';
 import { useCanAccessCustomerPII } from '@/hooks/useSecureSalesOrders';
 import { useRecordPayment } from '@/hooks/useSalePaymentStatus';
 import { useComputedSalePaymentStatus } from '@/hooks/useComputedSalePaymentStatus';
-import { useStores } from '@/hooks/useStores';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { DeliveryStatus } from '@/types';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
@@ -21,7 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Sales() {
   const isMobile = useIsMobile();
-  const [selectedStore, setSelectedStore] = useState('all');
+  const { activeStoreId, accessibleStores } = useStoreContext();
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingOrder, setViewingOrder] = useState<any>(null);
@@ -33,8 +33,7 @@ export default function Sales() {
   const [documentType, setDocumentType] = useState<'order' | 'quote'>('order');
 
   // Use computed sale payment status that works with secure orders
-  const { data: salePaymentStatus = [], isLoading: ordersLoading, refetch: refetchSalePaymentStatus } = useComputedSalePaymentStatus(selectedStore === 'all' ? undefined : selectedStore, documentType);
-  const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: salePaymentStatus = [], isLoading: ordersLoading, refetch: refetchSalePaymentStatus } = useComputedSalePaymentStatus(activeStoreId === 'all' ? undefined : activeStoreId, documentType);
   const { data: suppliers = [] } = useSuppliers();
   const { data: canAccessPII = false } = useCanAccessCustomerPII();
   const updateOrderStatus = useUpdateSalesOrderStatus();
@@ -112,7 +111,7 @@ export default function Sales() {
 
     // Use sale payment status data for enhanced information
     let filtered = salePaymentStatus.filter(order => {
-      const matchesStore = selectedStore === 'all' || order.store_id === selectedStore;
+      const matchesStore = activeStoreId === 'all' || order.store_id === activeStoreId;
       
       // Supplier filter: check BOTH order-level supplier AND item-level suppliers
       let matchesSupplier = selectedSupplier === 'all';
@@ -167,10 +166,10 @@ export default function Sales() {
     });
 
     return filtered;
-  }, [salePaymentStatus, selectedStore, selectedSupplier, searchTerm, dateFilter, customDateRange, orderItemSuppliers]);
+  }, [salePaymentStatus, activeStoreId, selectedSupplier, searchTerm, dateFilter, customDateRange, orderItemSuppliers]);
 
   const getStoreName = (storeId: string) => {
-    return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
+    return accessibleStores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
 
   const getSupplierName = (supplierId: string) => {
@@ -230,16 +229,12 @@ export default function Sales() {
       <SalesFilters
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        selectedStore={selectedStore}
-        setSelectedStore={setSelectedStore}
         selectedSupplier={selectedSupplier}
         setSelectedSupplier={setSelectedSupplier}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
         customDateRange={customDateRange}
         setCustomDateRange={setCustomDateRange}
-        stores={stores}
-        storesLoading={storesLoading}
       />
 
       <SalesTable

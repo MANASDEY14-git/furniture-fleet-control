@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
+import { StoreProvider } from '@/contexts/StoreContext';
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
@@ -59,8 +60,9 @@ function App() {
             } />
             <Route path="/*" element={
               <ProtectedRoute>
-                <Layout>
-                  <Routes>
+                <StoreProvider>
+                  <Layout>
+                    <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/sales" element={<Sales />} />
@@ -84,6 +86,7 @@ function App() {
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>
+                </StoreProvider>
               </ProtectedRoute>
             } />
           </Routes>

@@ -3,7 +3,8 @@ import { useState } from 'react';
 import {
   LayoutDashboard, ShoppingCart, Package, DollarSign, FileText,
   Settings, Calendar, Users, BookOpen, LogOut, Building2,
-  TrendingUp, ChevronDown, ChevronRight, Layers, Activity, Tag, CreditCard
+  TrendingUp, ChevronDown, ChevronRight, Layers, Activity, Tag,
+  CreditCard, Store, Check
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -11,7 +12,16 @@ import {
   SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // ─────────────────────────────────────────────
@@ -53,13 +63,13 @@ const navigationGroups = [
 
 // Secondary "Operations" links tucked in a collapsible — power users only
 const operationsItems = [
-  { name: 'Inventory',            href: '/inventory',             icon: Package   },
-  { name: 'Materials',            href: '/materials',             icon: Package   },
-  { name: 'Material Purchases',   href: '/material-purchases',    icon: Tag       },
-  { name: 'Stock Ledger',         href: '/stock-ledger',          icon: BookOpen  },
-  { name: 'Material Stock Ledger',href: '/material-stock-ledger', icon: Activity  },
-  { name: 'BOM Management',       href: '/bom-management',        icon: Layers    },
-  { name: 'Vendor Payments',      href: '/payments',              icon: DollarSign},
+  { name: 'Inventory',             href: '/inventory',             icon: Package    },
+  { name: 'Materials',             href: '/materials',             icon: Package    },
+  { name: 'Material Purchases',    href: '/material-purchases',    icon: Tag        },
+  { name: 'Stock Ledger',          href: '/stock-ledger',          icon: BookOpen   },
+  { name: 'Material Stock Ledger', href: '/material-stock-ledger', icon: Activity   },
+  { name: 'BOM Management',        href: '/bom-management',        icon: Layers     },
+  { name: 'Vendor Payments',       href: '/payments',              icon: DollarSign },
 ];
 
 export function AppSidebar() {
@@ -69,6 +79,15 @@ export function AppSidebar() {
   const isCollapsed = state === 'collapsed';
   const [opsOpen, setOpsOpen] = useState(false);
 
+  // Store context
+  const {
+    activeStoreId,
+    activeStore,
+    accessibleStores,
+    canViewAllStores,
+    setActiveStore,
+  } = useStoreContext();
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -77,18 +96,92 @@ export function AppSidebar() {
     if (isMobile) setOpenMobile(false);
   };
 
-  // Is any operations item currently active? If so, keep section visible.
+  // Is any operations item currently active?
   const opsActive = operationsItems.some(i => location.pathname === i.href);
+
+  // Label shown on the store-switcher button
+  const activeStoreLabel =
+    activeStoreId === 'all' ? 'All Stores' : (activeStore?.name ?? 'Select Store');
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border/50">
-      <SidebarHeader className="border-b border-border/50 p-4">
+      <SidebarHeader className="border-b border-border/50 p-3 space-y-2">
+        {/* Brand */}
         {!isCollapsed && (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-0.5 px-1">
             <span className="text-lg font-bold text-primary leading-tight">Furniture ERP</span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Retail Management</span>
           </div>
         )}
+
+        {/* ── Store Switcher ─────────────────────────────────── */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`
+                w-full justify-between gap-1 border-border/60 bg-accent/40
+                hover:bg-accent hover:border-border text-xs font-medium
+                transition-all duration-150
+                ${isCollapsed ? 'px-2 justify-center' : 'px-3'}
+              `}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
+                {!isCollapsed && (
+                  <span className="truncate">{activeStoreLabel}</span>
+                )}
+              </div>
+              {!isCollapsed && <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />}
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="start"
+            sideOffset={6}
+            className="w-52 border-border/60 bg-popover shadow-lg"
+          >
+            <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider pb-1">
+              Switch Store
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+
+            {/* "All Stores" — only for admin / manager */}
+            {canViewAllStores && (
+              <DropdownMenuItem
+                className="gap-2 cursor-pointer"
+                onClick={() => setActiveStore('all')}
+              >
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <span className="flex-1">All Stores</span>
+                {activeStoreId === 'all' && (
+                  <Check className="h-3.5 w-3.5 text-primary" />
+                )}
+              </DropdownMenuItem>
+            )}
+
+            {/* Individual stores */}
+            {accessibleStores.map(store => (
+              <DropdownMenuItem
+                key={store.id}
+                className="gap-2 cursor-pointer"
+                onClick={() => setActiveStore(store.id)}
+              >
+                <Store className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-sm">{store.name}</div>
+                  {store.location && (
+                    <div className="truncate text-[10px] text-muted-foreground">{store.location}</div>
+                  )}
+                </div>
+                {activeStoreId === store.id && (
+                  <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarHeader>
 
       <SidebarContent className="bg-sidebar">
@@ -128,20 +221,16 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
 
-        {/* Operations — collapsible group for power users */}
+        {/* Operations — collapsible group for power users (expanded only) */}
         {!isCollapsed && (
           <SidebarGroup>
             <Collapsible open={opsOpen || opsActive} onOpenChange={setOpsOpen}>
               <CollapsibleTrigger asChild>
-                <button
-                  className="flex w-full items-center justify-between px-2 py-1 text-muted-foreground/60 text-xs uppercase tracking-wider hover:text-muted-foreground transition-colors"
-                >
+                <button className="flex w-full items-center justify-between px-2 py-1 text-muted-foreground/60 text-xs uppercase tracking-wider hover:text-muted-foreground transition-colors">
                   <span>Operations</span>
-                  {(opsOpen || opsActive) ? (
-                    <ChevronDown className="h-3 w-3" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3" />
-                  )}
+                  {(opsOpen || opsActive)
+                    ? <ChevronDown className="h-3 w-3" />
+                    : <ChevronRight className="h-3 w-3" />}
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -177,7 +266,7 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Show ops items flat when sidebar is icon-only (collapsed) */}
+        {/* Collapsed: show ops items flat with tooltips */}
         {isCollapsed && (
           <SidebarGroup>
             <SidebarGroupContent>

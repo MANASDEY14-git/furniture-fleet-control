@@ -3,12 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { DashboardMetrics } from '@/types/erp';
 
-export const useRealDashboardMetrics = () => {
+export const useRealDashboardMetrics = (storeId?: string) => {
+  const effectiveStoreId = storeId && storeId !== 'all' ? storeId : undefined;
   return useQuery({
-    queryKey: ['real-dashboard-metrics'],
+    queryKey: ['real-dashboard-metrics', storeId],
     queryFn: async () => {
       // Get total sales with order count using secure function
-      const { data: rawSalesData, error: salesError } = await supabase.rpc('get_sales_orders_for_user', { _document_type: 'order' });
+      const { data: rawSalesData, error: salesError } = await supabase.rpc('get_sales_orders_for_user', {
+        _document_type: 'order',
+        ...(effectiveStoreId ? { _store_id: effectiveStoreId } : {}),
+      });
       
       if (salesError) throw salesError;
       
@@ -32,17 +36,17 @@ export const useRealDashboardMetrics = () => {
         }
       }
 
-      // Get total purchases
-      const { data: purchasesData, error: purchasesError } = await supabase
-        .from('purchases')
-        .select('total_cost');
+      // Get total purchases (filtered by store if set)
+      let purchaseQuery = supabase.from('purchases').select('total_cost');
+      if (effectiveStoreId) purchaseQuery = purchaseQuery.eq('store_id', effectiveStoreId);
+      const { data: purchasesData, error: purchasesError } = await purchaseQuery;
       
       if (purchasesError) throw purchasesError;
       
-      // Get inventory metrics
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('items')
-        .select('id, name, quantity_available, cost_price, selling_price');
+      // Get inventory metrics (filtered by store if set)
+      let itemsQuery = supabase.from('items').select('id, name, quantity_available, cost_price, selling_price');
+      if (effectiveStoreId) itemsQuery = itemsQuery.eq('store_id', effectiveStoreId);
+      const { data: itemsData, error: itemsError } = await itemsQuery;
       
       if (itemsError) throw itemsError;
       

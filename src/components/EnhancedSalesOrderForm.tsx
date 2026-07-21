@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, ShoppingCart, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import SupplierSelector from '@/components/SupplierSelector';
 import { useQuery } from '@tanstack/react-query';
 import { useStores } from '@/hooks/useStores';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
 import { useEnhancedBOMByItem } from '@/hooks/useEnhancedBOM';
 import { useItemVariants } from '@/hooks/useItemVariants';
@@ -60,6 +61,7 @@ export default function EnhancedSalesOrderForm({
   documentType = 'order'
 }: EnhancedSalesOrderFormProps) {
   const isMobile = useIsMobile();
+  const { activeStoreId } = useStoreContext();
   const [open, setOpen] = useState(false);
   const [isWalkInCustomer, setIsWalkInCustomer] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,6 +113,14 @@ export default function EnhancedSalesOrderForm({
   const {
     data: stores = []
   } = useStores();
+
+  // Pre-fill store when the form opens (user can still override)
+  useEffect(() => {
+    if (open && activeStoreId && activeStoreId !== 'all') {
+      setFormData(prev => ({ ...prev, storeId: prev.storeId || activeStoreId }));
+    }
+  }, [open, activeStoreId]);
+
   const createSalesOrder = useCreateSalesOrder();
   const [customizationDialog, setCustomizationDialog] = useState({
     open: false,

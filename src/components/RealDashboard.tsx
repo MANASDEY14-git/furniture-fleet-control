@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, ShoppingCart, Package, DollarSign, AlertTriangle, Users, Truck, Brain, BarChart3 } from 'lucide-react';
 import { useRealDashboardMetrics } from '@/hooks/useRealDashboardMetrics';
 import { useSalePaymentStatus } from '@/hooks/useSalePaymentStatus';
-import { useStores } from '@/hooks/useStores';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { formatCurrency } from '@/utils/currencyUtils';
 import EnhancedMetricsGrid from '@/components/dashboard/EnhancedMetricsGrid';
 import BusinessAnalyticsSection from '@/components/dashboard/BusinessAnalyticsSection';
@@ -15,16 +15,14 @@ import DeliveryAlertsCard from '@/components/dashboard/DeliveryAlertsCard';
 
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { activeStoreId } = useStoreContext();
   const {
     data: metrics,
     isLoading: metricsLoading
-  } = useRealDashboardMetrics();
+  } = useRealDashboardMetrics(activeStoreId);
   const {
     data: salePaymentStatus = []
   } = useSalePaymentStatus();
-  const {
-    data: stores = []
-  } = useStores();
 
   // Update time every minute
   useEffect(() => {

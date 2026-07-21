@@ -8,10 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Search, CreditCard, Trash2, Receipt, Filter } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerFooter, DrawerClose } from '@/components/ui/drawer';
 import { usePayments, useDeletePayment } from '@/hooks/usePayments';
-import { useStores } from '@/hooks/useStores';
-import { useSuppliers } from '@/hooks/useSuppliers';
-import StoreSelector from '@/components/StoreSelector';
 import SupplierSelector from '@/components/SupplierSelector';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useStoreContext } from '@/contexts/StoreContext';
 import ExportButton from '@/components/ExportButton';
 import DateFilterSelector from '@/components/DateFilterSelector';
 import PaymentEntryForm from '@/components/PaymentEntryForm';
@@ -92,7 +91,6 @@ function MobilePaymentCard({
 }
 
 export default function Payments() {
-  const [selectedStore, setSelectedStore] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
@@ -101,14 +99,14 @@ export default function Payments() {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   
   const isMobile = useIsMobile();
+  const { activeStoreId, accessibleStores } = useStoreContext();
   const { data: payments = [], isLoading, refetch } = usePayments();
-  const { data: stores = [] } = useStores();
   const { data: suppliers = [] } = useSuppliers();
   const deletePayment = useDeletePayment();
 
   const filteredPayments = useMemo(() => {
     let filtered = payments.filter(payment => {
-      const matchesStore = selectedStore === 'all' || payment.store_id === selectedStore;
+      const matchesStore = activeStoreId === 'all' || payment.store_id === activeStoreId;
       const matchesSupplier = selectedSupplier === 'all' || payment.supplier_id === selectedSupplier;
       const matchesSearch = payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
       return matchesStore && matchesSupplier && matchesSearch;
@@ -146,10 +144,10 @@ export default function Payments() {
     }
 
     return filtered;
-  }, [payments, selectedStore, selectedSupplier, searchTerm, dateFilter, customDateRange]);
+  }, [payments, activeStoreId, selectedSupplier, searchTerm, dateFilter, customDateRange]);
 
   const getStoreName = (storeId: string) => {
-    return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
+    return accessibleStores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
 
   const getSupplierName = (supplierId?: string) => {
@@ -219,16 +217,6 @@ export default function Payments() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm text-blue-200 mb-2 block">Store</label>
-                    <StoreSelector 
-                      value={selectedStore} 
-                      onValueChange={setSelectedStore}
-                      stores={stores}
-                      isLoading={false}
-                      placeholder="All stores"
-                    />
-                  </div>
-                  <div>
                     <label className="text-sm text-blue-200 mb-2 block">Supplier</label>
                     <SupplierSelector 
                       value={selectedSupplier} 
@@ -252,7 +240,6 @@ export default function Payments() {
                     variant="outline" 
                     onClick={() => {
                       setSearchTerm('');
-                      setSelectedStore('all');
                       setSelectedSupplier('all');
                       setDateFilter('month');
                     }}
@@ -337,7 +324,7 @@ export default function Payments() {
       {!isMobile && (
         <Card className="futuristic-card">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 w-4 h-4" />
                 <Input
@@ -347,13 +334,6 @@ export default function Payments() {
                   className="pl-10 neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
                 />
               </div>
-              <StoreSelector 
-                value={selectedStore} 
-                onValueChange={setSelectedStore}
-                stores={stores}
-                isLoading={false}
-                placeholder="All stores"
-              />
               <SupplierSelector 
                 value={selectedSupplier} 
                 onValueChange={setSelectedSupplier}

@@ -4,7 +4,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { usePaginatedItems } from '@/hooks/usePaginatedItems';
 import { useInfiniteItems } from '@/hooks/useInfiniteItems';
 import { useDeleteItem } from '@/hooks/useItems';
-import { useStores } from '@/hooks/useStores';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { useCategories } from '@/hooks/useCategories';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
@@ -23,16 +23,15 @@ import { ErrorBoundary, QueryErrorFallback } from '@/components/ui/error-boundar
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Inventory() {
-  const { data: stores = [] } = useStores();
+  const { activeStoreId, accessibleStores } = useStoreContext();
+  const [searchTerm, setSearchTerm] = useState('');
   const { data: categories = [] } = useCategories();
   const { data: suppliers = [] } = useSuppliers();
   const deleteItem = useDeleteItem();
   const { session } = useAuth();
   const isMobile = useIsMobile();
-  
-  const [searchTerm, setSearchTerm] = useState('');
+
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [selectedStore, setSelectedStore] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [showLowStock, setShowLowStock] = useState(false);
@@ -42,7 +41,7 @@ export default function Inventory() {
   // Use different hooks for mobile vs desktop
   const desktopQuery = usePaginatedItems({
     searchTerm,
-    storeId: selectedStore,
+    storeId: activeStoreId,
     categoryId: selectedCategory,
     supplierId: selectedSupplier,
     showLowStockOnly: showLowStock,
@@ -51,7 +50,7 @@ export default function Inventory() {
 
   const mobileQuery = useInfiniteItems({
     searchTerm,
-    storeId: selectedStore,
+    storeId: activeStoreId,
     categoryId: selectedCategory,
     supplierId: selectedSupplier,
     showLowStockOnly: showLowStock,
@@ -160,7 +159,7 @@ export default function Inventory() {
                   >
                     <div className="space-y-3">
                       {items.map((item) => {
-                        const storeName = stores.find(store => store.id === item.store_id)?.name || 'Unknown Store';
+                        const storeName = accessibleStores.find(store => store.id === item.store_id)?.name || 'Unknown Store';
                         const categoryName = categories.find(cat => cat.id === item.category_id)?.name || 'Unknown Category';
                         const isSelected = selectedItems.includes(item.id);
 

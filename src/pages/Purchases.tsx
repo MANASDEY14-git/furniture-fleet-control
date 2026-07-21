@@ -15,42 +15,36 @@ import PurchaseDetailsDialog from '@/components/purchases/PurchaseDetailsDialog'
 import ExportButton from '@/components/ExportButton';
 import DateFilterSelector from '@/components/DateFilterSelector';
 import { usePurchases } from '@/hooks/usePurchases';
-import { useStores } from '@/hooks/useStores';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { formatCurrency } from '@/utils/currencyUtils';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 export default function Purchases() {
+  const isMobile = useIsMobile();
+  const { activeStoreId, accessibleStores } = useStoreContext();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStore, setSelectedStore] = useState('all');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
-  const [customDateRange, setCustomDateRange] = useState<{
-    from: Date;
-    to: Date;
-  } | null>(null);
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date; } | null>(null);
   const [fabOpen, setFabOpen] = useState(false);
   const [singleItemOpen, setSingleItemOpen] = useState(false);
   const [multiItemOpen, setMultiItemOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const {
+    data: suppliers = []
+  } = useSuppliers();
   const {
     data: purchases = [],
     isLoading,
     refetch
   } = usePurchases();
-  const {
-    data: stores = []
-  } = useStores();
-  const {
-    data: suppliers = []
-  } = useSuppliers();
   const filteredPurchases = useMemo(() => {
     return purchases.filter(purchase => {
       const matchesSearch = purchase.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) || purchase.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStore = selectedStore === 'all' || purchase.store_id === selectedStore;
+      const matchesStore = activeStoreId === 'all' || purchase.store_id === activeStoreId;
       const matchesSupplier = selectedSupplier === 'all' || purchase.supplier_id === selectedSupplier;
       const purchaseDate = new Date(purchase.date);
       let matchesDate = true;
@@ -70,9 +64,9 @@ export default function Purchases() {
       }
       return matchesSearch && matchesStore && matchesSupplier && matchesDate;
     });
-  }, [purchases, searchTerm, selectedStore, selectedSupplier, dateFilter, customDateRange]);
+  }, [purchases, searchTerm, activeStoreId, selectedSupplier, dateFilter, customDateRange]);
   const getStoreName = (storeId: string) => {
-    return stores.find(store => store.id === storeId)?.name || 'Unknown Store';
+    return accessibleStores.find(store => store.id === storeId)?.name || 'Unknown Store';
   };
   const getSupplierName = (supplierId: string) => {
     return suppliers.find(supplier => supplier.id === supplierId)?.name || 'Unknown Supplier';
