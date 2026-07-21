@@ -185,8 +185,8 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="bg-sidebar">
-        {/* Main navigation groups */}
-        {navigationGroups.map(group => (
+        {/* Render Overview Group first */}
+        {navigationGroups.slice(0, 1).map(group => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="text-muted-foreground/60 text-xs uppercase tracking-wider">
               {group.label}
@@ -221,7 +221,7 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
 
-        {/* Operations — collapsible group for power users (expanded only) */}
+        {/* Operations — right under Overview / Dashboard */}
         {!isCollapsed && (
           <SidebarGroup>
             <Collapsible open={opsOpen || opsActive} onOpenChange={setOpsOpen}>
@@ -265,6 +265,42 @@ export function AppSidebar() {
             </Collapsible>
           </SidebarGroup>
         )}
+
+        {/* Render Remaining Navigation Groups (Sales, Purchasing, Finance & Reports) */}
+        {navigationGroups.slice(1).map(group => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel className="text-muted-foreground/60 text-xs uppercase tracking-wider">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map(item => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.name}
+                        className={`
+                          transition-all duration-150
+                          ${isActive
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'}
+                        `}
+                      >
+                        <Link to={item.href} onClick={handleNavClick}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
         {/* Collapsed: show ops items flat with tooltips */}
         {isCollapsed && (
