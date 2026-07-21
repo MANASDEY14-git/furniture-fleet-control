@@ -40,7 +40,7 @@ const navigationGroups = [
       { name: 'Sales Orders',    href: '/sales',             icon: ShoppingCart },
       { name: 'Customers',       href: '/customers',         icon: Users        },
       { name: 'Delivery',        href: '/delivery-calendar', icon: Calendar     },
-      { name: 'Payments',        href: '/enhanced-payments', icon: CreditCard   },
+      { name: 'Payments',        href: '/payments',          icon: CreditCard   },
     ],
   },
   {
@@ -69,7 +69,6 @@ const operationsItems = [
   { name: 'Stock Ledger',          href: '/stock-ledger',          icon: BookOpen   },
   { name: 'Material Stock Ledger', href: '/material-stock-ledger', icon: Activity   },
   { name: 'BOM Management',        href: '/bom-management',        icon: Layers     },
-  { name: 'Vendor Payments',       href: '/payments',              icon: DollarSign },
 ];
 
 export function AppSidebar() {

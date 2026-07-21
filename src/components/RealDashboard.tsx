@@ -42,8 +42,9 @@ export default function RealDashboard() {
     return deliveryDate < today && sale.delivery_status !== 'Delivered' && sale.delivery_status !== 'Cancelled';
   }).length;
 
-  // Calculate customers with outstanding balance
-  const customersWithBalance = salePaymentStatus.filter(sale => sale.balance_due > 0).length;
+  const customersWithBalance = salePaymentStatus.filter(
+    sale => sale.balance_due > 0 && sale.delivery_status !== 'Cancelled' && sale.delivery_status?.toLowerCase() !== 'cancelled'
+  ).length;
   
   if (metricsLoading) {
     return (

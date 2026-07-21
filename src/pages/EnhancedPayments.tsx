@@ -1,6 +1,5 @@
-
-import EnhancedPaymentsPage from '@/components/EnhancedPaymentsPage';
+import Payments from '@/pages/Payments';
 
 export default function EnhancedPayments() {
-  return <EnhancedPaymentsPage />;
+  return <Payments />;
 }

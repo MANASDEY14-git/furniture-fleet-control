@@ -56,11 +56,15 @@ export const useRealDashboardMetrics = (storeId?: string) => {
         .select('quantity_available, cost_price');
       if (materialsError) throw materialsError;
       
-      const { data: outstandingData, error: outstandingError } = await supabase
+      const { data: rawOutstandingData, error: outstandingError } = await supabase
         .from('sale_payment_status')
-        .select('balance_due')
+        .select('balance_due, delivery_status')
         .gt('balance_due', 0);
       if (outstandingError) throw outstandingError;
+
+      const outstandingData = (rawOutstandingData || []).filter(
+        item => item.delivery_status !== 'Cancelled' && item.delivery_status?.toLowerCase() !== 'cancelled'
+      );
       
       const { data: supplierLedgerData, error: supplierLedgerError } = await supabase
         .from('supplier_ledger')
