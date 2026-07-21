@@ -15,7 +15,7 @@ import DeliveryAlertsCard from '@/components/dashboard/DeliveryAlertsCard';
 
 export default function RealDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const { activeStoreId } = useStoreContext();
+  const { activeStoreId, accessibleStores } = useStoreContext();
   const {
     data: metrics,
     isLoading: metricsLoading
@@ -79,7 +79,7 @@ export default function RealDashboard() {
                 })}
               </p>
               <p className="text-muted-foreground text-sm">
-                {stores.length} Active Stores • AI Enhanced
+                {accessibleStores.length} Active Stores • AI Enhanced
               </p>
             </div>
           </div>
