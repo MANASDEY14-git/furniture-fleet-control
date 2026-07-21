@@ -133,7 +133,7 @@ export default function Inventory() {
                   onSupplierChange={setSelectedSupplier}
                   showLowStock={showLowStock}
                   onShowLowStockChange={setShowLowStock}
-                  stores={stores}
+                  stores={accessibleStores}
                   categories={categories}
                   suppliers={suppliers}
                   selectedItems={selectedItems}
@@ -196,7 +196,7 @@ export default function Inventory() {
                   onSupplierChange={setSelectedSupplier}
                   showLowStock={showLowStock}
                   onShowLowStockChange={setShowLowStock}
-                  stores={stores}
+                  stores={accessibleStores}
                   categories={categories}
                   suppliers={suppliers}
                   selectedItems={selectedItems}
@@ -219,7 +219,7 @@ export default function Inventory() {
               <div className="flex-1 overflow-hidden">
                 <InventoryTable
                   items={items}
-                  stores={stores}
+                  stores={accessibleStores}
                   categories={categories}
                   selectedItems={selectedItems}
                   onItemSelection={handleItemSelection}
