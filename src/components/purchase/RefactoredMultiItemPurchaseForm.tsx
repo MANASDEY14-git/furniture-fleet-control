@@ -103,6 +103,7 @@ export default function RefactoredMultiItemPurchaseForm({
           updatedItem.itemName = selectedItem?.name || '';
           updatedItem.variantId = undefined;
           updatedItem.variantName = '';
+          updatedItem.unitPrice = selectedItem?.cost_price || 0;
         }
         if (field === 'quantity' || field === 'unitPrice') {
           updatedItem.totalPrice = updatedItem.quantity * updatedItem.unitPrice;
@@ -153,6 +154,7 @@ export default function RefactoredMultiItemPurchaseForm({
       store_id: formData.storeId, supplier_id: formData.supplierId, date: formData.invoiceDate,
       items: validItems.map(item => ({
         item_id: item.itemId, item_name: item.itemName,
+        variant_id: item.variantId,
         quantity: item.quantity, unit_price: item.unitPrice, total_price: item.totalPrice
       }))
     });

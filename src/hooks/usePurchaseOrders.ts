@@ -8,6 +8,7 @@ interface PurchaseOrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  variant_id?: string;
 }
 
 interface CreatePurchaseOrderData {
@@ -32,6 +33,7 @@ export const useCreatePurchaseOrder = () => {
             store_id: data.store_id,
             supplier_id: data.supplier_id,
             item_id: item.item_id,
+            variant_id: item.variant_id,
             item_name: item.item_name,
             quantity: item.quantity,
             total_cost: item.total_price,

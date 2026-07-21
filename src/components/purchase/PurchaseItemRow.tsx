@@ -115,6 +115,11 @@ export default function PurchaseItemRow({
                     onUpdateItem(item.id, 'variantId', actualValue);
                     const variant = variants.find(v => v.id === value);
                     onUpdateItem(item.id, 'variantName', variant?.variant_name || '');
+                    if (variant) {
+                      onUpdateItem(item.id, 'unitPrice', variant.cost_price || 0);
+                    } else if (selectedItem) {
+                      onUpdateItem(item.id, 'unitPrice', selectedItem.cost_price || 0);
+                    }
                   }}
                 >
                   <SelectTrigger>
