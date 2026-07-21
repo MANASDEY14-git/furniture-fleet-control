@@ -1,0 +1,214 @@
+import { useState } from 'react';
+import { Search, Filter, Settings, Target, Eye } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BOMHeader } from '@/components/bom/enhanced/BOMHeader';
+import { EnhancedBOMTable } from '@/components/bom/enhanced/EnhancedBOMTable';
+import { BOMFormWizard } from '@/components/bom/enhanced/BOMFormWizard';
+import { BOMCostAnalytics } from '@/components/bom/BOMCostAnalytics';
+import { BOMTemplates } from '@/components/bom/BOMTemplates';
+import { EnhancedBOMManager } from '@/components/bom/enhanced/EnhancedBOMManager';
+import { BOMBulkOperations } from '@/components/bom/BOMBulkOperations';
+import { useItems } from '@/hooks/useItems';
+import { useEnhancedBOMList, useCreateEnhancedBOM } from '@/hooks/useEnhancedBOM';
+import { useStores } from '@/hooks/useStores';
+import StoreSelector from '@/components/StoreSelector';
+
+export default function BOMManagement() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStore, setSelectedStore] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'list' | 'analytics' | 'templates'>('list');
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [selectedItemForBOM, setSelectedItemForBOM] = useState<{ id: string; name: string } | null>(null);
+  const [showBulkOperations, setShowBulkOperations] = useState(false);
+  
+  const { data: stores = [] } = useStores();
+  const { data: items = [] } = useItems(selectedStore !== 'all' ? selectedStore : undefined);
+  const { data: bomList = [] } = useEnhancedBOMList();
+  const createBOM = useCreateEnhancedBOM();
+
+  const itemsWithBOM = bomList.length;
+  const activeBOMs = bomList.filter(bom => bom.is_active).length;
+  const avgComponents = bomList.length > 0 
+    ? (bomList.reduce((sum, bom) => sum + bom.component_count, 0) / bomList.length).toFixed(1) 
+    : '0';
+
+  const handleCreateBOM = () => {
+    setSelectedItemForBOM(null);
+    setShowCreateWizard(true);
+  };
+
+  const handleBOMSubmit = async (data: any) => {
+    try {
+      await createBOM.mutateAsync(data);
+      setShowCreateWizard(false);
+      setSelectedItemForBOM(null);
+    } catch (error) {
+      console.error('Error creating BOM:', error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Enhanced Header with Stats */}
+      <BOMHeader
+        totalItems={items.length}
+        itemsWithBOM={itemsWithBOM}
+        activeBOMs={activeBOMs}
+        avgComponents={parseFloat(avgComponents)}
+        onCreateNew={handleCreateBOM}
+        onViewAnalytics={() => setActiveTab('analytics')}
+        onViewTemplates={() => setActiveTab('templates')}
+      />
+
+      {/* Enhanced Search and Control Bar */}
+      <Card className="bg-slate-800/50 border-blue-500/30">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+              <Input
+                placeholder="Search items, materials, or BOMs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-slate-700/50 border-blue-500/30 text-white placeholder-blue-300"
+              />
+            </div>
+            
+            {/* Store Filter */}
+            <div className="w-full md:w-48">
+              <StoreSelector
+                value={selectedStore}
+                onValueChange={setSelectedStore}
+                stores={stores}
+              />
+            </div>
+            
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full md:w-48 bg-slate-700/50 border-blue-500/30 text-white">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="furniture">Furniture</SelectItem>
+                <SelectItem value="accessories">Accessories</SelectItem>
+                <SelectItem value="hardware">Hardware</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowBulkOperations(!showBulkOperations)}
+                className="flex-1 md:flex-none border-blue-500/30 text-blue-200 hover:bg-blue-800/30"
+              >
+                <Settings className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Bulk Operations</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex-1 md:flex-none border-blue-500/30 text-blue-200 hover:bg-blue-800/30"
+              >
+                <Filter className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Advanced Filters</span>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Operations Panel */}
+      {showBulkOperations && (
+        <div className="space-y-4">
+          <BOMBulkOperations 
+            bomList={bomList} 
+            onRefresh={() => window.location.reload()} 
+          />
+        </div>
+      )}
+
+      {/* Enhanced Tab Content */}
+      <div className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="list">BOM Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Cost Analytics</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="list" className="space-y-6">
+            <EnhancedBOMTable 
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              selectedStore={selectedStore}
+              onSelectItem={(item) => setSelectedItemForBOM(item)}
+            />
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="space-y-6">
+            <BOMCostAnalytics />
+          </TabsContent>
+          
+          <TabsContent value="templates" className="space-y-6">
+            <BOMTemplates />
+          </TabsContent>
+        </Tabs>
+        
+        {/* Enhanced BOM Manager for selected item */}
+        {selectedItemForBOM && (
+          <Card className="bg-slate-800/50 border-blue-500/30">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-cyan-300 flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Managing BOM: {selectedItemForBOM.name}
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSelectedItemForBOM(null)}
+                  className="border-blue-500/30 text-blue-200"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Close Manager
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <EnhancedBOMManager itemId={selectedItemForBOM.id} />
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Create BOM Wizard Dialog */}
+      <Dialog open={showCreateWizard} onOpenChange={setShowCreateWizard}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New BOM</DialogTitle>
+            <DialogDescription>Follow the steps to create a Bill of Materials for a selected item.</DialogDescription>
+          </DialogHeader>
+          {showCreateWizard && (
+            <BOMFormWizard
+              itemId={selectedItemForBOM?.id}
+              itemName={selectedItemForBOM?.name}
+              storeId={selectedStore !== 'all' ? selectedStore : undefined}
+              onSubmit={handleBOMSubmit}
+              onCancel={() => {
+                setShowCreateWizard(false);
+                setSelectedItemForBOM(null);
+              }}
+              isLoading={createBOM.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

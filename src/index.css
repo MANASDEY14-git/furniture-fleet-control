@@ -1,0 +1,275 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import 'react-big-calendar/lib/css/react-big-calendar.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 220 60% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 93%;
+    --secondary-foreground: 220 20% 20%;
+    --muted: 220 15% 93%;
+    --muted-foreground: 220 10% 46%;
+    --accent: 220 15% 93%;
+    --accent-foreground: 220 20% 20%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 220 60% 50%;
+    --radius: 0.75rem;
+    --chart-1: 220 60% 50%;
+    --chart-2: 220 40% 65%;
+    --chart-3: 220 25% 75%;
+    --chart-4: 220 15% 85%;
+    --chart-5: 220 10% 92%;
+
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 220 60% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 95%;
+    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-border: 220 15% 92%;
+    --sidebar-ring: 220 60% 50%;
+  }
+
+  .dark {
+    --background: 220 20% 97%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 220 60% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 93%;
+    --secondary-foreground: 220 20% 20%;
+    --muted: 220 15% 93%;
+    --muted-foreground: 220 10% 46%;
+    --accent: 220 15% 93%;
+    --accent-foreground: 220 20% 20%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 220 60% 50%;
+    --chart-1: 220 60% 50%;
+    --chart-2: 220 40% 65%;
+    --chart-3: 220 25% 75%;
+    --chart-4: 220 15% 85%;
+    --chart-5: 220 10% 92%;
+
+    /* Sidebar colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 220 60% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 95%;
+    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-border: 220 15% 92%;
+    --sidebar-ring: 220 60% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .simple-card {
+    @apply bg-card shadow-sm rounded-2xl;
+  }
+
+  .data-grid {
+    @apply border-separate border-spacing-0;
+  }
+
+  .data-grid th {
+    @apply bg-muted/50 border-b border-border/50 px-5 py-4 text-left text-muted-foreground font-medium text-xs uppercase tracking-wider;
+  }
+
+  .data-grid td {
+    @apply px-5 py-4 border-b border-border/30 text-foreground;
+  }
+
+  .dropdown-content {
+    @apply bg-popover border-border/50 shadow-lg rounded-xl;
+  }
+
+  /* Mobile optimizations */
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .mobile-card-spacing {
+    @apply space-y-4;
+  }
+
+  .mobile-text-base {
+    @apply text-base leading-relaxed;
+  }
+}
+
+/* Calendar styling - neutral tones */
+.delivery-calendar {
+  @apply text-foreground;
+}
+
+.delivery-calendar .rbc-calendar {
+  @apply bg-transparent;
+}
+
+.delivery-calendar .rbc-header {
+  @apply text-muted-foreground font-semibold bg-muted/50 border-b border-border/50 py-3;
+}
+
+.delivery-calendar .rbc-month-view {
+  @apply border border-border/50 rounded-xl overflow-hidden;
+}
+
+.delivery-calendar .rbc-date-cell {
+  @apply text-foreground p-2;
+}
+
+.delivery-calendar .rbc-today {
+  @apply bg-primary/5;
+}
+
+.delivery-calendar .rbc-off-range-bg {
+  @apply bg-muted/30;
+}
+
+.delivery-calendar .rbc-event {
+  @apply text-white font-medium px-2 py-1 rounded-lg text-xs;
+}
+
+.delivery-calendar .rbc-toolbar {
+  @apply mb-4 flex flex-wrap gap-2 items-center justify-between;
+}
+
+.delivery-calendar .rbc-toolbar button {
+  @apply px-3 py-2 bg-card text-foreground border border-border/50 rounded-lg hover:bg-muted/50 transition-all duration-150;
+}
+
+.delivery-calendar .rbc-toolbar button:hover {
+  @apply text-primary;
+}
+
+.delivery-calendar .rbc-toolbar button.rbc-active {
+  @apply bg-primary/10 text-primary border-primary/30;
+}
+
+.delivery-calendar .rbc-btn-group {
+  @apply flex gap-1;
+}
+
+.delivery-calendar .rbc-toolbar-label {
+  @apply text-foreground font-semibold text-lg;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/30;
+}
+
+/* Mobile-specific utilities */
+.mobile-container {
+  @apply px-4 py-6 bg-background;
+}
+
+.mobile-card {
+  @apply p-5 rounded-2xl shadow-sm bg-card text-card-foreground;
+}
+
+.mobile-button {
+  @apply h-12 text-base px-6 py-3;
+}
+
+.mobile-input {
+  @apply h-12 text-base px-4 py-3 bg-card;
+}
+
+/* Touch target guidelines */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile form optimizations */
+.mobile-form-spacing {
+  @apply space-y-6 md:space-y-4;
+}
+
+.mobile-field-spacing {
+  @apply space-y-3 md:space-y-2;
+}
+
+.mobile-form-buttons {
+  @apply flex flex-col sm:flex-row gap-3 sm:gap-2 pt-6 md:pt-4;
+}
+
+/* Mobile dialog full-screen */
+.mobile-fullscreen-dialog {
+  @apply fixed inset-0 m-0 max-w-full max-h-full rounded-none border-0 bg-background;
+}
+
+/* Ensure consistent backgrounds on mobile */
+@media (max-width: 768px) {
+  body, #root, main, .app-container {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .mobile-touch-target {
+    @apply bg-card text-card-foreground;
+  }
+
+  .mobile-card-spacing {
+    @apply bg-background;
+  }
+
+  .container, .max-w-7xl, .max-w-6xl, .max-w-4xl {
+    @apply bg-background;
+  }
+
+  [data-radix-portal] {
+    background-color: hsl(var(--background)) !important;
+  }
+}
+
+/* Mobile sheet content background fix */
+.mobile-sheet-content {
+  @apply bg-background text-foreground;
+}
