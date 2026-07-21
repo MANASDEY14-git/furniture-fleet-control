@@ -23,7 +23,11 @@ export default function DeliveryAlertsCard() {
     const upcoming: typeof salePaymentStatus = [];
 
     salePaymentStatus.forEach((sale) => {
-      if (!sale.delivery_date || sale.delivery_status?.toLowerCase() === 'delivered') return;
+      if (
+        !sale.delivery_date || 
+        sale.delivery_status?.toLowerCase() === 'delivered' ||
+        sale.delivery_status?.toLowerCase() === 'cancelled'
+      ) return;
       
       const deliveryDate = new Date(sale.delivery_date);
       deliveryDate.setHours(0, 0, 0, 0);

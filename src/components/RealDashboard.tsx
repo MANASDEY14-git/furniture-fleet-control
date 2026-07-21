@@ -41,7 +41,7 @@ export default function RealDashboard() {
     const deliveryDate = new Date(sale.delivery_date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return deliveryDate < today && sale.delivery_status !== 'Delivered';
+    return deliveryDate < today && sale.delivery_status !== 'Delivered' && sale.delivery_status !== 'Cancelled';
   }).length;
 
   // Calculate customers with outstanding balance
