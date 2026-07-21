@@ -35,6 +35,12 @@ export const transformSalesDataToEvents = (
 ): DeliveryEvent[] => {
   return salePaymentStatus
     .filter(sale => sale.delivery_date)
+    .filter(sale => {
+      const foundSalesOrder = salesOrders.find(order => order.id === sale.sale_id);
+      const orderStatus = foundSalesOrder?.delivery_status?.toLowerCase();
+      const saleStatus = sale.delivery_status?.toLowerCase();
+      return orderStatus !== 'cancelled' && saleStatus !== 'cancelled';
+    })
     .map(sale => {
       const deliveryDate = new Date(sale.delivery_date!);
       const today = new Date();
