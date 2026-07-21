@@ -18,6 +18,10 @@ const navigationGroups = [{
     href: '/sales',
     icon: ShoppingCart
   }, {
+    name: 'Customers',
+    href: '/customers',
+    icon: Users
+  }, {
     name: 'Delivery Calendar',
     href: '/delivery-calendar',
     icon: Calendar

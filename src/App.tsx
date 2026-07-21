@@ -25,6 +25,8 @@ import MaterialStockLedger from '@/pages/MaterialStockLedger';
 import StockLedger from '@/pages/StockLedger';
 import BOMManagement from '@/pages/BOMManagement';
 import BankBook from '@/pages/BankBook';
+import Customers from '@/pages/Customers';
+import CustomerProfile from '@/pages/CustomerProfile';
 import NotFound from '@/pages/NotFound';
 import { AssistantBubble } from '@/components/ai-assistant/AssistantBubble';
 import './App.css';
@@ -75,6 +77,8 @@ function App() {
                     <Route path="/bom-management" element={<BOMManagement />} />
                     <Route path="/stock-ledger" element={<StockLedger />} />
                     <Route path="/bank-book" element={<BankBook />} />
+                    <Route path="/customers" element={<Customers />} />
+                    <Route path="/customers/:id" element={<CustomerProfile />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="*" element={<NotFound />} />
