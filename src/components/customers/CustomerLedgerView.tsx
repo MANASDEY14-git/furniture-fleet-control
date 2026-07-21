@@ -8,9 +8,17 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowDownRight, ArrowUpRight, FileText } from 'lucide-react';
 
 export function CustomerLedgerView({ customerId }: { customerId: string }) {
-  const { data: ledgerEntries, isLoading } = useCustomerLedger(customerId);
+  const { data: ledgerEntries, isLoading, isError, error } = useCustomerLedger(customerId);
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
+
+  if (isError) {
+    return (
+      <div className="text-center p-8 border border-dashed border-red-500/50 rounded-lg text-red-500">
+        <p>Error loading ledger: {(error as Error).message}</p>
+      </div>
+    );
+  }
 
   if (!ledgerEntries || ledgerEntries.length === 0) {
     return (
@@ -27,10 +35,8 @@ export function CustomerLedgerView({ customerId }: { customerId: string }) {
   let currentBalance = 0;
   
   const entriesWithBalance = reversedEntries.map(entry => {
-    // Debit increases customer balance (they owe us more)
-    // Credit decreases customer balance (they owe us less)
-    const debit = Number(entry.amount) > 0 && ['Sale', 'Adjustment'].includes(entry.transaction_type) ? Number(entry.amount) : 0;
-    const credit = Number(entry.amount) > 0 && ['Payment', 'Refund'].includes(entry.transaction_type) ? Number(entry.amount) : 0;
+    const debit = Number(entry.debit_amount) || 0;
+    const credit = Number(entry.credit_amount) || 0;
     
     // In many systems, for customers: Balance = Debit - Credit
     currentBalance += debit - credit;
@@ -44,11 +50,12 @@ export function CustomerLedgerView({ customerId }: { customerId: string }) {
   }).reverse();
 
   const getTransactionBadge = (type: string) => {
-    switch (type) {
-      case 'Sale': return <Badge variant="outline" className="text-cyan-400 border-cyan-400/30">Sale</Badge>;
-      case 'Payment': return <Badge variant="outline" className="text-emerald-400 border-emerald-400/30">Payment</Badge>;
-      case 'Refund': return <Badge variant="outline" className="text-amber-400 border-amber-400/30">Refund</Badge>;
-      default: return <Badge variant="outline" className="text-slate-400 border-slate-400/30">{type}</Badge>;
+    switch (type.toLowerCase()) {
+      case 'sale': return <Badge variant="outline" className="text-cyan-400 border-cyan-400/30">Sale</Badge>;
+      case 'payment': return <Badge variant="outline" className="text-emerald-400 border-emerald-400/30">Payment</Badge>;
+      case 'refund': return <Badge variant="outline" className="text-amber-400 border-amber-400/30">Refund</Badge>;
+      case 'adjustment': return <Badge variant="outline" className="text-purple-400 border-purple-400/30">Adjustment</Badge>;
+      default: return <Badge variant="outline" className="text-slate-400 border-slate-400/30" className="capitalize">{type}</Badge>;
     }
   };
 
@@ -71,12 +78,12 @@ export function CustomerLedgerView({ customerId }: { customerId: string }) {
               {entriesWithBalance.map((entry) => (
                 <TableRow key={entry.id} className="border-border/30 hover:bg-accent/20">
                   <TableCell className="whitespace-nowrap">
-                    {new Date(entry.date).toLocaleDateString('en-GB')}
+                    {new Date(entry.transaction_date).toLocaleDateString('en-GB')}
                   </TableCell>
                   <TableCell>{getTransactionBadge(entry.transaction_type)}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-foreground">{entry.description}</span>
+                      <span className="font-medium text-foreground">{entry.notes || '-'}</span>
                       {entry.reference_id && <span className="text-xs text-muted-foreground font-mono">{entry.reference_id.substring(0, 8)}</span>}
                     </div>
                   </TableCell>
