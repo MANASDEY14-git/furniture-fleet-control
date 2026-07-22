@@ -1,10 +1,11 @@
 import React from 'react';
-import { Download, Printer, RefreshCw, Sparkles, Store, Calendar, FileSpreadsheet, FileText } from 'lucide-react';
+import { Download, Printer, RefreshCw, Sparkles, Store, Calendar, FileSpreadsheet, FileText, Plus, Upload, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import EnhancedSalesOrderForm from '@/components/EnhancedSalesOrderForm';
 import type { SalesIntelligenceSummary } from '@/hooks/useSalesIntelligence';
 
 interface SalesIntelligenceHeaderProps {
@@ -13,6 +14,8 @@ interface SalesIntelligenceHeaderProps {
   onRefresh: () => void;
   activeStoreName?: string;
   onOpenPrintSheet?: () => void;
+  onOpenQuickPastOrder?: () => void;
+  onOpenBulkImport?: () => void;
 }
 
 export function SalesIntelligenceHeader({
@@ -20,7 +23,9 @@ export function SalesIntelligenceHeader({
   isLoading,
   onRefresh,
   activeStoreName = 'All Stores',
-  onOpenPrintSheet
+  onOpenPrintSheet,
+  onOpenQuickPastOrder,
+  onOpenBulkImport
 }: SalesIntelligenceHeaderProps) {
   const handleExportExcel = () => {
     if (!summary || !summary.salespeople) {
@@ -29,7 +34,6 @@ export function SalesIntelligenceHeader({
     }
 
     try {
-      // 1. Leaderboard Sheet
       const leaderboardData = summary.salespeople.map((sp, idx) => ({
         Rank: idx + 1,
         Name: sp.name,
@@ -50,7 +54,6 @@ export function SalesIntelligenceHeader({
         'CSAT Score': sp.csatScore,
       }));
 
-      // 2. Co-Selling Duos Sheet
       const duoData = summary.coSellingPairs.map((pair, idx) => ({
         Rank: idx + 1,
         'Salesperson 1': pair.person1Name,
@@ -64,7 +67,6 @@ export function SalesIntelligenceHeader({
         'Synergy Index': pair.synergyScore,
       }));
 
-      // Create workbook
       const wb = XLSX.utils.book_new();
       const wsLeaderboard = XLSX.utils.json_to_sheet(leaderboardData);
       const wsDuos = XLSX.utils.json_to_sheet(duoData);
@@ -86,7 +88,7 @@ export function SalesIntelligenceHeader({
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-border/40">
+    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-border/40">
       <div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 gap-1.5 px-2.5 py-1 text-xs font-semibold">
@@ -113,7 +115,48 @@ export function SalesIntelligenceHeader({
         </p>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 flex-wrap shrink-0">
+        {/* 1. Record Present Sales Order Button */}
+        <EnhancedSalesOrderForm
+          trigger={
+            <Button size="sm" className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+              <Plus className="h-4 w-4" />
+              <span>Record Sales Order</span>
+            </Button>
+          }
+        />
+
+        {/* Data Entry Actions Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs font-semibold border-border/60">
+              <Calendar className="h-3.5 w-3.5 text-primary" />
+              <span>Log Past Orders</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider">
+              Data Entry Options
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onOpenQuickPastOrder} className="gap-2 cursor-pointer text-xs">
+              <Calendar className="h-4 w-4 text-purple-600" />
+              <div>
+                <div className="font-semibold">Enter Past Single Order</div>
+                <div className="text-[10px] text-muted-foreground">Log historical sale date, items & 50-50 rep split</div>
+              </div>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={onOpenBulkImport} className="gap-2 cursor-pointer text-xs">
+              <Upload className="h-4 w-4 text-emerald-600" />
+              <div>
+                <div className="font-semibold">Bulk Import Past Sales (Excel)</div>
+                <div className="text-[10px] text-muted-foreground">Upload spreadsheet of past orders</div>
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button
           variant="outline"
           size="sm"
@@ -122,7 +165,7 @@ export function SalesIntelligenceHeader({
           className="gap-1.5 border-border/60 hover:bg-accent text-xs"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh Data</span>
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
 
         {onOpenPrintSheet && (
@@ -133,15 +176,15 @@ export function SalesIntelligenceHeader({
             className="gap-1.5 border-border/60 hover:bg-accent text-xs hidden sm:flex"
           >
             <Printer className="h-3.5 w-3.5 text-primary" />
-            <span>Print Review Sheet</span>
+            <span>Print Sheet</span>
           </Button>
         )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" className="gap-1.5 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs font-semibold border-border/60 shadow-sm">
               <Download className="h-3.5 w-3.5" />
-              <span>Export Report</span>
+              <span>Export</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

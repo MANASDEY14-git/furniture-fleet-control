@@ -13,6 +13,8 @@ import { SalespersonLeaderboard } from '@/components/sales-intelligence/Salesper
 import { TeamAnalyticsTabs } from '@/components/sales-intelligence/TeamAnalyticsTabs';
 import { SalespersonDetailDrawer } from '@/components/sales-intelligence/SalespersonDetailDrawer';
 import { PrintableReviewSheet } from '@/components/sales-intelligence/PrintableReviewSheet';
+import { QuickPastOrderDialog } from '@/components/sales-intelligence/QuickPastOrderDialog';
+import { BulkImportSalesDialog } from '@/components/sales-intelligence/BulkImportSalesDialog';
 
 export default function SalesIntelligence() {
   const { activeStoreId, activeStore } = useStoreContext();
@@ -24,6 +26,8 @@ export default function SalesIntelligence() {
 
   const [selectedSalesperson, setSelectedSalesperson] = useState<SalespersonPerformance | null>(null);
   const [openTeamPrintSheet, setOpenTeamPrintSheet] = useState(false);
+  const [openQuickPastOrder, setOpenQuickPastOrder] = useState(false);
+  const [openBulkImport, setOpenBulkImport] = useState(false);
 
   // Sync active store from StoreContext
   const currentStoreId = activeStoreId === 'all' ? undefined : activeStoreId;
@@ -36,13 +40,15 @@ export default function SalesIntelligence() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1700px] mx-auto min-h-screen">
-      {/* 1. Header */}
+      {/* 1. Header with Data Entry Actions */}
       <SalesIntelligenceHeader
         summary={summary}
         isLoading={isLoading}
         onRefresh={refetch}
         activeStoreName={activeStoreId === 'all' ? 'All Stores' : activeStore?.name}
         onOpenPrintSheet={() => setOpenTeamPrintSheet(true)}
+        onOpenQuickPastOrder={() => setOpenQuickPastOrder(true)}
+        onOpenBulkImport={() => setOpenBulkImport(true)}
       />
 
       {/* 2. Filter Bar */}
@@ -73,7 +79,21 @@ export default function SalesIntelligence() {
         onClose={() => setSelectedSalesperson(null)}
       />
 
-      {/* 8. Printable Review Sheet Modal for Best Performer / Team */}
+      {/* 8. Quick Single Past Order Entry Modal */}
+      <QuickPastOrderDialog
+        open={openQuickPastOrder}
+        onOpenChange={setOpenQuickPastOrder}
+        onSuccessRefresh={refetch}
+      />
+
+      {/* 9. Bulk Import Past Sales (CSV/Excel) Modal */}
+      <BulkImportSalesDialog
+        open={openBulkImport}
+        onOpenChange={setOpenBulkImport}
+        onSuccessRefresh={refetch}
+      />
+
+      {/* 10. Printable Review Sheet Modal */}
       {summary?.salespeople && summary.salespeople.length > 0 && (
         <PrintableReviewSheet
           salesperson={summary.salespeople[0]}
