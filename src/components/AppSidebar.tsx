@@ -37,10 +37,11 @@ const navigationGroups = [
   {
     label: 'Sales',
     items: [
-      { name: 'Sales Orders',    href: '/sales',             icon: ShoppingCart },
-      { name: 'Customers',       href: '/customers',         icon: Users        },
-      { name: 'Delivery',        href: '/delivery-calendar', icon: Calendar     },
-      { name: 'Payments',        href: '/payments',          icon: CreditCard   },
+      { name: 'Sales Intelligence', href: '/sales-intelligence', icon: Sparkles     },
+      { name: 'Sales Orders',          href: '/sales',                  icon: ShoppingCart },
+      { name: 'Customers',             href: '/customers',              icon: Users        },
+      { name: 'Delivery',              href: '/delivery-calendar',      icon: Calendar     },
+      { name: 'Payments',              href: '/payments',               icon: CreditCard   },
     ],
   },
   {

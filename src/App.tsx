@@ -11,6 +11,7 @@ import Dashboard from '@/pages/Dashboard';
 import Onboarding from '@/pages/Onboarding';
 import PendingApproval from '@/pages/PendingApproval';
 import Sales from '@/pages/Sales';
+import SalesIntelligence from '@/pages/SalesIntelligence';
 import DeliveryCalendar from '@/pages/DeliveryCalendar';
 import EnhancedPayments from '@/pages/EnhancedPayments';
 import Inventory from '@/pages/Inventory';
@@ -67,6 +68,7 @@ function App() {
                     <Route path="/" element={<Index />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/sales" element={<Sales />} />
+                    <Route path="/sales-intelligence" element={<SalesIntelligence />} />
                     <Route path="/delivery-calendar" element={<DeliveryCalendar />} />
                     <Route path="/enhanced-payments" element={<EnhancedPayments />} />
                     <Route path="/inventory" element={<Inventory />} />

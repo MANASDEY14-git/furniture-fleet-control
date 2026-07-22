@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, X, ShoppingCart, Check, ChevronsUpDown } from 'lucide-react';
+import { Plus, Trash2, X, ShoppingCart, Check, ChevronsUpDown, Users, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -79,7 +79,8 @@ export default function EnhancedSalesOrderForm({
     advancePaid: 0,
     description: '',
     advancePaymentMethod: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque' | 'debit_card' | 'credit_card',
-    advanceBankAccountId: ''
+    advanceBankAccountId: '',
+    salespeople: ''
   });
   const [items, setItems] = useState<OrderItem[]>([{
     id: '1',
@@ -450,6 +451,38 @@ export default function EnhancedSalesOrderForm({
                         deliveryDate: e.target.value
                       })} className="h-12 text-base" />
                     </div>
+                  </div>
+
+                  {/* Attended Salespeople (50-50 Split Rule) */}
+                  <div className="space-y-2 pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="salespeople" className="text-sm font-medium flex items-center gap-1.5">
+                        <Users className="h-4 w-4 text-purple-500" /> Attended Salesperson / Team (50-50 Split)
+                      </Label>
+                      <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30">
+                        50-50 Split Rule Active
+                      </Badge>
+                    </div>
+
+                    <Input
+                      id="salespeople"
+                      placeholder="e.g. Amit Sharma, Rajiv Patel (comma separated for 2 reps)"
+                      value={formData.salespeople || ''}
+                      onChange={e => setFormData({ ...formData, salespeople: e.target.value })}
+                      className="h-12 text-base"
+                    />
+
+                    {formData.salespeople && formData.salespeople.includes(',') && (
+                      <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg text-xs flex items-start gap-2 text-purple-900 dark:text-purple-100">
+                        <Sparkles className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold">⚡ Co-Attended Sale Detected!</span>
+                          <p className="text-[11px] opacity-90 mt-0.5">
+                            50% / 50% split rule will be automatically applied to Revenue, Gross Profit, and Commission for <strong className="underline">{formData.salespeople}</strong> in Sales Performance Intelligence.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
