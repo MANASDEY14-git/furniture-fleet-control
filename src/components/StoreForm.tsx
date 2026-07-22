@@ -61,14 +61,15 @@ export default function StoreForm({ store, trigger }: StoreFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location">Warehouse / Location</Label>
             <Input
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Enter store location"
+              placeholder="e.g. Main Central Warehouse, Plot 42 Industrial Area"
               required
             />
+            <p className="text-xs text-muted-foreground">This serves as the primary warehouse location for items in this store.</p>
           </div>
           <Button type="submit" className="w-full">
             {isEditing ? 'Update Store' : 'Add Store'}

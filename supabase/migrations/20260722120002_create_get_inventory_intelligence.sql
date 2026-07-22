@@ -89,8 +89,10 @@ BEGIN
       c.name AS category_name,
       i.supplier_id,
       sup.name AS supplier_name,
-      i.brand,
-      i.warehouse,
+      -- Brand defaults to supplier name if item brand is not set
+      COALESCE(NULLIF(TRIM(i.brand), ''), sup.name, 'Generic Brand') AS brand,
+      -- Warehouse defaults to store location if item warehouse is not set
+      COALESCE(NULLIF(TRIM(i.warehouse), ''), st.location, 'Main Store Warehouse') AS warehouse,
       COALESCE(i.stock_receive_date, i.created_at::date, CURRENT_DATE) AS stock_receive_date,
       COALESCE(i.quantity_available, 0)::numeric AS quantity_available,
       COALESCE(i.cost_price, 0)::numeric AS cost_price,
@@ -117,12 +119,13 @@ BEGIN
     FROM public.items i
     LEFT JOIN public.categories c ON c.id = i.category_id
     LEFT JOIN public.suppliers sup ON sup.id = i.supplier_id
+    LEFT JOIN public.stores st ON st.id = i.store_id
     LEFT JOIN item_sales s ON s.item_id = i.id
     WHERE (store_id_filter IS NULL OR i.store_id = store_id_filter)
       AND (category_id_filter IS NULL OR i.category_id = category_id_filter)
       AND (supplier_id_filter IS NULL OR i.supplier_id = supplier_id_filter)
-      AND (brand_filter IS NULL OR brand_filter = '' OR i.brand ILIKE '%' || brand_filter || '%')
-      AND (warehouse_filter IS NULL OR warehouse_filter = '' OR i.warehouse ILIKE '%' || warehouse_filter || '%')
+      AND (brand_filter IS NULL OR brand_filter = '' OR i.brand ILIKE '%' || brand_filter || '%' OR sup.name ILIKE '%' || brand_filter || '%')
+      AND (warehouse_filter IS NULL OR warehouse_filter = '' OR i.warehouse ILIKE '%' || warehouse_filter || '%' OR st.location ILIKE '%' || warehouse_filter || '%')
       AND (price_min IS NULL OR i.cost_price >= price_min)
       AND (price_max IS NULL OR i.cost_price <= price_max)
   ),
@@ -164,7 +167,6 @@ BEGIN
         ELSE 'Overstocked'
       END AS reorder_status,
       
-      -- Hero score composite formula (0 to 100) with explicit double precision to numeric casting
       ROUND(
         LEAST(100.0::numeric, GREATEST(0.0::numeric,
           ((PERCENT_RANK() OVER (ORDER BY ci.revenue_period ASC))::numeric * 35.0) +
@@ -222,5 +224,4 @@ BEGIN
 END;
 $$;
 
--- Grant execution to authenticated users
 GRANT EXECUTE ON FUNCTION public.get_inventory_intelligence TO authenticated;

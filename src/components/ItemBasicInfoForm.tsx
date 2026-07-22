@@ -189,14 +189,25 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
 
         <div className="space-y-3 md:space-y-2">
           <Label htmlFor="store" className="text-foreground text-base md:text-sm font-medium">Store *</Label>
-          <Select value={formData.store_id} onValueChange={(value) => setFormData({...formData, store_id: value})} required>
+          <Select 
+            value={formData.store_id} 
+            onValueChange={(value) => {
+              const selectedStore = stores.find(s => s.id === value);
+              setFormData({
+                ...formData, 
+                store_id: value,
+                warehouse: formData.warehouse || selectedStore?.location || ''
+              });
+            }} 
+            required
+          >
             <SelectTrigger className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary">
               <SelectValue placeholder="Select store" />
             </SelectTrigger>
             <SelectContent>
               {stores.map((store) => (
                 <SelectItem key={store.id} value={store.id} className="text-base md:text-sm py-3 md:py-2">
-                  {store.name}
+                  {store.name} ({store.location})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -204,7 +215,7 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
         </div>
 
         <div className="space-y-3 md:space-y-2">
-          <Label htmlFor="supplier" className="text-foreground text-base md:text-sm font-medium">Supplier</Label>
+          <Label htmlFor="supplier" className="text-foreground text-base md:text-sm font-medium">Supplier (Brand Owner)</Label>
           <SupplierSelector 
             value={formData.supplier_id} 
             onValueChange={(value) => setFormData({...formData, supplier_id: value})}
@@ -213,25 +224,27 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
         </div>
 
         <div className="space-y-3 md:space-y-2">
-          <Label htmlFor="brand" className="text-foreground text-base md:text-sm font-medium">Brand</Label>
+          <Label htmlFor="brand" className="text-foreground text-base md:text-sm font-medium">Brand (Optional)</Label>
           <Input
             id="brand"
             value={formData.brand}
             onChange={(e) => setFormData({...formData, brand: e.target.value})}
-            placeholder="e.g. Royal Oak, Godrej, In-House"
+            placeholder="Defaults to Supplier Name"
             className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
+          <p className="text-[11px] text-muted-foreground">If empty, Supplier Name will be used as the Brand.</p>
         </div>
 
         <div className="space-y-3 md:space-y-2">
-          <Label htmlFor="warehouse" className="text-foreground text-base md:text-sm font-medium">Warehouse / Rack Location</Label>
+          <Label htmlFor="warehouse" className="text-foreground text-base md:text-sm font-medium">Warehouse / Storage Location</Label>
           <Input
             id="warehouse"
             value={formData.warehouse}
             onChange={(e) => setFormData({...formData, warehouse: e.target.value})}
-            placeholder="e.g. Central Wh-A, Section B-4"
+            placeholder="Defaults to Store Location"
             className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
+          <p className="text-[11px] text-muted-foreground">Specify warehouse, section, or rack (e.g. Rack A-12).</p>
         </div>
 
         <div className="space-y-3 md:space-y-2">

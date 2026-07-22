@@ -87,8 +87,8 @@ export default function Settings() {
               <Table className="data-grid">
                 <TableHeader>
                   <TableRow className="border-blue-500/30">
-                    <TableHead className="text-blue-200">Name</TableHead>
-                    <TableHead className="text-blue-200">Location</TableHead>
+                    <TableHead className="text-blue-200">Store Name</TableHead>
+                    <TableHead className="text-blue-200">Warehouse / Location</TableHead>
                     {isAdmin && <TableHead className="text-right text-blue-200">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
