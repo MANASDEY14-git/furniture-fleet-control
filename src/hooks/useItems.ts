@@ -9,6 +9,8 @@ export interface Item {
   category_id: string;
   store_id: string;
   supplier_id?: string;
+  brand?: string;
+  warehouse?: string;
   quantity_available: number;
   cost_price: number;
   selling_price: number;
@@ -26,6 +28,8 @@ export interface CreateItemData {
   category_id: string;
   store_id: string;
   supplier_id?: string;
+  brand?: string;
+  warehouse?: string;
   quantity_available: number;
   cost_price: number;
   selling_price: number;

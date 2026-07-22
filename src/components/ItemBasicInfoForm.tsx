@@ -26,6 +26,8 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
     category_id: item?.category_id || '',
     store_id: item?.store_id || '',
     supplier_id: item?.supplier_id || '',
+    brand: item?.brand || '',
+    warehouse: item?.warehouse || '',
     quantity_available: item?.quantity_available || 0,
     cost_price: item?.cost_price || 0,
     selling_price: item?.selling_price || 0,
@@ -207,6 +209,28 @@ export default function ItemBasicInfoForm({ item, onSubmit, onCancel, isLoading 
             value={formData.supplier_id} 
             onValueChange={(value) => setFormData({...formData, supplier_id: value})}
             placeholder="Select supplier"
+          />
+        </div>
+
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="brand" className="text-foreground text-base md:text-sm font-medium">Brand</Label>
+          <Input
+            id="brand"
+            value={formData.brand}
+            onChange={(e) => setFormData({...formData, brand: e.target.value})}
+            placeholder="e.g. Royal Oak, Godrej, In-House"
+            className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
+          />
+        </div>
+
+        <div className="space-y-3 md:space-y-2">
+          <Label htmlFor="warehouse" className="text-foreground text-base md:text-sm font-medium">Warehouse / Rack Location</Label>
+          <Input
+            id="warehouse"
+            value={formData.warehouse}
+            onChange={(e) => setFormData({...formData, warehouse: e.target.value})}
+            placeholder="e.g. Central Wh-A, Section B-4"
+            className="h-12 md:h-10 text-base md:text-sm bg-background border-border focus:border-primary"
           />
         </div>
 

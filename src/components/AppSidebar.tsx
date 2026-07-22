@@ -63,6 +63,7 @@ const navigationGroups = [
 
 // Secondary "Operations" links tucked in a collapsible — power users only
 const operationsItems = [
+  { name: 'Inventory Intelligence', href: '/inventory-intelligence', icon: Sparkles },
   { name: 'Inventory',             href: '/inventory',             icon: Package    },
   { name: 'Materials',             href: '/materials',             icon: Package    },
   { name: 'Material Purchases',    href: '/material-purchases',    icon: Tag        },

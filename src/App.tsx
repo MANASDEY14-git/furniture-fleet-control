@@ -14,6 +14,7 @@ import Sales from '@/pages/Sales';
 import DeliveryCalendar from '@/pages/DeliveryCalendar';
 import EnhancedPayments from '@/pages/EnhancedPayments';
 import Inventory from '@/pages/Inventory';
+import InventoryIntelligence from '@/pages/InventoryIntelligence';
 import Purchases from '@/pages/Purchases';
 import Payments from '@/pages/Payments';
 import Reports from '@/pages/Reports';
@@ -69,6 +70,7 @@ function App() {
                     <Route path="/delivery-calendar" element={<DeliveryCalendar />} />
                     <Route path="/enhanced-payments" element={<EnhancedPayments />} />
                     <Route path="/inventory" element={<Inventory />} />
+                    <Route path="/inventory-intelligence" element={<InventoryIntelligence />} />
                     <Route path="/purchases" element={<Purchases />} />
                     <Route path="/payments" element={<Payments />} />
                     <Route path="/suppliers" element={<Suppliers />} />

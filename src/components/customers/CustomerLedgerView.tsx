@@ -55,7 +55,7 @@ export function CustomerLedgerView({ customerId }: { customerId: string }) {
       case 'payment': return <Badge variant="outline" className="text-emerald-400 border-emerald-400/30">Payment</Badge>;
       case 'refund': return <Badge variant="outline" className="text-amber-400 border-amber-400/30">Refund</Badge>;
       case 'adjustment': return <Badge variant="outline" className="text-purple-400 border-purple-400/30">Adjustment</Badge>;
-      default: return <Badge variant="outline" className="text-slate-400 border-slate-400/30" className="capitalize">{type}</Badge>;
+      default: return <Badge variant="outline" className="text-slate-400 border-slate-400/30 capitalize">{type}</Badge>;
     }
   };
 
