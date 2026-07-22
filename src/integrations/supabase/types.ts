@@ -14,6 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_briefings: {
+        Row: {
+          agent_outputs: Json
+          created_at: string
+          generated_at: string
+          generated_for_date: string
+          id: string
+          source: string
+          store_id: string
+          summary: string
+        }
+        Insert: {
+          agent_outputs?: Json
+          created_at?: string
+          generated_at?: string
+          generated_for_date?: string
+          id?: string
+          source?: string
+          store_id: string
+          summary: string
+        }
+        Update: {
+          agent_outputs?: Json
+          created_at?: string
+          generated_at?: string
+          generated_for_date?: string
+          id?: string
+          source?: string
+          store_id?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_briefings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_settings: {
+        Row: {
+          briefing_enabled: boolean
+          briefing_time: string
+          briefing_timezone: string
+          created_at: string
+          enabled_agents: string[]
+          last_briefing_at: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          briefing_enabled?: boolean
+          briefing_time?: string
+          briefing_timezone?: string
+          created_at?: string
+          enabled_agents?: string[]
+          last_briefing_at?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          briefing_enabled?: boolean
+          briefing_time?: string
+          briefing_timezone?: string
+          created_at?: string
+          enabled_agents?: string[]
+          last_briefing_at?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_settings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_conversations: {
         Row: {
           created_at: string
@@ -42,6 +124,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_conversations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_insights: {
+        Row: {
+          category: string
+          confidence: number
+          created_at: string | null
+          id: string
+          impact_score: number
+          priority: string
+          recommendation: string
+          store_id: string | null
+          summary: string
+        }
+        Insert: {
+          category: string
+          confidence?: number
+          created_at?: string | null
+          id?: string
+          impact_score?: number
+          priority: string
+          recommendation: string
+          store_id?: string | null
+          summary: string
+        }
+        Update: {
+          category?: string
+          confidence?: number
+          created_at?: string | null
+          id?: string
+          impact_score?: number
+          priority?: string
+          recommendation?: string
+          store_id?: string | null
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -84,66 +210,6 @@ export type Database = {
           },
         ]
       }
-      attribute_values: {
-        Row: {
-          attribute_id: string | null
-          created_at: string | null
-          id: string
-          updated_at: string | null
-          value: string
-        }
-        Insert: {
-          attribute_id?: string | null
-          created_at?: string | null
-          id?: string
-          updated_at?: string | null
-          value: string
-        }
-        Update: {
-          attribute_id?: string | null
-          created_at?: string | null
-          id?: string
-          updated_at?: string | null
-          value?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attribute_values_attribute_id_fkey"
-            columns: ["attribute_id"]
-            isOneToOne: false
-            referencedRelation: "attributes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_attribute_values_attribute_id"
-            columns: ["attribute_id"]
-            isOneToOne: false
-            referencedRelation: "attributes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      attributes: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       audit_trails: {
         Row: {
           action: string
@@ -175,15 +241,7 @@ export type Database = {
           table_name?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_trails_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_roles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       bank_accounts: {
         Row: {
@@ -484,6 +542,13 @@ export type Database = {
             foreignKeyName: "customer_addresses_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_balances"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "customer_addresses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -530,6 +595,13 @@ export type Database = {
           transaction_type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "customer_ledger_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_balances"
+            referencedColumns: ["customer_id"]
+          },
           {
             foreignKeyName: "customer_ledger_customer_id_fkey"
             columns: ["customer_id"]
@@ -593,6 +665,137 @@ export type Database = {
           },
         ]
       }
+      daily_business_kpis: {
+        Row: {
+          collections_amount: number
+          created_at: string | null
+          date: string
+          dead_stock_value: number
+          delivery_success_rate: number
+          gross_margin: number
+          id: string
+          inventory_value: number
+          pending_collections: number
+          sales_amount: number
+          store_id: string
+        }
+        Insert: {
+          collections_amount?: number
+          created_at?: string | null
+          date: string
+          dead_stock_value?: number
+          delivery_success_rate?: number
+          gross_margin?: number
+          id?: string
+          inventory_value?: number
+          pending_collections?: number
+          sales_amount?: number
+          store_id: string
+        }
+        Update: {
+          collections_amount?: number
+          created_at?: string | null
+          date?: string
+          dead_stock_value?: number
+          delivery_success_rate?: number
+          gross_margin?: number
+          id?: string
+          inventory_value?: number
+          pending_collections?: number
+          sales_amount?: number
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_business_kpis_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_years: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          is_closed: boolean | null
+          label: string
+          start_date: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          is_closed?: boolean | null
+          label: string
+          start_date: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          is_closed?: boolean | null
+          label?: string
+          start_date?: string
+        }
+        Relationships: []
+      }
+      item_opening_balances: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          financial_year_id: string
+          id: string
+          item_id: string
+          notes: string | null
+          opening_quantity: number
+          opening_unit_cost: number
+          opening_value: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          effective_date: string
+          financial_year_id: string
+          id?: string
+          item_id: string
+          notes?: string | null
+          opening_quantity?: number
+          opening_unit_cost?: number
+          opening_value?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          financial_year_id?: string
+          id?: string
+          item_id?: string
+          notes?: string | null
+          opening_quantity?: number
+          opening_unit_cost?: number
+          opening_value?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       item_variants: {
         Row: {
           attributes: Json | null
@@ -600,6 +803,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
+          is_discontinued: boolean
           parent_item_id: string
           quantity_available: number
           selling_price: number
@@ -613,6 +817,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_discontinued?: boolean
           parent_item_id: string
           quantity_available?: number
           selling_price?: number
@@ -626,6 +831,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_discontinued?: boolean
           parent_item_id?: string
           quantity_available?: number
           selling_price?: number
@@ -650,6 +856,7 @@ export type Database = {
           created_at: string | null
           id: string
           image_url: string | null
+          is_discontinued: boolean
           last_restocked_date: string | null
           name: string
           quantity_available: number
@@ -665,6 +872,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_discontinued?: boolean
           last_restocked_date?: string | null
           name: string
           quantity_available?: number
@@ -680,6 +888,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_discontinued?: boolean
           last_restocked_date?: string | null
           name?: string
           quantity_available?: number
@@ -989,6 +1198,107 @@ export type Database = {
           },
         ]
       }
+      operational_alerts: {
+        Row: {
+          ai_confidence: number | null
+          ai_recommendation: string | null
+          ai_summary: string | null
+          alert_type: string
+          assigned_to: string | null
+          auto_resolved: boolean
+          created_at: string | null
+          dedupe_key: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          last_numeric_signal: number | null
+          last_seen_at: string | null
+          last_signal_hash: string | null
+          message: string
+          metadata: Json | null
+          priority_score: number | null
+          reopened_from: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_source: string | null
+          severity: string
+          snoozed_until: string | null
+          status: string | null
+          store_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_recommendation?: string | null
+          ai_summary?: string | null
+          alert_type: string
+          assigned_to?: string | null
+          auto_resolved?: boolean
+          created_at?: string | null
+          dedupe_key?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          last_numeric_signal?: number | null
+          last_seen_at?: string | null
+          last_signal_hash?: string | null
+          message: string
+          metadata?: Json | null
+          priority_score?: number | null
+          reopened_from?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_source?: string | null
+          severity: string
+          snoozed_until?: string | null
+          status?: string | null
+          store_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_recommendation?: string | null
+          ai_summary?: string | null
+          alert_type?: string
+          assigned_to?: string | null
+          auto_resolved?: boolean
+          created_at?: string | null
+          dedupe_key?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          last_numeric_signal?: number | null
+          last_seen_at?: string | null
+          last_signal_hash?: string | null
+          message?: string
+          metadata?: Json | null
+          priority_score?: number | null
+          reopened_from?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_source?: string | null
+          severity?: string
+          snoozed_until?: string | null
+          status?: string | null
+          store_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_alerts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1232,67 +1542,6 @@ export type Database = {
           },
         ]
       }
-      sales: {
-        Row: {
-          created_at: string | null
-          date: string
-          delivery_status: string
-          id: string
-          item_id: string | null
-          item_name: string
-          quantity: number
-          store_id: string | null
-          supplier_id: string | null
-          total_price: number
-        }
-        Insert: {
-          created_at?: string | null
-          date: string
-          delivery_status: string
-          id?: string
-          item_id?: string | null
-          item_name: string
-          quantity: number
-          store_id?: string | null
-          supplier_id?: string | null
-          total_price: number
-        }
-        Update: {
-          created_at?: string | null
-          date?: string
-          delivery_status?: string
-          id?: string
-          item_id?: string | null
-          item_name?: string
-          quantity?: number
-          store_id?: string | null
-          supplier_id?: string | null
-          total_price?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sales_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sales_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sales_customizations: {
         Row: {
           bom_component_id: string | null
@@ -1351,13 +1600,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sales_customizations_sale_id_fkey"
-            columns: ["sale_id"]
-            isOneToOne: false
-            referencedRelation: "sales"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "sales_customizations_selected_material_id_fkey"
             columns: ["selected_material_id"]
             isOneToOne: false
@@ -1407,6 +1649,7 @@ export type Database = {
       sales_order_items: {
         Row: {
           created_at: string
+          discount: number | null
           id: string
           item_id: string | null
           item_name: string
@@ -1420,6 +1663,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          discount?: number | null
           id?: string
           item_id?: string | null
           item_name: string
@@ -1433,6 +1677,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          discount?: number | null
           id?: string
           item_id?: string | null
           item_name?: string
@@ -1562,6 +1807,7 @@ export type Database = {
           order_number: string
           order_sequence: number
           quote_status: string | null
+          salesperson_name: string | null
           status: string | null
           stock_deducted: boolean | null
           store_id: string | null
@@ -1591,6 +1837,7 @@ export type Database = {
           order_number: string
           order_sequence?: number
           quote_status?: string | null
+          salesperson_name?: string | null
           status?: string | null
           stock_deducted?: boolean | null
           store_id?: string | null
@@ -1620,6 +1867,7 @@ export type Database = {
           order_number?: string
           order_sequence?: number
           quote_status?: string | null
+          salesperson_name?: string | null
           status?: string | null
           stock_deducted?: boolean | null
           store_id?: string | null
@@ -1629,6 +1877,13 @@ export type Database = {
           workflow_state?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_balances"
+            referencedColumns: ["customer_id"]
+          },
           {
             foreignKeyName: "sales_orders_customer_id_fkey"
             columns: ["customer_id"]
@@ -1749,6 +2004,53 @@ export type Database = {
           },
         ]
       }
+      store_operational_scores: {
+        Row: {
+          compliance_score: number
+          created_at: string | null
+          customer_score: number
+          date: string
+          delivery_score: number
+          finance_score: number
+          id: string
+          inventory_score: number
+          overall_score: number
+          store_id: string
+        }
+        Insert: {
+          compliance_score?: number
+          created_at?: string | null
+          customer_score?: number
+          date: string
+          delivery_score?: number
+          finance_score?: number
+          id?: string
+          inventory_score?: number
+          overall_score?: number
+          store_id: string
+        }
+        Update: {
+          compliance_score?: number
+          created_at?: string | null
+          customer_score?: number
+          date?: string
+          delivery_score?: number
+          finance_score?: number
+          id?: string
+          inventory_score?: number
+          overall_score?: number
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_operational_scores_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           created_at: string | null
@@ -1838,6 +2140,7 @@ export type Database = {
           balance_type: string
           created_at: string | null
           effective_date: string
+          financial_year_id: string | null
           id: string
           notes: string | null
           opening_balance: number
@@ -1849,6 +2152,7 @@ export type Database = {
           balance_type?: string
           created_at?: string | null
           effective_date: string
+          financial_year_id?: string | null
           id?: string
           notes?: string | null
           opening_balance?: number
@@ -1860,6 +2164,7 @@ export type Database = {
           balance_type?: string
           created_at?: string | null
           effective_date?: string
+          financial_year_id?: string | null
           id?: string
           notes?: string | null
           opening_balance?: number
@@ -1869,6 +2174,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "supplier_opening_balances_financial_year_id_fkey"
+            columns: ["financial_year_id"]
+            isOneToOne: false
+            referencedRelation: "financial_years"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "supplier_opening_balances_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
@@ -1877,6 +2189,42 @@ export type Database = {
           },
           {
             foreignKeyName: "supplier_opening_balances_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_store_access: {
+        Row: {
+          created_at: string
+          id: string
+          store_id: string
+          supplier_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          store_id: string
+          supplier_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          store_id?: string
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_store_access_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_store_access_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
@@ -1917,6 +2265,223 @@ export type Database = {
           name?: string
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_events: {
+        Row: {
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          payload: Json | null
+          processed: boolean | null
+          processed_at: string | null
+          source_operation: string | null
+          source_table: string | null
+          store_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          processed_at?: string | null
+          source_operation?: string | null
+          source_table?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          processed_at?: string | null
+          source_operation?: string | null
+          source_table?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_chat_context: {
+        Row: {
+          active_store_id: string
+          ai_conversation_id: string | null
+          chat_id: number
+          created_at: string
+          last_message_at: string
+          updated_at: string
+        }
+        Insert: {
+          active_store_id: string
+          ai_conversation_id?: string | null
+          chat_id: number
+          created_at?: string
+          last_message_at?: string
+          updated_at?: string
+        }
+        Update: {
+          active_store_id?: string
+          ai_conversation_id?: string | null
+          chat_id?: number
+          created_at?: string
+          last_message_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_chat_context_active_store_id_fkey"
+            columns: ["active_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_chat_context_ai_conversation_id_fkey"
+            columns: ["ai_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_link_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          store_id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          store_id: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          store_id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_link_codes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_links: {
+        Row: {
+          ai_conversation_id: string | null
+          chat_id: number
+          created_at: string
+          id: string
+          is_active: boolean
+          linked_at: string
+          notification_preferences: Json
+          store_id: string
+          telegram_first_name: string | null
+          telegram_username: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_conversation_id?: string | null
+          chat_id: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          linked_at?: string
+          notification_preferences?: Json
+          store_id: string
+          telegram_first_name?: string | null
+          telegram_username?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_conversation_id?: string | null
+          chat_id?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          linked_at?: string
+          notification_preferences?: Json
+          store_id?: string
+          telegram_first_name?: string | null
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_links_ai_conversation_id_fkey"
+            columns: ["ai_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_links_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_messages: {
+        Row: {
+          chat_id: number
+          created_at: string
+          raw_update: Json
+          text: string | null
+          update_id: number
+          user_id: number | null
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          raw_update: Json
+          text?: string | null
+          update_id: number
+          user_id?: number | null
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          raw_update?: Json
+          text?: string | null
+          update_id?: number
+          user_id?: number | null
         }
         Relationships: []
       }
@@ -1970,6 +2535,63 @@ export type Database = {
           },
         ]
       }
+      year_end_snapshots: {
+        Row: {
+          balance_type: string | null
+          closing_amount: number | null
+          closing_quantity: number | null
+          created_at: string | null
+          entity_id: string
+          entity_name: string | null
+          financial_year_id: string
+          id: string
+          metadata: Json | null
+          snapshot_type: string
+          store_id: string | null
+        }
+        Insert: {
+          balance_type?: string | null
+          closing_amount?: number | null
+          closing_quantity?: number | null
+          created_at?: string | null
+          entity_id: string
+          entity_name?: string | null
+          financial_year_id: string
+          id?: string
+          metadata?: Json | null
+          snapshot_type: string
+          store_id?: string | null
+        }
+        Update: {
+          balance_type?: string | null
+          closing_amount?: number | null
+          closing_quantity?: number | null
+          created_at?: string | null
+          entity_id?: string
+          entity_name?: string | null
+          financial_year_id?: string
+          id?: string
+          metadata?: Json | null
+          snapshot_type?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "year_end_snapshots_financial_year_id_fkey"
+            columns: ["financial_year_id"]
+            isOneToOne: false
+            referencedRelation: "financial_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "year_end_snapshots_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       bank_transaction_ledger: {
@@ -2001,6 +2623,25 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_balances: {
+        Row: {
+          balance_due: number | null
+          customer_id: string | null
+          name: string | null
+          store_id: string | null
+          total_credit: number | null
+          total_debit: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_summary: {
         Row: {
           net_balance: number | null
@@ -2026,9 +2667,12 @@ export type Database = {
           customer_phone: string | null
           delivery_date: string | null
           delivery_status: string | null
+          document_type: string | null
           order_number: string | null
+          quote_status: string | null
           sale_date: string | null
           sale_id: string | null
+          salesperson_name: string | null
           store_id: string | null
           supplier_id: string | null
           total_paid: number | null
@@ -2072,32 +2716,98 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_daily_kpis_and_scores: {
+        Args: { p_date: string }
+        Returns: Json
+      }
       can_access_customer_pii: { Args: { _user_id?: string }; Returns: boolean }
       convert_quote_to_order: {
         Args: { _order_id: string }
         Returns: undefined
       }
-      create_sales_order_secure: {
-        Args: {
-          _advance_paid?: number
-          _customer_address?: string
-          _customer_id?: string
-          _customer_name?: string
-          _customer_phone?: string
-          _customizations?: Json
-          _date?: string
-          _delivery_date?: string
-          _delivery_status?: string
-          _description?: string
-          _document_type?: string
-          _items?: Json
-          _order_number: string
-          _store_id: string
-          _supplier_id?: string
-          _total_amount?: number
-        }
-        Returns: string
+      create_sales_order_secure:
+        | {
+            Args: {
+              _advance_paid?: number
+              _customer_address?: string
+              _customer_id?: string
+              _customer_name?: string
+              _customer_phone?: string
+              _customizations?: Json
+              _date?: string
+              _delivery_date?: string
+              _delivery_status?: string
+              _description?: string
+              _document_type?: string
+              _items?: Json
+              _order_number: string
+              _store_id: string
+              _supplier_id?: string
+              _total_amount?: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _advance_paid?: number
+              _customer_address?: string
+              _customer_id?: string
+              _customer_name?: string
+              _customer_phone?: string
+              _customizations?: Json
+              _date?: string
+              _delivery_date?: string
+              _delivery_status?: string
+              _description?: string
+              _document_type?: string
+              _items?: Json
+              _order_number: string
+              _salesperson_name?: string
+              _store_id: string
+              _supplier_id?: string
+              _total_amount?: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _advance_bank_account_id?: string
+              _advance_paid?: number
+              _advance_payment_method?: string
+              _customer_address?: string
+              _customer_id?: string
+              _customer_name?: string
+              _customer_phone?: string
+              _customizations?: Json
+              _date?: string
+              _delivery_date?: string
+              _delivery_status?: string
+              _description?: string
+              _document_type?: string
+              _items?: Json
+              _order_number: string
+              _salesperson_name?: string
+              _store_id: string
+              _supplier_id?: string
+              _total_amount?: number
+            }
+            Returns: string
+          }
+      cron_check_briefings: { Args: never; Returns: undefined }
+      customer_summary: {
+        Args: { store_uuid?: string }
+        Returns: {
+          balance_due: number
+          customer_id: string
+          last_order_date: string
+          name: string
+          phone: string
+          store_id: string
+          total_orders: number
+          total_revenue: number
+        }[]
       }
+      generate_ai_insights: { Args: never; Returns: number }
       get_all_users_for_admin: {
         Args: never
         Returns: {
@@ -2137,6 +2847,7 @@ export type Database = {
           upi_id: string
         }[]
       }
+      get_edge_internal_secret: { Args: never; Returns: string }
       get_sales_order_for_user: {
         Args: { _order_id: string }
         Returns: {
@@ -2181,6 +2892,7 @@ export type Database = {
           id: string
           order_number: string
           quote_status: string
+          salesperson_name: string
           status: string
           store_id: string
           supplier_id: string
@@ -2211,6 +2923,17 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_stock_opening_balance: {
+        Args: { p_as_of_date: string; p_item_id: string; p_store_id: string }
+        Returns: number
+      }
+      get_stock_opening_value: {
+        Args: { p_as_of_date: string; p_item_id: string; p_store_id: string }
+        Returns: {
+          qty: number
+          value: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2222,7 +2945,31 @@ export type Database = {
         Args: { _module: string; _store_id: string }
         Returns: boolean
       }
+      notify_telegram: {
+        Args: { p_data: Json; p_event: string; p_store_id: string }
+        Returns: undefined
+      }
+      perform_year_end_closing: { Args: { p_year_id: string }; Returns: Json }
       ping: { Args: never; Returns: undefined }
+      process_system_events: { Args: never; Returns: Json }
+      raise_operational_alert: {
+        Args: {
+          p_alert_type: string
+          p_dedupe_key: string
+          p_entity_id: string
+          p_entity_type: string
+          p_message: string
+          p_metadata: Json
+          p_numeric_signal: number
+          p_priority: number
+          p_severity: string
+          p_store_id: string
+          p_title: string
+          p_worsen_ratio?: number
+        }
+        Returns: string
+      }
+      scan_operational_risks: { Args: never; Returns: Json }
       search_items_enhanced: {
         Args: {
           category_id_filter?: string
@@ -2239,6 +2986,7 @@ export type Database = {
           created_at: string
           has_variants: boolean
           id: string
+          is_discontinued: boolean
           last_restocked_date: string
           name: string
           quantity_available: number
