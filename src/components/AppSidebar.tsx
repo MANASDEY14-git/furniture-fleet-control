@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, DollarSign, FileText,
   Settings, Calendar, Users, BookOpen, LogOut, Building2,
   TrendingUp, ChevronDown, ChevronRight, Layers, Activity, Tag,
-  CreditCard, Store, Check
+  CreditCard, Store, Check, Sparkles
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,

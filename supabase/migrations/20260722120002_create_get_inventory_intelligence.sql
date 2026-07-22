@@ -97,9 +97,9 @@ BEGIN
       COALESCE(i.selling_price, 0)::numeric AS selling_price,
       
       -- Sales aggregations
-      COALESCE(s.revenue, 0) AS revenue_period,
-      COALESCE(s.units_sold, 0) AS units_sold_period,
-      (COALESCE(s.revenue, 0) - (COALESCE(s.units_sold, 0) * COALESCE(i.cost_price, 0))) AS gross_profit_period,
+      COALESCE(s.revenue, 0)::numeric AS revenue_period,
+      COALESCE(s.units_sold, 0)::numeric AS units_sold_period,
+      (COALESCE(s.revenue, 0) - (COALESCE(s.units_sold, 0) * COALESCE(i.cost_price, 0)))::numeric AS gross_profit_period,
       s.max_sale_date AS last_sold_date,
       
       CASE 
@@ -129,8 +129,8 @@ BEGIN
   computed_items AS (
     SELECT
       ri.*,
-      (ri.quantity_available * ri.selling_price) AS inventory_value,
-      (ri.quantity_available * ri.cost_price) AS inventory_cost,
+      (ri.quantity_available * ri.selling_price)::numeric AS inventory_value,
+      (ri.quantity_available * ri.cost_price)::numeric AS inventory_cost,
       
       CASE
         WHEN ri.stock_age_days <= 180 THEN 'Healthy'
@@ -140,17 +140,17 @@ BEGIN
         ELSE 'Critical'
       END AS stock_age_bucket,
       
-      ROUND(ri.units_sold_period / months_in_period, 2) AS monthly_velocity,
+      ROUND((ri.units_sold_period / months_in_period)::numeric, 2) AS monthly_velocity,
       
       CASE
         WHEN ri.units_sold_period > 0 THEN 
-          ROUND(ri.quantity_available / (ri.units_sold_period / days_in_period), 1)
+          ROUND((ri.quantity_available / (ri.units_sold_period / days_in_period))::numeric, 1)
         ELSE 999.0
       END AS days_to_sell,
 
       CASE
-        WHEN ri.stock_age_days > 180 THEN (ri.quantity_available * ri.cost_price)
-        ELSE 0
+        WHEN ri.stock_age_days > 180 THEN (ri.quantity_available * ri.cost_price)::numeric
+        ELSE 0::numeric
       END AS cash_locked
     FROM raw_items ri
   ),
@@ -164,14 +164,14 @@ BEGIN
         ELSE 'Overstocked'
       END AS reorder_status,
       
-      -- Hero score composite formula (0 to 100)
+      -- Hero score composite formula (0 to 100) with explicit double precision to numeric casting
       ROUND(
-        LEAST(100.0, GREATEST(0.0,
-          (PERCENT_RANK() OVER (ORDER BY ci.revenue_period ASC) * 35.0) +
-          (PERCENT_RANK() OVER (ORDER BY ci.gross_profit_period ASC) * 25.0) +
-          (PERCENT_RANK() OVER (ORDER BY ci.units_sold_period ASC) * 20.0) +
+        LEAST(100.0::numeric, GREATEST(0.0::numeric,
+          ((PERCENT_RANK() OVER (ORDER BY ci.revenue_period ASC))::numeric * 35.0) +
+          ((PERCENT_RANK() OVER (ORDER BY ci.gross_profit_period ASC))::numeric * 25.0) +
+          ((PERCENT_RANK() OVER (ORDER BY ci.units_sold_period ASC))::numeric * 20.0) +
           (CASE WHEN ci.quantity_available > 0 THEN 10.0 ELSE 0.0 END) +
-          (CASE WHEN ci.selling_price > ci.cost_price THEN LEAST(10.0, ((ci.selling_price - ci.cost_price) / NULLIF(ci.selling_price, 0)) * 20.0) ELSE 0.0 END)
+          (CASE WHEN ci.selling_price > ci.cost_price THEN LEAST(10.0::numeric, (((ci.selling_price - ci.cost_price) / NULLIF(ci.selling_price, 0)) * 20.0)::numeric) ELSE 0.0 END)
         )),
         1
       ) AS hero_score,
