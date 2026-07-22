@@ -57,6 +57,7 @@ export default function Sales() {
   });
 
   // Set up real-time subscriptions
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const channels: any[] = [];
 
@@ -71,7 +72,6 @@ export default function Sales() {
           table: 'sales_orders'
         },
         () => {
-          console.log('Sales orders changed, refreshing...');
           refetchSalePaymentStatus();
         }
       )
@@ -89,7 +89,6 @@ export default function Sales() {
           table: 'payments'
         },
         () => {
-          console.log('Payments changed, refreshing sales...');
           refetchSalePaymentStatus();
         }
       )
@@ -101,7 +100,8 @@ export default function Sales() {
         supabase.removeChannel(channel);
       });
     };
-  }, [refetchSalePaymentStatus]);
+  // Run only once on mount — refetch is stable via react-query
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredOrders = useMemo(() => {
     // Get set of order IDs that have items from selected supplier

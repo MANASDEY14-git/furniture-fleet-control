@@ -376,15 +376,15 @@ export default function EnhancedSalesOrderForm({
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-foreground">Order Details</h3>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="orderNumber" className="text-sm font-medium">Order Number *</Label>
-                    <Input id="orderNumber" value={formData.orderNumber} onChange={e => setFormData({
-                    ...formData,
-                    orderNumber: e.target.value
-                  })} required className="h-12 text-base" placeholder="Enter order number" />
-                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="orderNumber" className="text-sm font-medium">Order Number *</Label>
+                      <Input id="orderNumber" value={formData.orderNumber} onChange={e => setFormData({
+                      ...formData,
+                      orderNumber: e.target.value
+                    })} required className="h-12 text-base" placeholder="Enter order number" />
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="store" className="text-sm font-medium">Store *</Label>
                       <select value={formData.storeId} onChange={e => setFormData({
@@ -402,6 +402,19 @@ export default function EnhancedSalesOrderForm({
                       ...formData,
                       date: e.target.value
                     })} required className="h-12 text-base" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="topSalespeople" className="text-sm font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                        <Users className="h-4 w-4 text-purple-600" /> Sales Person(s) *
+                      </Label>
+                      <Input
+                        id="topSalespeople"
+                        placeholder="e.g. Rahul or Amit, Rajiv"
+                        value={formData.salespeople || ''}
+                        onChange={e => setFormData({ ...formData, salespeople: e.target.value })}
+                        className="h-12 text-base border-2 border-purple-500 bg-purple-50/50 dark:bg-purple-950/20 font-bold text-purple-900 dark:text-purple-100"
+                      />
                     </div>
                   </div>
                 </div>

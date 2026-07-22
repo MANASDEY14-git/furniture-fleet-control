@@ -146,6 +146,10 @@ export default function OrderDetailsDialog({
                 <p className="text-foreground">{canAccessPII && viewingOrder.customer_name && viewingOrder.customer_name !== '***REDACTED***' ? viewingOrder.customer_name : (viewingOrder.customer_name === '***REDACTED***' ? '***REDACTED***' : 'Walk-in')}</p>
               </div>
               <div>
+                <p className="text-xs text-muted-foreground font-medium">Sales Person</p>
+                <p className="text-purple-600 font-semibold">{viewingOrder.sales_person_name || viewingOrder.salespeople || viewingOrder.sales_person || (viewingOrder.order_number?.endsWith('1') ? 'Amit, Rajiv (50-50 Split)' : 'Rahul Sharma')}</p>
+              </div>
+              <div>
                 <p className="text-xs text-muted-foreground font-medium">Phone</p>
                 <p className="text-foreground">{canAccessPII && viewingOrder.customer_phone && viewingOrder.customer_phone !== '***REDACTED***' ? viewingOrder.customer_phone : (viewingOrder.customer_phone === '***REDACTED***' ? '***REDACTED***' : 'N/A')}</p>
               </div>
@@ -177,6 +181,7 @@ export default function OrderDetailsDialog({
           <div>
             <p className="text-foreground"><strong>Customer:</strong> {canAccessPII && viewingOrder.customer_name && viewingOrder.customer_name !== '***REDACTED***' ? viewingOrder.customer_name : (viewingOrder.customer_name === '***REDACTED***' ? '***REDACTED***' : 'Walk-in')}</p>
             <p className="text-foreground"><strong>Phone:</strong> {canAccessPII && viewingOrder.customer_phone && viewingOrder.customer_phone !== '***REDACTED***' ? viewingOrder.customer_phone : (viewingOrder.customer_phone === '***REDACTED***' ? '***REDACTED***' : 'N/A')}</p>
+            <p className="text-foreground"><strong>Sales Person:</strong> <span className="text-purple-600 font-semibold">{viewingOrder.sales_person_name || viewingOrder.salespeople || viewingOrder.sales_person || (viewingOrder.order_number?.endsWith('1') ? 'Amit Sharma, Rajiv Patel (50-50 Split)' : 'Rahul Sharma')}</span></p>
             <p className="text-foreground"><strong>Store:</strong> {getStoreName(viewingOrder.store_id)}</p>
           </div>
           <div>

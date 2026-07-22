@@ -163,7 +163,7 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
         <Card className="border-none shadow-none">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="orderNumber" className="text-blue-200">Order Number *</Label>
                   <Input
@@ -201,6 +201,17 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
                     required
                     className="neon-border bg-slate-800/50 text-blue-100"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="salespeople" className="text-purple-300 font-medium">Sales Person(s) *</Label>
+                  <Input
+                    id="salespeople"
+                    value={(formData as any).salespeople || ''}
+                    onChange={(e) => setFormData({...formData, salespeople: e.target.value} as any)}
+                    className="neon-border bg-slate-800/50 text-purple-200 font-semibold"
+                    placeholder="e.g. Rahul Sharma or Amit, Rajiv"
                   />
                 </div>
 
