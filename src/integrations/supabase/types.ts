@@ -3067,6 +3067,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_past_sales_order: {
+        Args: {
+          _category_name: string
+          _cost_price: number
+          _customer_name: string
+          _discount_pct: number
+          _item_name: string
+          _order_date: string
+          _order_number: string
+          _quantity: number
+          _salespeople: string
+          _store_id: string
+          _unit_price: number
+        }
+        Returns: string
+      }
       is_module_enabled: {
         Args: { _module: string; _store_id: string }
         Returns: boolean
