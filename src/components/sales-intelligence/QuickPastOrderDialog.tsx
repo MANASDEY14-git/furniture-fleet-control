@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Calendar, Plus, Users, Sparkles, ShoppingBag, CheckCircle } from 'lucid
 import { toast } from 'sonner';
 import { useCreateSalesOrder } from '@/hooks/useSalesOrders';
 import { useStores } from '@/hooks/useStores';
+import { supabase } from '@/integrations/supabase/client';
 
 interface QuickPastOrderDialogProps {
   open: boolean;
@@ -30,6 +31,12 @@ export function QuickPastOrderDialog({ open, onOpenChange, onSuccessRefresh }: Q
   const [discountPct, setDiscountPct] = useState<number>(5);
   const [salespeople, setSalespeople] = useState<string>('Rahul Sharma, Amit Verma');
 
+  useEffect(() => {
+    if (stores.length > 0 && !storeId) {
+      setStoreId(stores[0].id);
+    }
+  }, [stores, storeId]);
+
   const categories = ['Sofa', 'Dining', 'Wardrobe', 'Bed', 'Office Furniture', 'Mattress', 'Chairs', 'Storage'];
 
   const handleSavePastOrder = async (e: React.FormEvent) => {
@@ -40,36 +47,34 @@ export function QuickPastOrderDialog({ open, onOpenChange, onSuccessRefresh }: Q
     }
 
     try {
-      const discountedPrice = Math.round(unitPrice * (1 - discountPct / 100));
-      const totalPrice = discountedPrice * quantity;
-      const selectedStore = storeId || (stores[0]?.id ?? '1');
+      const selectedStore = storeId || (stores[0]?.id);
+      if (!selectedStore) {
+        toast.error('No store available');
+        return;
+      }
 
-      await createSalesOrder.mutateAsync({
-        order_number: `SO-HIST-${Date.now().toString().slice(-4)}`,
-        store_id: selectedStore,
-        date: date,
-        customer_name: customerName || 'Historical Walk-in Client',
-        delivery_status: 'Delivered' as any,
-        items: [
-          {
-            item_id: 'item-hist-1',
-            item_name: `${category} - ${itemName}`,
-            quantity: quantity,
-            unit_price: unitPrice,
-            total_price: totalPrice,
-          }
-        ],
-        description: `Historical past order entry. Attended by: ${salespeople}`,
-      } as any);
+      const { data, error } = await supabase.rpc('import_past_sales_order', {
+        _order_date: date,
+        _order_number: `SO-HIST-${Date.now().toString().slice(-4)}`,
+        _customer_name: customerName || 'Historical Walk-in Client',
+        _category_name: category,
+        _item_name: itemName,
+        _quantity: quantity,
+        _unit_price: unitPrice,
+        _cost_price: Math.round(unitPrice * 0.6), // default cost price to 60% of unit price
+        _discount_pct: discountPct,
+        _salespeople: salespeople,
+        _store_id: selectedStore
+      });
+
+      if (error) throw error;
 
       toast.success(`Past order logged for ${date}! (Sales split 50-50 for ${salespeople})`);
       onOpenChange(false);
       if (onSuccessRefresh) onSuccessRefresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.success(`Past order recorded for ${date}! Updated intelligence metrics.`);
-      onOpenChange(false);
-      if (onSuccessRefresh) onSuccessRefresh();
+      toast.error(`Failed to record past order: ${err.message || err}`);
     }
   };
 
@@ -106,9 +111,9 @@ export function QuickPastOrderDialog({ open, onOpenChange, onSuccessRefresh }: Q
                   <SelectValue placeholder="Select Branch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Downtown Flagship</SelectItem>
-                  <SelectItem value="2">Suburban Outlet</SelectItem>
-                  <SelectItem value="3">Mall Experience Center</SelectItem>
+                  {stores.map(store => (
+                    <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

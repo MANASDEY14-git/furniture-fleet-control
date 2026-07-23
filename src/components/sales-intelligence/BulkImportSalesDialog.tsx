@@ -6,6 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { FileSpreadsheet, Upload, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { supabase } from '@/integrations/supabase/client';
+import { useStores } from '@/hooks/useStores';
+import { useStoreContext } from '@/contexts/StoreContext';
 
 interface BulkImportSalesDialogProps {
   open: boolean;
@@ -16,6 +19,8 @@ interface BulkImportSalesDialogProps {
 export function BulkImportSalesDialog({ open, onOpenChange, onSuccessRefresh }: BulkImportSalesDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const { data: stores = [] } = useStores();
+  const { activeStoreId } = useStoreContext();
 
   const handleDownloadSample = () => {
     const sampleData = [
@@ -67,7 +72,7 @@ export function BulkImportSalesDialog({ open, onOpenChange, onSuccessRefresh }: 
     setIsProcessing(true);
     const reader = new FileReader();
 
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const bstr = evt.target?.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
@@ -75,13 +80,48 @@ export function BulkImportSalesDialog({ open, onOpenChange, onSuccessRefresh }: 
         const ws = wb.Sheets[wsName];
         const data = XLSX.utils.sheet_to_json(ws);
 
-        toast.success(`Successfully imported ${data.length} historical sales records!`);
+        const rows = data as any[];
+        const targetStoreId = activeStoreId && activeStoreId !== 'all' 
+          ? activeStoreId 
+          : (stores[0]?.id);
+
+        if (!targetStoreId) {
+          toast.error('No target store available to import sales.');
+          setIsProcessing(false);
+          return;
+        }
+
+        let importCount = 0;
+        for (const row of rows) {
+          const { error } = await supabase.rpc('import_past_sales_order', {
+            _order_date: row.order_date || new Date().toISOString().split('T')[0],
+            _order_number: row.order_number || `SO-HIST-IMP-${Math.floor(Math.random() * 10000)}`,
+            _customer_name: row.customer_name || 'Imported Client',
+            _category_name: row.category || 'General',
+            _item_name: row.item_name || 'Imported Item',
+            _quantity: parseInt(row.quantity) || 1,
+            _unit_price: parseFloat(row.unit_price) || 0,
+            _cost_price: parseFloat(row.cost_price) || (parseFloat(row.unit_price) * 0.6) || 0,
+            _discount_pct: parseFloat(row.discount_pct) || 0,
+            _salespeople: row.salespeople || 'General Staff',
+            _store_id: targetStoreId
+          });
+
+          if (error) {
+            console.error('Error importing row:', row, error);
+            toast.error(`Error importing row: ${row.order_number || ''}`);
+          } else {
+            importCount++;
+          }
+        }
+
+        toast.success(`Successfully imported ${importCount} of ${rows.length} historical sales records!`);
         setIsProcessing(false);
         onOpenChange(false);
         if (onSuccessRefresh) onSuccessRefresh();
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast.error('Failed to parse import file. Please use the sample template.');
+        toast.error(`Failed to parse import file: ${err.message || err}`);
         setIsProcessing(false);
       }
     };

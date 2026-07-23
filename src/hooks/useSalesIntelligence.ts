@@ -304,6 +304,28 @@ interface RpcSalesperson {
   uniqueCustomers: number;
   avgOrderValue: number;
   profitMarginPct: number;
+  older180DaysValue?: number;
+  older365DaysValue?: number;
+  totalValueCleared?: number;
+  deadStockClearedPct?: number;
+  itemsClearedCount?: number;
+  avgDiscountPct?: number;
+  highestDiscountPct?: number;
+  revenueLostToDiscounts?: number;
+  marginImpactPct?: number;
+  approvalViolationsCount?: number;
+  categoryBreakdown?: CategoryPerformance[];
+  monthlyTrend?: Array<{
+    month: string;
+    revenue: number;
+    profit: number;
+    orders: number;
+    aov: number;
+    conversion?: number;
+  }>;
+  coSellingPartners?: CoSellingPartnerInfo[];
+  discountViolations?: DiscountViolation[];
+  salesHistory?: SalesHistoryEntry[];
 }
 
 interface RpcSummary {
@@ -314,8 +336,19 @@ interface RpcSummary {
     totalUnits: number;
     avgOrderValue: number;
     profitMarginPct: number;
+    inventoryClearedValue?: number;
   };
   salespeople: RpcSalesperson[];
+  coSellingPairs?: CoSellingPairSynergy[];
+  teamCategoryMix?: CategoryPerformance[];
+  teamMonthlyTrends?: Array<{
+    month: string;
+    revenue: number;
+    profit: number;
+    orders: number;
+    aov: number;
+    conversion?: number;
+  }>;
 }
 
 async function fetchSummary(storeId: string | undefined, start: Date | null, end: Date | null): Promise<RpcSummary> {
@@ -401,18 +434,20 @@ function toSalespersonPerformance(
     forecastAchievement: 0,
     achievementPct: 0,
 
-    older180DaysValue: 0,
-    older365DaysValue: 0,
-    totalValueCleared: 0,
-    deadStockClearedPct: 0,
-    itemsClearedCount: 0,
+    older180DaysValue: Math.round(rp.older180DaysValue ?? 0),
+    older365DaysValue: Math.round(rp.older365DaysValue ?? 0),
+    totalValueCleared: Math.round(rp.totalValueCleared ?? 0),
+    deadStockClearedPct: rp.deadStockClearedPct ?? 0,
+    itemsClearedCount: Math.round(rp.itemsClearedCount ?? 0),
 
     heroProductsSold: 0,
     fastMovingSold: 0,
     slowMovingCleared: 0,
     premiumProductsSold: 0,
-    categoryBreakdown: [],
-    topCategory: '—',
+    categoryBreakdown: rp.categoryBreakdown || [],
+    topCategory: (rp.categoryBreakdown && rp.categoryBreakdown.length > 0)
+      ? [...rp.categoryBreakdown].sort((a, b) => b.revenue - a.revenue)[0].category
+      : '—',
 
     repeatCustomersCount: rp.uniqueCustomers,
     newCustomersCount: 0,
@@ -422,12 +457,12 @@ function toSalespersonPerformance(
     complaintsCount: 0,
     deliveryIssuesCount: 0,
 
-    avgDiscountPct: 0,
-    highestDiscountPct: 0,
-    revenueLostToDiscounts: 0,
-    marginImpactPct: 0,
-    approvalViolationsCount: 0,
-    discountViolations: [],
+    avgDiscountPct: rp.avgDiscountPct ?? 0,
+    highestDiscountPct: rp.highestDiscountPct ?? 0,
+    revenueLostToDiscounts: rp.revenueLostToDiscounts ?? 0,
+    marginImpactPct: rp.marginImpactPct ?? 0,
+    approvalViolationsCount: rp.approvalViolationsCount ?? 0,
+    discountViolations: rp.discountViolations || [],
 
     performanceScore: score,
     scoreTier: performanceTier(score),
@@ -446,12 +481,12 @@ function toSalespersonPerformance(
     trendPctChange: trendPct,
     badgeStatus: badgeStatus(score),
 
-    coSellingPartners: [],
+    coSellingPartners: rp.coSellingPartners || [],
     coSellingDealsCount: rp.ordersTouched - Math.round(rp.ordersClosed),
 
     coachingRecommendations: [],
-    salesHistory: [],
-    monthlyTrend: [],
+    salesHistory: rp.salesHistory || [],
+    monthlyTrend: rp.monthlyTrend || [],
   };
 }
 
@@ -514,8 +549,8 @@ export function useSalesIntelligence(filters: SalesIntelligenceFilters = {}) {
         prevAvgOrderValue,
         teamConversionRate: 0,
         prevTeamConversionRate: 0,
-        inventoryClearedValue: 0,
-        prevInventoryClearedValue: 0,
+        inventoryClearedValue: current.kpis.inventoryClearedValue ?? 0,
+        prevInventoryClearedValue: previous.kpis.inventoryClearedValue ?? 0,
         bestPerformer: best
           ? { id: best.id, name: best.name, avatarUrl: best.avatarUrl, revenue: best.monthlyRevenue, profit: best.monthlyProfit, score: best.performanceScore }
           : empty,
@@ -562,9 +597,9 @@ export function useSalesIntelligence(filters: SalesIntelligenceFilters = {}) {
         kpis,
         insights,
         salespeople,
-        coSellingPairs: [],
-        teamCategoryMix: [],
-        teamMonthlyTrends: [],
+        coSellingPairs: current.coSellingPairs || [],
+        teamCategoryMix: current.teamCategoryMix || [],
+        teamMonthlyTrends: current.teamMonthlyTrends || [],
       };
     },
     staleTime: 60 * 1000,
