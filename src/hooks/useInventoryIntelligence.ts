@@ -110,7 +110,7 @@ export function useInventoryIntelligence(filters: InventoryFiltersState) {
       filters.priceMax,
     ],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_inventory_intelligence', {
+      const { data, error } = await supabase.rpc('get_inventory_intelligence' as never, {
         p_store_id: storeId,
         p_date_from: dateFrom,
         p_date_to: dateTo,
@@ -122,14 +122,28 @@ export function useInventoryIntelligence(filters: InventoryFiltersState) {
         p_age_max_days: filters.ageMaxDays ?? null,
         p_price_min: filters.priceMin ?? null,
         p_price_max: filters.priceMax ?? null,
-      });
+      } as never);
 
       if (error) {
         console.error('[inventory-intelligence]', error);
         throw error;
       }
 
-      return (data ?? []) as unknown as InventoryIntelligenceRow[];
+      const rows = (data ?? []) as unknown as Array<
+        Omit<InventoryIntelligenceRow, 'id' | 'name'>
+      >;
+      // Populate id/name aliases for UI convenience
+      let filtered = rows.map((r) => ({
+        ...r,
+        id: r.item_id,
+        name: r.item_name,
+      })) as InventoryIntelligenceRow[];
+
+      if (filters.ageBucket && filters.ageBucket !== 'all') {
+        filtered = filtered.filter((r) => r.stock_age_bucket === filters.ageBucket);
+      }
+
+      return filtered;
     },
     staleTime: 60 * 1000,
   });
