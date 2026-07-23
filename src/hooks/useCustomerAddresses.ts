@@ -5,12 +5,10 @@ import { useToast } from '@/hooks/use-toast';
 export interface CustomerAddress {
   id: string;
   customer_id: string;
-  address_line1: string;
-  address_line2?: string | null;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
+  label?: string | null;
+  address: string;
+  contact_person?: string | null;
+  phone?: string | null;
   is_default: boolean;
   created_at?: string;
   updated_at?: string;
@@ -20,7 +18,7 @@ export const useCustomerAddresses = (customerId?: string) => {
   return useQuery({
     queryKey: ['customer-addresses', customerId],
     queryFn: async () => {
-      if (!customerId) return [];
+      if (!customerId) return [] as CustomerAddress[];
       const { data, error } = await supabase
         .from('customer_addresses')
         .select('*')
@@ -28,7 +26,7 @@ export const useCustomerAddresses = (customerId?: string) => {
         .order('is_default', { ascending: false });
 
       if (error) throw error;
-      return data as CustomerAddress[];
+      return (data ?? []) as CustomerAddress[];
     },
     enabled: !!customerId,
   });
@@ -40,7 +38,6 @@ export const useCreateCustomerAddress = () => {
 
   return useMutation({
     mutationFn: async (address: Omit<CustomerAddress, 'id' | 'created_at' | 'updated_at'>) => {
-      // If setting as default, unset others first (handled by backend or do it here)
       if (address.is_default) {
         await supabase
           .from('customer_addresses')
@@ -55,21 +52,14 @@ export const useCreateCustomerAddress = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as CustomerAddress;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['customer-addresses', data.customer_id] });
-      toast({
-        title: "Success",
-        description: "Address added successfully",
-      });
+      toast({ title: 'Success', description: 'Address added successfully' });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to add address: ${error.message}`,
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: `Failed to add address: ${error.message}`, variant: 'destructive' });
     },
   });
 };
@@ -95,21 +85,14 @@ export const useUpdateCustomerAddress = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as CustomerAddress;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['customer-addresses', data.customer_id] });
-      toast({
-        title: "Success",
-        description: "Address updated successfully",
-      });
+      toast({ title: 'Success', description: 'Address updated successfully' });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to update address: ${error.message}`,
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: `Failed to update address: ${error.message}`, variant: 'destructive' });
     },
   });
 };
@@ -119,7 +102,7 @@ export const useDeleteCustomerAddress = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, customerId }: { id: string, customerId: string }) => {
+    mutationFn: async ({ id }: { id: string; customerId: string }) => {
       const { error } = await supabase
         .from('customer_addresses')
         .delete()
@@ -129,17 +112,10 @@ export const useDeleteCustomerAddress = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['customer-addresses', variables.customerId] });
-      toast({
-        title: "Success",
-        description: "Address deleted successfully",
-      });
+      toast({ title: 'Success', description: 'Address deleted successfully' });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to delete address: ${error.message}`,
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: `Failed to delete address: ${error.message}`, variant: 'destructive' });
     },
   });
 };
