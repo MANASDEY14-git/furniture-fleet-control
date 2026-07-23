@@ -38,6 +38,7 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
     supplierId: '',
     deliveryStatus: DeliveryStatus.Pending,
     date: new Date().toISOString().split('T')[0],
+    salespeople: '',
   });
 
   const [items, setItems] = useState<OrderItem[]>([
@@ -123,6 +124,7 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
       supplier_id: supplierId,
       delivery_status: formData.deliveryStatus,
       date: formData.date,
+      salesperson_name: formData.salespeople.trim() ? formData.salespeople.trim() : null,
       items: validItems.map(item => ({
         item_id: item.itemId,
         item_name: item.itemName,
@@ -143,6 +145,7 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
       supplierId: '',
       deliveryStatus: DeliveryStatus.Pending,
       date: new Date().toISOString().split('T')[0],
+      salespeople: '',
     });
     setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
     setIsWalkInCustomer(false);
