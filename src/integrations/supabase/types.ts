@@ -3014,6 +3014,10 @@ export type Database = {
               warehouse: string
             }[]
           }
+      get_sales_intelligence_summary: {
+        Args: { _end_date?: string; _start_date?: string; _store_id?: string }
+        Returns: Json
+      }
       get_sales_order_for_user: {
         Args: { _order_id: string }
         Returns: {
