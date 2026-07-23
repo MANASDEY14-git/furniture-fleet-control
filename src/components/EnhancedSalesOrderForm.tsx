@@ -261,6 +261,8 @@ export default function EnhancedSalesOrderForm({
         description: formData.description || null,
         salesperson_name: formData.salespeople?.trim() || null,
         document_type: documentType,
+        advance_payment_method: formData.advancePaymentMethod,
+        advance_bank_account_id: formData.advanceBankAccountId || null,
         items: validItems.map(item => {
           const selectedItem = filteredItems.find(i => i.id === item.itemId);
           return {

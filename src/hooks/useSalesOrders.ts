@@ -69,7 +69,9 @@ export const useCreateSalesOrder = () => {
         _customizations: customizationsJson,
         _customer_id: data.customer_id || null,
         _document_type: data.document_type || 'order',
-        _salesperson_name: data.salesperson_name || null
+        _salesperson_name: data.salesperson_name || null,
+        _advance_payment_method: data.advance_payment_method || 'cash',
+        _advance_bank_account_id: data.advance_bank_account_id || null
       });
 
       if (error) throw error;

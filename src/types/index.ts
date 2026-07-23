@@ -106,6 +106,8 @@ export interface CreateSalesOrderData {
   description?: string | null;
   salesperson_name?: string | null;
   document_type?: 'order' | 'quote';
+  advance_payment_method?: string;
+  advance_bank_account_id?: string | null;
   items: {
     item_id: string;
     item_name: string;
