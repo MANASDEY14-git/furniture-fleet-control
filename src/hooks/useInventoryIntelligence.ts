@@ -3,7 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface InventoryIntelligenceRow {
   item_id: string;
+  /** Alias of item_id for UI convenience */
+  id: string;
   item_name: string;
+  /** Alias of item_name for UI convenience */
+  name: string;
   category_id: string | null;
   category_name: string | null;
   supplier_id: string | null;
@@ -43,6 +47,22 @@ export interface InventoryIntelligenceRow {
     | 'Bundle Product'
     | 'Discount'
     | 'Clearance Sale';
+}
+
+export interface InventoryFiltersState {
+  storeId?: string | null;
+  dateFrom?: string;
+  dateTo?: string;
+  categoryId?: string | null;
+  supplierId?: string | null;
+  brand?: string | null;
+  warehouse?: string | null;
+  ageMinDays?: number | null;
+  ageMaxDays?: number | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  /** UI-only bucket filter (Healthy/Watch/Slow Moving/Dead Stock/Critical/all) */
+  ageBucket?: string | null;
 }
 
 export interface InventoryFiltersState {
