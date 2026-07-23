@@ -104,6 +104,7 @@ export interface CreateSalesOrderData {
   delivery_date?: string | null;
   advance_paid?: number;
   description?: string | null;
+  salesperson_name?: string | null;
   document_type?: 'order' | 'quote';
   items: {
     item_id: string;

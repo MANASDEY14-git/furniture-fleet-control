@@ -68,7 +68,8 @@ export const useCreateSalesOrder = () => {
         _items: itemsJson,
         _customizations: customizationsJson,
         _customer_id: data.customer_id || null,
-        _document_type: data.document_type || 'order'
+        _document_type: data.document_type || 'order',
+        _salesperson_name: data.salesperson_name || null
       });
 
       if (error) throw error;
