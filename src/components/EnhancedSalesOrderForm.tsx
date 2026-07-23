@@ -736,6 +736,26 @@ export default function EnhancedSalesOrderForm({
                 </div>
               </div>
 
+              {/* Salesperson(s) */}
+              <div className="space-y-2">
+                <Label htmlFor="salespeople-desktop" className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-purple-500" /> Sales Person(s)
+                </Label>
+                <Input
+                  id="salespeople-desktop"
+                  placeholder="e.g. Amit Sharma  —  or  Amit, Rajiv (comma-separated for 50-50 split)"
+                  value={formData.salespeople || ''}
+                  onChange={e => setFormData({ ...formData, salespeople: e.target.value })}
+                />
+                {formData.salespeople && formData.salespeople.includes(',') && (
+                  <div className="p-2 bg-purple-500/10 border border-purple-500/30 rounded-lg text-xs flex items-start gap-2 text-purple-900 dark:text-purple-100">
+                    <Sparkles className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">Co-attended sale detected.</span> Revenue & profit will be split 50/50 across <strong>{formData.salespeople}</strong> in Sales Intelligence.
+                    </div>
+                  </div>
+                )}
+
               {/* Customer Information */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
