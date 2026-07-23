@@ -1,78 +1,150 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface InventoryIntelligenceItem {
+export interface InventoryIntelligenceRow {
+  item_id: string;
+  /** Alias of item_id for UI convenience */
   id: string;
+  item_name: string;
+  /** Alias of item_name for UI convenience */
   name: string;
-  image_url?: string;
-  category_id?: string;
-  category_name?: string;
-  supplier_id?: string;
-  supplier_name?: string;
-  brand?: string;
-  warehouse?: string;
-  stock_receive_date?: string;
+  category_id: string | null;
+  category_name: string | null;
+  supplier_id: string | null;
+  supplier_name: string | null;
+  store_id: string;
+  store_name: string | null;
+  brand: string | null;
+  warehouse: string | null;
+  image_url: string | null;
+  stock_receive_date: string | null;
   quantity_available: number;
   cost_price: number;
   selling_price: number;
   inventory_value: number;
   inventory_cost: number;
-  revenue_period: number;
   units_sold_period: number;
+  revenue_period: number;
   gross_profit_period: number;
-  last_sold_date?: string;
-  days_since_last_sale?: number;
-  avg_days_between_sales?: number;
-  stock_age_days: number;
-  stock_age_bucket: 'Healthy' | 'Watch' | 'Slow Moving' | 'Dead Stock' | 'Critical';
+  last_sold_date: string | null;
+  days_since_last_sale: number | null;
+  stock_age_days: number | null;
+  stock_age_bucket:
+    | 'Healthy'
+    | 'Watch'
+    | 'Slow Moving'
+    | 'Dead Stock'
+    | 'Critical'
+    | 'Unknown';
   monthly_velocity: number;
-  days_to_sell: number;
-  stock_coverage_days: number;
-  reorder_status: 'Reorder Soon' | 'Healthy' | 'Overstocked';
+  days_to_sell: number | null;
+  reorder_status: 'Reorder Soon' | 'Healthy' | 'Overstocked' | 'Stale';
   hero_score: number;
   cash_locked: number;
-  recommended_action: 'Clearance Sale' | 'Discount' | 'Bundle' | 'Increase Marketing' | 'Keep Normal';
+  recommended_action:
+    | 'Keep Normal'
+    | 'Increase Marketing'
+    | 'Bundle Product'
+    | 'Discount'
+    | 'Clearance Sale';
 }
 
-export interface InventoryIntelligenceFilters {
-  storeId?: string;
+export interface InventoryFiltersState {
+  storeId?: string | null;
   dateFrom?: string;
   dateTo?: string;
-  categoryId?: string;
-  supplierId?: string;
-  brand?: string;
-  warehouse?: string;
-  ageBucket?: string;
-  priceMin?: number;
-  priceMax?: number;
+  categoryId?: string | null;
+  supplierId?: string | null;
+  brand?: string | null;
+  warehouse?: string | null;
+  ageMinDays?: number | null;
+  ageMaxDays?: number | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  /** UI-only bucket filter (Healthy/Watch/Slow Moving/Dead Stock/Critical/all) */
+  ageBucket?: string | null;
 }
 
-export function useInventoryIntelligence(filters: InventoryIntelligenceFilters = {}) {
-  const storeIdParam = filters.storeId && filters.storeId !== 'all' ? filters.storeId : null;
+export interface InventoryFiltersState {
+  storeId?: string | null;
+  dateFrom?: string;
+  dateTo?: string;
+  categoryId?: string | null;
+  supplierId?: string | null;
+  brand?: string | null;
+  warehouse?: string | null;
+  ageMinDays?: number | null;
+  ageMaxDays?: number | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+}
 
-  return useQuery<InventoryIntelligenceItem[]>({
-    queryKey: ['inventory_intelligence', { ...filters, storeId: storeIdParam }],
+// Aliases used by the inventory-intelligence UI components
+export type InventoryIntelligenceItem = InventoryIntelligenceRow;
+export type InventoryIntelligenceFilters = InventoryFiltersState;
+
+const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+
+export function useInventoryIntelligence(filters: InventoryFiltersState) {
+  const today = new Date();
+  const defaultFrom = new Date();
+  defaultFrom.setDate(today.getDate() - 180);
+
+  const dateFrom = filters.dateFrom ?? isoDate(defaultFrom);
+  const dateTo = filters.dateTo ?? isoDate(today);
+  const storeId = filters.storeId && filters.storeId !== 'all' ? filters.storeId : null;
+
+  return useQuery({
+    queryKey: [
+      'inventory-intelligence',
+      storeId,
+      dateFrom,
+      dateTo,
+      filters.categoryId,
+      filters.supplierId,
+      filters.brand,
+      filters.warehouse,
+      filters.ageMinDays,
+      filters.ageMaxDays,
+      filters.priceMin,
+      filters.priceMax,
+    ],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_inventory_intelligence', {
-        store_id_filter: storeIdParam,
-        date_from: filters.dateFrom || null,
-        date_to: filters.dateTo || null,
-        category_id_filter: filters.categoryId || null,
-        supplier_id_filter: filters.supplierId || null,
-        brand_filter: filters.brand || null,
-        warehouse_filter: filters.warehouse || null,
-        age_bucket_filter: filters.ageBucket || null,
-        price_min: filters.priceMin !== undefined && filters.priceMin !== null ? filters.priceMin : null,
-        price_max: filters.priceMax !== undefined && filters.priceMax !== null ? filters.priceMax : null,
-      });
+      const { data, error } = await supabase.rpc('get_inventory_intelligence' as never, {
+        p_store_id: storeId,
+        p_date_from: dateFrom,
+        p_date_to: dateTo,
+        p_category_id: filters.categoryId || null,
+        p_supplier_id: filters.supplierId || null,
+        p_brand: filters.brand || null,
+        p_warehouse: filters.warehouse || null,
+        p_age_min_days: filters.ageMinDays ?? null,
+        p_age_max_days: filters.ageMaxDays ?? null,
+        p_price_min: filters.priceMin ?? null,
+        p_price_max: filters.priceMax ?? null,
+      } as never);
 
       if (error) {
-        console.error('Error fetching inventory intelligence:', error);
+        console.error('[inventory-intelligence]', error);
         throw error;
       }
 
-      return (data as InventoryIntelligenceItem[]) || [];
+      const rows = (data ?? []) as unknown as Array<
+        Omit<InventoryIntelligenceRow, 'id' | 'name'>
+      >;
+      // Populate id/name aliases for UI convenience
+      let filtered = rows.map((r) => ({
+        ...r,
+        id: r.item_id,
+        name: r.item_name,
+      })) as InventoryIntelligenceRow[];
+
+      if (filters.ageBucket && filters.ageBucket !== 'all') {
+        filtered = filtered.filter((r) => r.stock_age_bucket === filters.ageBucket);
+      }
+
+      return filtered;
     },
-    staleTime: 60 * 1000, // 60s per project memory
+    staleTime: 60 * 1000,
   });
 }
