@@ -22,6 +22,7 @@ export interface SecureSalesOrder {
   delivery_date?: string;
   document_type?: string;
   quote_status?: string;
+  salesperson_name?: string;
 }
 
 export const useSecureSalesOrders = (storeId?: string, documentType: 'order' | 'quote' = 'order') => {

@@ -113,9 +113,14 @@ function MobileOrderCard({
                       ? '***REDACTED***' 
                       : getSupplierName(order.supplier_id || ''))}
                 </p>
-                <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
-                  <User className="h-3 w-3" /> Sales Rep: {order.sales_person_name || order.salespeople || order.sales_person || (order.order_number?.endsWith('1') ? 'Amit, Rajiv (50-50)' : 'Rahul Sharma')}
-                </p>
+                {order.salesperson_name && (
+                  <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                    <User className="h-3 w-3" /> Sales Rep: {order.salesperson_name}
+                    {order.salesperson_name.includes(',') && (
+                      <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30 px-1 py-0 ml-1">50-50</Badge>
+                    )}
+                  </p>
+                )}
                 <p className="text-gray-400">{new Date(order.sale_date).toLocaleDateString('en-GB')}</p>
                 <p className="text-gray-900 font-semibold">{formatCurrency(order.total_price)}</p>
               </div>
@@ -403,17 +408,19 @@ export default function SalesTable({
                         : getSupplierName(order.supplier_id || ''))}
                   </TableCell>
                   <TableCell className="font-medium text-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-                      <span className="truncate max-w-[130px]">
-                        {order.sales_person_name || order.salespeople || order.sales_person || (order.order_number?.endsWith('1') ? 'Amit, Rajiv' : order.order_number?.endsWith('2') ? 'Priya Patel' : 'Rahul Sharma')}
-                      </span>
-                      {(order.sales_person_name?.includes(',') || order.salespeople?.includes(',') || order.order_number?.endsWith('1')) && (
-                        <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30 px-1 py-0 shrink-0">
-                          50-50
-                        </Badge>
-                      )}
-                    </div>
+                    {order.salesperson_name ? (
+                      <div className="flex items-center gap-1.5">
+                        <User className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                        <span className="truncate max-w-[130px]">{order.salesperson_name}</span>
+                        {order.salesperson_name.includes(',') && (
+                          <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30 px-1 py-0 shrink-0">
+                            50-50
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-gray-500">{getStoreName(order.store_id)}</TableCell>
                   <TableCell className="text-right font-semibold text-gray-900">{formatCurrency(order.total_price)}</TableCell>
