@@ -599,7 +599,14 @@ export function useSalesIntelligence(filters: SalesIntelligenceFilters = {}) {
         salespeople,
         coSellingPairs: current.coSellingPairs || [],
         teamCategoryMix: current.teamCategoryMix || [],
-        teamMonthlyTrends: current.teamMonthlyTrends || [],
+        teamMonthlyTrends: (current.teamMonthlyTrends || []).map(t => ({
+          month: t.month,
+          revenue: t.revenue,
+          profit: t.profit,
+          orders: t.orders,
+          aov: t.aov,
+          conversion: t.conversion ?? 0,
+        })),
       };
     },
     staleTime: 60 * 1000,
