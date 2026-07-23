@@ -144,6 +144,7 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
       supplierId: '',
       deliveryStatus: DeliveryStatus.Pending,
       date: new Date().toISOString().split('T')[0],
+      salespeople: '',
     });
     setItems([{ id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0, availableStock: 0 }]);
     setIsWalkInCustomer(false);
