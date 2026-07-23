@@ -27,9 +27,10 @@ export function SalespersonDetailDrawer({ salesperson, onClose }: SalespersonDet
 
   if (!salesperson) return null;
 
-  const formatCurrency = (val: number) => {
-    if (val >= 100000) return `₹${(val / 100000).toFixed(2)} Lakh`;
-    return `₹${val.toLocaleString('en-IN')}`;
+  const formatCurrency = (val?: number | null) => {
+    const n = Number(val ?? 0);
+    if (n >= 100000) return `₹${(n / 100000).toFixed(2)} Lakh`;
+    return `₹${n.toLocaleString('en-IN')}`;
   };
 
   const getScoreColor = (score: number) => {
