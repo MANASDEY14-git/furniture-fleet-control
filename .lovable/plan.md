@@ -1,53 +1,64 @@
-Sales Intelligence + Salesperson Name Integration Plan
+Goal
+Make the Sales Person(s) field in the sales order creation form fully connected to the `sales_orders.salesperson_name` column, and verify the data flows correctly into the sales table and sales intelligence.
 
-Current state (verified by reading backend and code):
+Current state (verified from the codebase and DB)
 
-- `sales_orders.salesperson_name` exists as a nullable text column.
-- `create_sales_order_secure` accepts `_salesperson_name` from the frontend but **does not insert it** into the table (the column is missing from the INSERT statement).
-- `EnhancedSalesOrderForm.tsx` already has a "Sales Person(s)" input and sends `salesperson_name`.
-- `SalesOrderForm.tsx` also has a salespeople input but does not wire it into the mutation payload.
-- `useSalesIntelligence.ts` currently returns hardcoded mock reps (`INITIAL_SALESPEOPLE`) and does not query real sales orders.
-- Real order data already contains salesperson names (e.g., SUBHO, TUBAN, MADHUMITA, BIPLAB) and co-selling combos like `SUBHO,BIPLAB`.
-- `get_sales_orders_for_user` already returns `salesperson_name`, so the sales table can display it once the data is saved.
+- `sales_orders.salesperson_name` exists as a nullable `text` column.
+- The `create_sales_order_secure` RPC already accepts `_salesperson_name` and inserts it into `sales_orders.salesperson_name` using `NULLIF(TRIM(_salesperson_name), '')`.
+- `useCreateSalesOrder` already passes `salesperson_name` to the RPC.
+- `EnhancedSalesOrderForm` (the form used by the Sales page) captures `salespeople` in state and submits it on mobile.
+- Real salesperson data is already being saved in the DB (e.g., SUBHO, MADHUMITA).
+- `get_sales_intelligence_summary` exists and is already used by `useSalesIntelligence`.
+- `SalesTable` already displays `salesperson_name` and the 50-50 split badge when a comma is present.
+
+Gaps found
+
+1. The **desktop layout** of `EnhancedSalesOrderForm` does NOT show a Sales Person(s) input field. It only appears in the mobile layout.
+2. The **mobile layout** of `EnhancedSalesOrderForm` shows two separate Sales Person(s) inputs for the same field (one labeled "Sales Person(s) *" near the top, another labeled "Attended Salesperson / Team (50-50 Split)" in the customer section). They both write to the same `formData.salespeople` value, which is confusing and redundant.
+3. The older `SalesOrderForm.tsx` has a Sales Person(s) input, but `salespeople` is not declared in the initial `formData` state, and the field is not passed to `createSalesOrder.mutateAsync`. Saving from this form would silently drop the salesperson value.
 
 Plan
 
-1. Persist salesperson name on order creation
-  - Update `create_sales_order_secure` migration to include `_salesperson_name` parameter and insert it into `sales_orders.salesperson_name`.
-  - Ensure the existing `useCreateSalesOrder` hook (already passes `_salesperson_name`) works end-to-end.
-  - Update `SalesOrderForm.tsx` to include `salesperson_name` in the mutation payload and in its local form state.
-  - Keep the comma-separated input format (e.g., `Amit, Ravi`); backend stores it as plain text, frontend intelligence layer will split it.
-2. Build real sales intelligence aggregation in the database
-  - Create a new RPC `get_sales_intelligence_summary(filters JSONB)` that returns one row per unique salesperson found in `sales_orders.salesperson_name` for the selected store/date range.
-  - Logic inside the RPC:
-    - Read `sales_orders` joined to `sales_order_items` and `items`.
-    - Parse `salesperson_name` by commas; trim whitespace and uppercase/lowercase normalize names.
-    - For each order, split revenue and gross profit equally across all named salespeople.
-    - Gross profit per line = `(sales_order_items.unit_price - items.cost_price) * quantity` for standard items; where `items.cost_price` is null, use 0.
-    - Exclude cancelled orders and quotes (only `document_type = 'order'` or null, `delivery_status != 'Cancelled'`).
-    - Aggregate: revenue, profit, orders closed, units sold, AOV, margin %, category mix, etc.
-    - Return a JSON structure matching the shape expected by `SalesIntelligenceSummary`.
-3. Replace mock data with real data in the frontend
-  - Rewrite `useSalesIntelligence.ts` query function to call `get_sales_intelligence_summary` with the active filters.
-  - Map the RPC result into the existing `SalesIntelligenceSummary` interface so the UI components (`SalespersonLeaderboard`, `SalespersonDetailDrawer`, `ExecutiveKpiCards`, etc.) need no changes.
-  - Remove the hardcoded `INITIAL_SALESPEOPLE`, `INITIAL_CO_SELLING_PAIRS`, and `INITIAL_AI_INSIGHTS` or move them into a fallback helper only used when there are no real salespeople.
-4. Display real salesperson in the sales table
-  - Update `SalesTable.tsx` to use the real `salesperson_name` field returned by `useComputedSalePaymentStatus` / `useSecureSalesOrders`, instead of the current fallback logic that shows `Rahul Sharma` for most orders.
-  - Keep the 50-50 badge when the name contains a comma.
-  - Update `OrderDetailsDialog.tsx` to show the salesperson name if available.
-5. Quote-to-order conversion preservation
-  - Verify that converting a quote to order copies `salesperson_name` forward. If the existing conversion RPC/function does not copy it, update it to do so.
-6. Validation & backfill
-  - After deploying, run a small test: create a sales order with two comma-separated salespeople and confirm both appear in Sales Intelligence with equal split revenue/profit.
-  - Optionally provide a one-time backfill SQL to update older blank `salesperson_name` records using the customer name or a default if the user wants historical data included.
+1. Fix the active sales form (`EnhancedSalesOrderForm.tsx`)
+   - Add a single Sales Person(s) input to the **desktop** layout, placed in the Basic Order Info row alongside Order Number, Store, and Date.
+   - Remove the duplicate salespeople inputs from the **mobile** layout and keep only one clearly labeled input.
+   - Ensure the helper text about the 50-50 split (comma-separated reps) is still visible on both layouts.
+   - Keep the existing submit logic that sends `salesperson_name: formData.salespeople?.trim() || null`.
 
-Open questions before implementation
+2. Fix or remove the old form (`SalesOrderForm.tsx`)
+   - Option A (recommended): Add `salespeople` to the `formData` initial state and pass `salesperson_name` in `handleSubmit` so it works consistently.
+   - Option B: If the old form is no longer used, remove the broken salespeople input to avoid future confusion.
+   - The plan will implement Option A unless the user confirms the old form is unused.
 
-1. Do you want to keep the mock demo data as a fallback when there are no real salespeople, or completely remove it?  
-answer: remove mock data fully
-2. For profit calculation, is `(unit_price - cost_price) * quantity` acceptable, or do you want to use the material/BOM cost from `sales_order_material_usage` for customized orders?  
-answer: no `(unit_price - cost_price) * quantity` acceptable.
-3. Should salespeople names be normalized (case-insensitive, trimmed) so `SUBHO` and `Subho` count as one person? Yes/No.  
-answer: yes
-4. Should the date range filter in Sales Intelligence apply to `sales_orders.date` or `sales_orders.created_at`?  
-answer: `sales_orders.created_at`
+3. Verify database integration end-to-end
+   - Confirm `create_sales_order_secure` inserts into `salesperson_name` correctly (already true, but re-check after any changes).
+   - Confirm `get_sales_intelligence_summary` splits comma-separated names and divides revenue/profit equally (already true, but re-check with a test order).
+   - Confirm `useComputedSalePaymentStatus` returns `salesperson_name` so the sales table shows it (already true).
+
+4. Add validation/persistence checks
+   - Add a `required` attribute only if the user wants Sales Person(s) mandatory. Default: optional, since the DB column is nullable.
+   - Trim whitespace and strip leading/trailing commas before saving.
+
+5. Test plan
+   - Create a sales order on desktop with a single salesperson (e.g., "SUBHO") and verify the value appears in the sales table and Sales Intelligence.
+   - Create a sales order on mobile with two comma-separated salespeople (e.g., "Amit, Ravi") and verify the 50-50 split appears in Sales Intelligence.
+   - Verify existing real orders with salesperson names still display correctly.
+
+Technical details
+
+- Files to edit:
+  - `src/components/EnhancedSalesOrderForm.tsx` — add desktop input, clean up mobile duplicate.
+  - `src/components/SalesOrderForm.tsx` — wire `salespeople` into state and submission, or remove the input.
+- Files to verify (no edits expected):
+  - `src/hooks/useSalesOrders.ts` (already passes `salesperson_name`)
+  - `src/hooks/useComputedSalePaymentStatus.ts` (already passes `salesperson_name` through)
+  - `src/components/sales/SalesTable.tsx` (already renders `salesperson_name`)
+  - `src/hooks/useSalesIntelligence.ts` (already calls the real RPC)
+- Database functions to verify:
+  - `create_sales_order_secure` inserts `salesperson_name`
+  - `get_sales_intelligence_summary` splits and aggregates correctly
+
+Out of scope
+
+- No new database migrations are needed; the schema and RPCs already support `salesperson_name`.
+- No changes to sales intelligence calculation logic are needed unless testing reveals an error.
