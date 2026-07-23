@@ -295,7 +295,8 @@ export default function EnhancedSalesOrderForm({
       advancePaid: 0,
       description: '',
       advancePaymentMethod: 'cash',
-      advanceBankAccountId: ''
+      advanceBankAccountId: '',
+      salespeople: ''
     });
     setItems([{
       id: '1',
