@@ -259,6 +259,7 @@ export default function EnhancedSalesOrderForm({
         delivery_date: formData.deliveryDate || null,
         advance_paid: documentType === 'quote' ? 0 : formData.advancePaid,
         description: formData.description || null,
+        salesperson_name: formData.salespeople?.trim() || null,
         document_type: documentType,
         items: validItems.map(item => {
           const selectedItem = filteredItems.find(i => i.id === item.itemId);
