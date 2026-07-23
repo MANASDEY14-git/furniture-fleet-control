@@ -2797,74 +2797,30 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
-      create_sales_order_secure:
-        | {
-            Args: {
-              _advance_paid?: number
-              _customer_address?: string
-              _customer_id?: string
-              _customer_name?: string
-              _customer_phone?: string
-              _customizations?: Json
-              _date?: string
-              _delivery_date?: string
-              _delivery_status?: string
-              _description?: string
-              _document_type?: string
-              _items?: Json
-              _order_number: string
-              _store_id: string
-              _supplier_id?: string
-              _total_amount?: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _advance_paid?: number
-              _customer_address?: string
-              _customer_id?: string
-              _customer_name?: string
-              _customer_phone?: string
-              _customizations?: Json
-              _date?: string
-              _delivery_date?: string
-              _delivery_status?: string
-              _description?: string
-              _document_type?: string
-              _items?: Json
-              _order_number: string
-              _salesperson_name?: string
-              _store_id: string
-              _supplier_id?: string
-              _total_amount?: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _advance_bank_account_id?: string
-              _advance_paid?: number
-              _advance_payment_method?: string
-              _customer_address?: string
-              _customer_id?: string
-              _customer_name?: string
-              _customer_phone?: string
-              _customizations?: Json
-              _date?: string
-              _delivery_date?: string
-              _delivery_status?: string
-              _description?: string
-              _document_type?: string
-              _items?: Json
-              _order_number: string
-              _salesperson_name?: string
-              _store_id: string
-              _supplier_id?: string
-              _total_amount?: number
-            }
-            Returns: string
-          }
+      create_sales_order_secure: {
+        Args: {
+          _advance_bank_account_id?: string
+          _advance_paid?: number
+          _advance_payment_method?: string
+          _customer_address?: string
+          _customer_id?: string
+          _customer_name?: string
+          _customer_phone?: string
+          _customizations?: Json
+          _date?: string
+          _delivery_date?: string
+          _delivery_status?: string
+          _description?: string
+          _document_type?: string
+          _items?: Json
+          _order_number: string
+          _salesperson_name?: string
+          _store_id: string
+          _supplier_id?: string
+          _total_amount?: number
+        }
+        Returns: string
+      }
       cron_check_briefings: { Args: never; Returns: undefined }
       customer_summary: {
         Args: { store_uuid?: string }
