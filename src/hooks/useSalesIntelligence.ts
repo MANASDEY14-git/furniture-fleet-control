@@ -486,7 +486,14 @@ function toSalespersonPerformance(
 
     coachingRecommendations: [],
     salesHistory: rp.salesHistory || [],
-    monthlyTrend: rp.monthlyTrend || [],
+    monthlyTrend: (rp.monthlyTrend || []).map(t => ({
+      month: t.month,
+      revenue: t.revenue,
+      profit: t.profit,
+      orders: t.orders,
+      aov: t.aov,
+      conversion: t.conversion ?? 0,
+    })),
   };
 }
 
