@@ -751,6 +751,72 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_snapshots: {
+        Row: {
+          age_days_avg: number | null
+          cost_price: number
+          created_at: string | null
+          dead_stock_value: number | null
+          fast_moving_value: number | null
+          id: string
+          item_id: string | null
+          quantity_available: number
+          selling_price: number
+          slow_moving_value: number | null
+          snapshot_date: string
+          store_id: string | null
+          total_cost: number
+          total_value: number
+        }
+        Insert: {
+          age_days_avg?: number | null
+          cost_price?: number
+          created_at?: string | null
+          dead_stock_value?: number | null
+          fast_moving_value?: number | null
+          id?: string
+          item_id?: string | null
+          quantity_available?: number
+          selling_price?: number
+          slow_moving_value?: number | null
+          snapshot_date?: string
+          store_id?: string | null
+          total_cost?: number
+          total_value?: number
+        }
+        Update: {
+          age_days_avg?: number | null
+          cost_price?: number
+          created_at?: string | null
+          dead_stock_value?: number | null
+          fast_moving_value?: number | null
+          id?: string
+          item_id?: string | null
+          quantity_available?: number
+          selling_price?: number
+          slow_moving_value?: number | null
+          snapshot_date?: string
+          store_id?: string | null
+          total_cost?: number
+          total_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_snapshots_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_snapshots_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_opening_balances: {
         Row: {
           created_at: string
@@ -851,6 +917,7 @@ export type Database = {
       }
       items: {
         Row: {
+          brand: string | null
           category_id: string | null
           cost_price: number
           created_at: string | null
@@ -865,8 +932,10 @@ export type Database = {
           store_id: string | null
           supplier_id: string | null
           updated_at: string | null
+          warehouse: string | null
         }
         Insert: {
+          brand?: string | null
           category_id?: string | null
           cost_price: number
           created_at?: string | null
@@ -881,8 +950,10 @@ export type Database = {
           store_id?: string | null
           supplier_id?: string | null
           updated_at?: string | null
+          warehouse?: string | null
         }
         Update: {
+          brand?: string | null
           category_id?: string | null
           cost_price?: number
           created_at?: string | null
@@ -897,6 +968,7 @@ export type Database = {
           store_id?: string | null
           supplier_id?: string | null
           updated_at?: string | null
+          warehouse?: string | null
         }
         Relationships: [
           {
@@ -2848,6 +2920,100 @@ export type Database = {
         }[]
       }
       get_edge_internal_secret: { Args: never; Returns: string }
+      get_inventory_intelligence:
+        | {
+            Args: {
+              p_age_max_days?: number
+              p_age_min_days?: number
+              p_brand?: string
+              p_category_id?: string
+              p_date_from?: string
+              p_date_to?: string
+              p_price_max?: number
+              p_price_min?: number
+              p_store_id?: string
+              p_supplier_id?: string
+              p_warehouse?: string
+            }
+            Returns: {
+              brand: string
+              cash_locked: number
+              category_id: string
+              category_name: string
+              cost_price: number
+              days_since_last_sale: number
+              days_to_sell: number
+              gross_profit_period: number
+              hero_score: number
+              image_url: string
+              inventory_cost: number
+              inventory_value: number
+              item_id: string
+              item_name: string
+              last_sold_date: string
+              monthly_velocity: number
+              quantity_available: number
+              recommended_action: string
+              reorder_status: string
+              revenue_period: number
+              selling_price: number
+              stock_age_bucket: string
+              stock_age_days: number
+              stock_receive_date: string
+              store_id: string
+              store_name: string
+              supplier_id: string
+              supplier_name: string
+              units_sold_period: number
+              warehouse: string
+            }[]
+          }
+        | {
+            Args: {
+              age_bucket_filter?: string
+              brand_filter?: string
+              category_id_filter?: string
+              date_from?: string
+              date_to?: string
+              price_max?: number
+              price_min?: number
+              store_id_filter?: string
+              supplier_id_filter?: string
+              warehouse_filter?: string
+            }
+            Returns: {
+              avg_days_between_sales: number
+              brand: string
+              cash_locked: number
+              category_id: string
+              category_name: string
+              cost_price: number
+              days_since_last_sale: number
+              days_to_sell: number
+              gross_profit_period: number
+              hero_score: number
+              id: string
+              image_url: string
+              inventory_cost: number
+              inventory_value: number
+              last_sold_date: string
+              monthly_velocity: number
+              name: string
+              quantity_available: number
+              recommended_action: string
+              reorder_status: string
+              revenue_period: number
+              selling_price: number
+              stock_age_bucket: string
+              stock_age_days: number
+              stock_coverage_days: number
+              stock_receive_date: string
+              supplier_id: string
+              supplier_name: string
+              units_sold_period: number
+              warehouse: string
+            }[]
+          }
       get_sales_order_for_user: {
         Args: { _order_id: string }
         Returns: {

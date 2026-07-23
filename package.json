@@ -50,6 +50,7 @@
     "html2canvas": "^1.4.1",
     "input-otp": "^1.2.4",
     "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.462.0",
     "moment": "^2.30.1",
     "next-themes": "^0.3.0",
