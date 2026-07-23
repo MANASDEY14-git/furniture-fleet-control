@@ -755,6 +755,8 @@ export default function EnhancedSalesOrderForm({
                     </div>
                   </div>
                 )}
+              </div>
+
 
               {/* Customer Information */}
               <div className="space-y-4">
