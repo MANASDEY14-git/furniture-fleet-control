@@ -59,6 +59,10 @@ export interface InventoryFiltersState {
   priceMax?: number | null;
 }
 
+// Aliases used by the inventory-intelligence UI components
+export type InventoryIntelligenceItem = InventoryIntelligenceRow;
+export type InventoryIntelligenceFilters = InventoryFiltersState;
+
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
 export function useInventoryIntelligence(filters: InventoryFiltersState) {

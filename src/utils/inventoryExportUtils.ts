@@ -123,3 +123,17 @@ export function exportInventoryIntelligenceToPdf(
 
   doc.save(`${filename}-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
+
+// Aliases used by the header component
+export const exportInventoryToExcel = (
+  rows: InventoryIntelligenceRow[],
+  storeName?: string,
+) =>
+  exportInventoryIntelligenceToExcel(
+    rows,
+    storeName ? `inventory-intelligence-${storeName}` : 'inventory-intelligence',
+  );
+
+export const exportInventoryToPDF = (rows?: InventoryIntelligenceRow[]) =>
+  exportInventoryIntelligenceToPdf(rows ?? []);
+
