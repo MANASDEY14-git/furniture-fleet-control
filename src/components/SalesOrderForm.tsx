@@ -124,6 +124,7 @@ export default function SalesOrderForm({ trigger }: SalesOrderFormProps) {
       supplier_id: supplierId,
       delivery_status: formData.deliveryStatus,
       date: formData.date,
+      salesperson_name: formData.salespeople.trim() ? formData.salespeople.trim() : null,
       items: validItems.map(item => ({
         item_id: item.itemId,
         item_name: item.itemName,
