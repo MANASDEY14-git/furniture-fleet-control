@@ -10,84 +10,31 @@ interface SalesMetricsGridProps {
 export default function SalesMetricsGrid({ filteredOrders }: SalesMetricsGridProps) {
   const isMobile = useIsMobile();
 
-  const getTotalRevenue = () => {
-    return filteredOrders.reduce((sum, order) => sum + order.total_price, 0);
-  };
+  // Exclude cancelled orders entirely so their revenue, partial payments,
+  // and outstanding balances don't distort the KPIs.
+  const activeOrders = filteredOrders.filter((order) => {
+    const status = (order.delivery_status || '').toString().toLowerCase();
+    return status !== 'cancelled';
+  });
 
-  const getTotalPaid = () => {
-    return filteredOrders.reduce((sum, order) => sum + order.total_paid, 0);
-  };
-
-  const getTotalOutstanding = () => {
-    return filteredOrders.reduce((sum, order) => sum + order.balance_due, 0);
-  };
+  const totalRevenue = activeOrders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
+  const totalCollected = activeOrders.reduce((sum, o) => sum + Number(o.total_paid || 0), 0);
+  const totalOutstanding = activeOrders.reduce((sum, o) => sum + Number(o.balance_due || 0), 0);
 
   const metrics = [
-    {
-      label: "Total Orders",
-      value: filteredOrders.length.toString(),
-      color: "text-foreground"
-    },
-    {
-      label: "Total Revenue", 
-      value: formatCurrency(getTotalRevenue()),
-      color: "text-foreground"
-    },
-    {
-      label: "Total Collected",
-      value: formatCurrency(getTotalPaid()),
-      color: "text-green-600"
-    },
-    {
-      label: "Outstanding",
-      value: formatCurrency(getTotalOutstanding()),
-      color: "text-amber-600"
-    }
+    { label: "Total Revenue", value: formatCurrency(totalRevenue), color: "text-foreground" },
+    { label: "Total Collected", value: formatCurrency(totalCollected), color: "text-green-600" },
+    { label: "Outstanding", value: formatCurrency(totalOutstanding), color: "text-amber-600" },
   ];
 
-  if (isMobile) {
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          {metrics.slice(0, 2).map((metric, index) => (
-            <Card key={index}>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">{metric.label}</p>
-                  <p className={`text-lg font-bold ${metric.color}`}>
-                    {metric.value}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {metrics.slice(2).map((metric, index) => (
-            <Card key={index + 2}>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">{metric.label}</p>
-                  <p className={`text-lg font-bold ${metric.color}`}>
-                    {metric.value}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div className={isMobile ? "grid grid-cols-3 gap-3" : "grid grid-cols-1 sm:grid-cols-3 gap-4"}>
       {metrics.map((metric, index) => (
         <Card key={index}>
-          <CardContent className="pt-6">
+          <CardContent className={isMobile ? "p-4" : "pt-6"}>
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
-              <p className={`text-2xl font-bold ${metric.color}`}>
+              <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground mb-1`}>{metric.label}</p>
+              <p className={`${isMobile ? 'text-base' : 'text-2xl'} font-bold ${metric.color}`}>
                 {metric.value}
               </p>
             </div>
