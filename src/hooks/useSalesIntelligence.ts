@@ -259,28 +259,55 @@ export interface SalesIntelligenceFilters {
 }
 
 // ---------- Date range helpers ----------
-function computeRange(filters: SalesIntelligenceFilters): { start: Date | null; end: Date | null; prevStart: Date | null; prevEnd: Date | null } {
+function computeRange(filters: SalesIntelligenceFilters, selectedYear: any): { start: Date | null; end: Date | null; prevStart: Date | null; prevEnd: Date | null } {
+  if (!selectedYear) {
+    return { start: null, end: null, prevStart: null, prevEnd: null };
+  }
+
+  const fyStartDate = new Date(selectedYear.start_date);
+  const fyEndDate = new Date(selectedYear.end_date);
   const now = new Date();
   const range = filters.dateRange || 'this_month';
   let start: Date | null = null;
   let end: Date | null = null;
 
-  if (range === 'custom' && filters.customStartDate && filters.customEndDate) {
-    start = new Date(filters.customStartDate);
-    end = new Date(filters.customEndDate);
-  } else if (range === 'this_month') {
-    start = new Date(now.getFullYear(), now.getMonth(), 1);
-    end = now;
-  } else if (range === 'last_month') {
-    start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-  } else if (range === 'this_quarter') {
-    const q = Math.floor(now.getMonth() / 3);
-    start = new Date(now.getFullYear(), q * 3, 1);
-    end = now;
-  } else if (range === 'ytd') {
-    start = new Date(now.getFullYear(), 0, 1);
-    end = now;
+  const isClosedOrPast = selectedYear.is_closed || !selectedYear.is_active;
+
+  if (isClosedOrPast) {
+    if (range === 'custom' && filters.customStartDate && filters.customEndDate) {
+      start = new Date(filters.customStartDate);
+      end = new Date(filters.customEndDate);
+      if (start < fyStartDate) start = fyStartDate;
+      if (start > fyEndDate) start = fyEndDate;
+      if (end < fyStartDate) end = fyStartDate;
+      if (end > fyEndDate) end = fyEndDate;
+    } else {
+      start = fyStartDate;
+      end = fyEndDate;
+    }
+  } else {
+    if (range === 'custom' && filters.customStartDate && filters.customEndDate) {
+      start = new Date(filters.customStartDate);
+      end = new Date(filters.customEndDate);
+    } else if (range === 'this_month') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = now;
+    } else if (range === 'last_month') {
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    } else if (range === 'this_quarter') {
+      const q = Math.floor(now.getMonth() / 3);
+      start = new Date(now.getFullYear(), q * 3, 1);
+      end = now;
+    } else if (range === 'ytd') {
+      start = fyStartDate;
+      end = now;
+    }
+
+    if (start && start < fyStartDate) start = fyStartDate;
+    if (start && start > fyEndDate) start = fyEndDate;
+    if (end && end < fyStartDate) end = fyStartDate;
+    if (end && end > fyEndDate) end = fyEndDate;
   }
 
   let prevStart: Date | null = null;
@@ -497,11 +524,16 @@ function toSalespersonPerformance(
   };
 }
 
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
+
 export function useSalesIntelligence(filters: SalesIntelligenceFilters = {}) {
+  const { selectedYear } = useFinancialYear();
+  
   return useQuery<SalesIntelligenceSummary>({
-    queryKey: ['sales_intelligence_analytics_v2', filters],
+    queryKey: ['sales_intelligence_analytics_v2', filters, selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async () => {
-      const { start, end, prevStart, prevEnd } = computeRange(filters);
+      const { start, end, prevStart, prevEnd } = computeRange(filters, selectedYear);
       const storeId = filters.storeId && filters.storeId !== 'all' ? filters.storeId : undefined;
 
       const [current, previous] = await Promise.all([

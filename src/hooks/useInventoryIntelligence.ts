@@ -85,13 +85,34 @@ export type InventoryIntelligenceFilters = InventoryFiltersState;
 
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
+
 export function useInventoryIntelligence(filters: InventoryFiltersState) {
+  const { selectedYear } = useFinancialYear();
   const today = new Date();
   const defaultFrom = new Date();
   defaultFrom.setDate(today.getDate() - 180);
 
-  const dateFrom = filters.dateFrom ?? isoDate(defaultFrom);
-  const dateTo = filters.dateTo ?? isoDate(today);
+  let dateFrom = filters.dateFrom ?? (selectedYear ? selectedYear.start_date : isoDate(defaultFrom));
+  let dateTo = filters.dateTo ?? (selectedYear ? selectedYear.end_date : isoDate(today));
+  
+  if (selectedYear) {
+    const fyStartDate = selectedYear.start_date;
+    const fyEndDate = selectedYear.end_date;
+    
+    // Clamp if past closed year, or if it exceeds boundaries
+    const isClosedOrPast = selectedYear.is_closed || !selectedYear.is_active;
+    if (isClosedOrPast) {
+      dateFrom = fyStartDate;
+      dateTo = fyEndDate;
+    } else {
+      if (dateFrom < fyStartDate) dateFrom = fyStartDate;
+      if (dateFrom > fyEndDate) dateFrom = fyEndDate;
+      if (dateTo < fyStartDate) dateTo = fyStartDate;
+      if (dateTo > fyEndDate) dateTo = fyEndDate;
+    }
+  }
+
   const storeId = filters.storeId && filters.storeId !== 'all' ? filters.storeId : null;
 
   return useQuery({
@@ -108,12 +129,14 @@ export function useInventoryIntelligence(filters: InventoryFiltersState) {
       filters.ageMaxDays,
       filters.priceMin,
       filters.priceMax,
+      selectedYear?.id,
     ],
+    enabled: !!selectedYear,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_inventory_intelligence' as never, {
         p_store_id: storeId,
-        p_date_from: dateFrom,
-        p_date_to: dateTo,
+        p_start_date: dateFrom,
+        p_end_date: dateTo,
         p_category_id: filters.categoryId || null,
         p_supplier_id: filters.supplierId || null,
         p_brand: filters.brand || null,

@@ -26,14 +26,21 @@ export interface BankTransaction {
   created_at: string;
 }
 
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
+
 export const useBankTransactions = (
   storeId?: string,
   bankAccountId?: string,
   startDate?: string,
   endDate?: string
 ) => {
+  const { selectedYear } = useFinancialYear();
+  const effectiveStartDate = startDate || selectedYear?.start_date;
+  const effectiveEndDate = endDate || selectedYear?.end_date;
+
   return useQuery({
-    queryKey: ['bank-transactions', storeId, bankAccountId, startDate, endDate],
+    queryKey: ['bank-transactions', storeId, bankAccountId, effectiveStartDate, effectiveEndDate, selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async () => {
       let query = supabase
         .from('payments')
@@ -83,12 +90,12 @@ export const useBankTransactions = (
         query = query.eq('bank_account_id', bankAccountId);
       }
 
-      if (startDate) {
-        query = query.gte('date', startDate);
+      if (effectiveStartDate) {
+        query = query.gte('date', effectiveStartDate);
       }
 
-      if (endDate) {
-        query = query.lte('date', endDate);
+      if (effectiveEndDate) {
+        query = query.lte('date', effectiveEndDate);
       }
 
       const { data, error } = await query;

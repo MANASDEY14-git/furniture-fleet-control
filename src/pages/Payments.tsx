@@ -22,10 +22,12 @@ import { PaginationControls } from '@/components/ui/pagination';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { useYearGuard } from '@/contexts/FinancialYearContext';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 export default function Payments() {
   const isMobile = useIsMobile();
+  const { readOnly } = useYearGuard();
   const { activeStoreId, accessibleStores } = useStoreContext();
 
   // State
@@ -241,6 +243,7 @@ export default function Payments() {
           <Button
             className="cyber-button text-white font-semibold"
             onClick={() => setIsEntryFormOpen(true)}
+            disabled={readOnly}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Transaction
@@ -375,14 +378,16 @@ export default function Payments() {
                       )}
                     </div>
                     <div className="mt-4 flex justify-between items-center pt-3 border-t border-blue-500/20">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                        onClick={() => handleDeletePayment(payment.id)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" /> Delete
-                      </Button>
+                      {!readOnly && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                          onClick={() => handleDeletePayment(payment.id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" /> Delete
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -434,14 +439,16 @@ export default function Payments() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                          onClick={() => handleDeletePayment(payment.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {!readOnly && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                            onClick={() => handleDeletePayment(payment.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -517,6 +524,7 @@ export default function Payments() {
                           setRecordingPayment(sale);
                           setPaymentAmount(sale.balance_due.toString());
                         }}
+                        disabled={readOnly}
                       >
                         Record Payment
                       </Button>
@@ -557,6 +565,7 @@ export default function Payments() {
                             setRecordingPayment(sale);
                             setPaymentAmount(sale.balance_due.toString());
                           }}
+                          disabled={readOnly}
                         >
                           Record Payment
                         </Button>

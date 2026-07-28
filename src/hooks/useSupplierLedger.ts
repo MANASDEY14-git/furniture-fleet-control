@@ -71,8 +71,11 @@ export const useSupplierLedger = (supplierId?: string, storeId?: string) => {
 };
 
 export const useSupplierBalances = (storeId?: string) => {
+  const { selectedYear } = useFinancialYear();
+  
   return useQuery({
-    queryKey: ['supplier-balances', storeId],
+    queryKey: ['supplier-balances', storeId, selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async () => {
       // Get ledger entries
       let ledgerQuery = supabase
@@ -89,6 +92,12 @@ export const useSupplierBalances = (storeId?: string) => {
       if (storeId && storeId !== 'all') {
         ledgerQuery = ledgerQuery.eq('store_id', storeId);
       }
+      
+      if (selectedYear) {
+        ledgerQuery = ledgerQuery
+          .gte('transaction_date', selectedYear.start_date)
+          .lte('transaction_date', selectedYear.end_date);
+      }
 
       const { data: ledgerData, error: ledgerError } = await ledgerQuery;
       if (ledgerError) throw ledgerError;
@@ -100,6 +109,10 @@ export const useSupplierBalances = (storeId?: string) => {
 
       if (storeId && storeId !== 'all') {
         openingQuery = openingQuery.eq('store_id', storeId);
+      }
+      
+      if (selectedYear) {
+        openingQuery = openingQuery.eq('financial_year_id', selectedYear.id);
       }
 
       const { data: openingData, error: openingError } = await openingQuery;

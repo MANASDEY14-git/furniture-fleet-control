@@ -41,18 +41,55 @@ const getDateRange = (filter: DateFilter, customRange?: DateRange): { startDate:
   }
 };
 
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
+
 export const useEnhancedDashboardMetrics = (
   dateFilter: DateFilter = 'today',
   customDateRange?: DateRange | null
 ) => {
+  const { selectedYear } = useFinancialYear();
+  
   return useQuery({
-    queryKey: ['enhanced-dashboard-metrics', dateFilter, customDateRange],
+    queryKey: ['enhanced-dashboard-metrics', dateFilter, customDateRange, selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async (): Promise<EnhancedDashboardMetrics & {
       topSellingItems: TopSellingItem[];
       lowStockItems: LowStockItem[];
       salesTrend: Array<{ date: string; sales: number; profit: number }>;
     }> => {
+      if (!selectedYear) {
+        return {
+          totalSalesToday: 0,
+          totalStockValue: 0,
+          paymentsReceived: 0,
+          pendingDeliveries: 0,
+          totalProfitToday: 0,
+          profitMarginPercentage: 0,
+          totalSales: 0,
+          totalPurchases: 0,
+          totalProfit: 0,
+          topSellingItems: [],
+          lowStockItems: [],
+          salesTrend: [],
+        };
+      }
+
       const { startDate, endDate } = getDateRange(dateFilter, customDateRange);
+      
+      let effectiveStartDate = startDate;
+      let effectiveEndDate = endDate;
+      
+      const isClosedOrPast = selectedYear.is_closed || !selectedYear.is_active;
+      
+      if (isClosedOrPast) {
+        effectiveStartDate = selectedYear.start_date;
+        effectiveEndDate = selectedYear.end_date;
+      } else {
+        if (effectiveStartDate < selectedYear.start_date) effectiveStartDate = selectedYear.start_date;
+        if (effectiveStartDate > selectedYear.end_date) effectiveStartDate = selectedYear.end_date;
+        if (effectiveEndDate < selectedYear.start_date) effectiveEndDate = selectedYear.start_date;
+        if (effectiveEndDate > selectedYear.end_date) effectiveEndDate = selectedYear.end_date;
+      }
       
       // Get sales data for the period from sales_orders
       const { data: salesOrdersData, error: salesError } = await supabase
@@ -75,12 +112,11 @@ export const useEnhancedDashboardMetrics = (
             )
           )
         `)
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('date', effectiveStartDate)
+        .lte('date', effectiveEndDate);
       
       if (salesError) {
         console.error('Error fetching sales orders:', salesError);
-        // Continue with empty data instead of throwing
       }
       
       const totalSales = salesOrdersData?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
@@ -95,7 +131,7 @@ export const useEnhancedDashboardMetrics = (
       const totalProfit = totalSales - totalCost;
       const profitMarginPercentage = totalSales > 0 ? ((totalProfit / totalSales) * 100) : 0;
       
-      // Get all sales for total calculations from sales_orders
+      // Get all sales for total calculations from sales_orders (scoped to the financial year)
       const { data: allSalesOrdersData, error: allSalesError } = await supabase
         .from('sales_orders')
         .select(`
@@ -115,11 +151,12 @@ export const useEnhancedDashboardMetrics = (
               name
             )
           )
-        `);
+        `)
+        .gte('date', selectedYear.start_date)
+        .lte('date', selectedYear.end_date);
       
       if (allSalesError) {
         console.error('Error fetching all sales orders:', allSalesError);
-        // Continue with empty data instead of throwing
       }
       
       const allTotalSales = allSalesOrdersData?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
@@ -131,15 +168,15 @@ export const useEnhancedDashboardMetrics = (
         return orderSum + orderCost;
       }, 0) || 0;
       
-      // Get purchases data - try multiple sources for robustness
+      // Get purchases data scoped to date range
       let totalPurchases = 0;
       
       // First try regular purchases table
       const { data: purchasesData, error: purchasesError } = await supabase
         .from('purchases')
         .select('total_cost, date')
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('date', effectiveStartDate)
+        .lte('date', effectiveEndDate);
       
       if (purchasesError) {
         console.error('Error fetching purchases:', purchasesError);
@@ -147,12 +184,12 @@ export const useEnhancedDashboardMetrics = (
         totalPurchases += purchasesData?.reduce((sum, purchase) => sum + Number(purchase.total_cost || 0), 0) || 0;
       }
       
-      // Also try material purchases as fallback/addition
+      // Also try material purchases
       const { data: materialPurchasesData, error: materialPurchasesError } = await supabase
         .from('material_purchases')
         .select('total_cost, date')
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('date', effectiveStartDate)
+        .lte('date', effectiveEndDate);
       
       if (materialPurchasesError) {
         console.error('Error fetching material purchases:', materialPurchasesError);
@@ -160,25 +197,52 @@ export const useEnhancedDashboardMetrics = (
         totalPurchases += materialPurchasesData?.reduce((sum, purchase) => sum + Number(purchase.total_cost || 0), 0) || 0;
       }
       
-      // Get inventory value with error handling
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('items')
-        .select('quantity_available, cost_price, name, selling_price');
+      // Get inventory value - Fallback to snapshots if closed/past year
+      let totalStockValue = 0;
+      let itemsForLowStock: Array<{ name: string; quantity_available: number; selling_price: number }> = [];
       
-      if (itemsError) {
-        console.error('Error fetching items:', itemsError);
+      if (isClosedOrPast) {
+        const { data: snapshotItems, error: snapshotError } = await supabase
+          .from('year_end_snapshots')
+          .select('closing_quantity, closing_amount, entity_name, metadata')
+          .eq('financial_year_id', selectedYear.id)
+          .eq('snapshot_type', 'stock');
+          
+        if (snapshotError) {
+          console.error('Error fetching snapshot stock:', snapshotError);
+        } else {
+          totalStockValue = snapshotItems?.reduce((sum, item) => sum + Number(item.closing_amount || 0), 0) || 0;
+          itemsForLowStock = (snapshotItems || []).map(item => ({
+            name: item.entity_name || 'Unknown Item',
+            quantity_available: Number(item.closing_quantity || 0),
+            selling_price: Number((item.metadata as any)?.selling_price || 0)
+          }));
+        }
+      } else {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('items')
+          .select('quantity_available, cost_price, name, selling_price');
+        
+        if (itemsError) {
+          console.error('Error fetching items:', itemsError);
+        } else {
+          totalStockValue = itemsData?.reduce((sum, item) => 
+            sum + (Number(item.quantity_available || 0) * Number(item.cost_price || 0)), 0) || 0;
+          itemsForLowStock = (itemsData || []).map(item => ({
+            name: item.name || 'Unknown Item',
+            quantity_available: Number(item.quantity_available || 0),
+            selling_price: Number(item.selling_price || 0)
+          }));
+        }
       }
       
-      const totalStockValue = itemsData?.reduce((sum, item) => 
-        sum + (Number(item.quantity_available || 0) * Number(item.cost_price || 0)), 0) || 0;
-      
-      // Get payments for the period with error handling
+      // Get payments for the period
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
         .select('amount')
         .eq('type', 'Receipt')
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('date', effectiveStartDate)
+        .lte('date', effectiveEndDate);
       
       if (paymentsError) {
         console.error('Error fetching payments:', paymentsError);
@@ -186,17 +250,22 @@ export const useEnhancedDashboardMetrics = (
       
       const paymentsReceived = paymentsData?.reduce((sum, payment) => sum + Number(payment.amount || 0), 0) || 0;
       
-      // Get pending deliveries from sales_orders
-      const { data: pendingSalesData, error: pendingSalesError } = await supabase
-        .from('sales_orders')
-        .select('id')
-        .eq('delivery_status', 'Pending');
-      
-      if (pendingSalesError) {
-        console.error('Error fetching pending deliveries:', pendingSalesError);
+      // Get pending deliveries from sales_orders (only relevant for active year)
+      let pendingDeliveries = 0;
+      if (!isClosedOrPast) {
+        const { data: pendingSalesData, error: pendingSalesError } = await supabase
+          .from('sales_orders')
+          .select('id')
+          .eq('delivery_status', 'Pending')
+          .gte('date', selectedYear.start_date)
+          .lte('date', selectedYear.end_date);
+        
+        if (pendingSalesError) {
+          console.error('Error fetching pending deliveries:', pendingSalesError);
+        } else {
+          pendingDeliveries = pendingSalesData?.length || 0;
+        }
       }
-      
-      const pendingDeliveries = pendingSalesData?.length || 0;
       
       // Calculate top selling items from sales_order_items
       const itemSales = allSalesOrdersData?.reduce((acc, order) => {
@@ -215,20 +284,17 @@ export const useEnhancedDashboardMetrics = (
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 5);
       
-      // Get low stock items (less than 10 units for better threshold)
-      const lowStockItems = itemsData?.filter(item => Number(item.quantity_available || 0) < 10)
-        .map(item => ({
-          name: item.name || 'Unknown Item',
-          quantity_available: Number(item.quantity_available || 0),
-          selling_price: Number(item.selling_price || 0)
-        }))
-        .slice(0, 5) || [];
+      // Get low stock items
+      const lowStockItems = itemsForLowStock.filter(item => Number(item.quantity_available || 0) < 10)
+        .slice(0, 5);
       
-      // Generate sales trend data for the last 7 days
+      // Generate sales trend data for the last 7 days of the period
       const salesTrend = [];
+      const trendEndDate = isClosedOrPast ? new Date(selectedYear.end_date) : new Date();
+      
       for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
+        const date = new Date(trendEndDate);
+        date.setDate(trendEndDate.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
         const dayOrders = allSalesOrdersData?.filter(order => order.date === dateStr) || [];
@@ -264,10 +330,10 @@ export const useEnhancedDashboardMetrics = (
       };
     },
     refetchInterval: 30000,
-    staleTime: 10000, // Consider data fresh for 10 seconds
+    staleTime: 10000,
     retry: (failureCount, error) => {
       console.warn(`Dashboard metrics fetch failed (attempt ${failureCount + 1}):`, error);
-      return failureCount < 2; // Retry up to 2 times
+      return failureCount < 2;
     },
   });
 };

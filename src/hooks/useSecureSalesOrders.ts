@@ -25,13 +25,20 @@ export interface SecureSalesOrder {
   salesperson_name?: string;
 }
 
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
+
 export const useSecureSalesOrders = (storeId?: string, documentType: 'order' | 'quote' = 'order') => {
+  const { selectedYear } = useFinancialYear();
+  
   return useQuery({
-    queryKey: ['secure-sales-orders', storeId, documentType],
+    queryKey: ['secure-sales-orders', storeId, documentType, selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_sales_orders_for_user', {
         _store_id: storeId || null,
-        _document_type: documentType
+        _document_type: documentType,
+        p_start_date: selectedYear?.start_date,
+        p_end_date: selectedYear?.end_date
       });
       
       if (error) throw error;

@@ -20,9 +20,12 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { formatCurrency } from '@/utils/currencyUtils';
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
+import { useYearGuard } from '@/contexts/FinancialYearContext';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 export default function Purchases() {
   const isMobile = useIsMobile();
+  const { readOnly } = useYearGuard();
   const { activeStoreId, accessibleStores } = useStoreContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
@@ -154,7 +157,7 @@ export default function Purchases() {
 
         <Sheet open={fabOpen} onOpenChange={setFabOpen}>
           <SheetTrigger asChild>
-            <Button size="lg" className="fixed bottom-6 right-6 z-50 font-semibold rounded-full h-14 w-14 shadow-2xl">
+            <Button size="lg" className="fixed bottom-6 right-6 z-50 font-semibold rounded-full h-14 w-14 shadow-2xl" disabled={readOnly}>
               <Plus className="w-6 h-6" />
             </Button>
           </SheetTrigger>
@@ -211,11 +214,11 @@ export default function Purchases() {
           'Quantity': purchase.quantity,
           'Total Cost': purchase.total_cost
         }))} filename="purchases" type="purchases" />
-          <EnhancedPurchaseForm trigger={<Button className="font-semibold">
+          <EnhancedPurchaseForm trigger={<Button className="font-semibold" disabled={readOnly}>
                 <Plus className="w-4 h-4 mr-2" />
                 Single Item
               </Button>} />
-          <RefactoredMultiItemPurchaseForm trigger={<Button className="font-semibold">
+          <RefactoredMultiItemPurchaseForm trigger={<Button className="font-semibold" disabled={readOnly}>
                 <Plus className="w-4 h-4 mr-2" />
                 Multi Item
               </Button>} />

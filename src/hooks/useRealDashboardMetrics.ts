@@ -3,14 +3,48 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { DashboardMetrics } from '@/types/erp';
 
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
+
 export const useRealDashboardMetrics = (storeId?: string) => {
+  const { selectedYear } = useFinancialYear();
   const effectiveStoreId = storeId && storeId !== 'all' ? storeId : undefined;
+  
   return useQuery({
-    queryKey: ['real-dashboard-metrics', storeId],
+    queryKey: ['real-dashboard-metrics', storeId, selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async () => {
-      // Get total sales with order count using secure function
+      if (!selectedYear) {
+        return {
+          totalSales: 0,
+          totalPurchases: 0,
+          grossProfit: 0,
+          lowStockCount: 0,
+          outstandingBalance: 0,
+          supplierPayable: 0,
+          todaysSales: 0,
+          weeklySales: 0,
+          deliveryDelays: 0,
+          pendingOrders: 0,
+          customerLifetimeValue: 0,
+          repeatCustomers: 0,
+          bestSellingProducts: [],
+          slowMovingInventory: [],
+          outOfStockCount: 0,
+          totalInventoryValue: 0,
+          totalMaterialValue: 0,
+          totalOrders: 0,
+          avgOrderValue: 0,
+          fulfillmentRate: 0,
+          cashFlowRatio: 0,
+          profitMargin: 0,
+        };
+      }
+
+      // Get total sales with order count using secure function scoped to selected financial year
       const { data: rawSalesData, error: salesError } = await supabase.rpc('get_sales_orders_for_user', {
         _document_type: 'order',
+        p_start_date: selectedYear.start_date,
+        p_end_date: selectedYear.end_date,
         ...(effectiveStoreId ? { _store_id: effectiveStoreId } : {}),
       });
       
@@ -20,13 +54,10 @@ export const useRealDashboardMetrics = (storeId?: string) => {
       const salesData = (rawSalesData as any[]).filter(sale => sale.delivery_status !== 'Cancelled');
       
       // Fetch sales order items for Best-Selling Products
-      // Note: We'll just fetch all items and filter them in memory for simplicity, or we can use the salesData IDs
       const saleIds = salesData.map(s => s.id);
       
       let salesOrderItemsData: any[] = [];
       if (saleIds.length > 0) {
-        // Fetch in batches if necessary, but for now we'll just fetch items for the filtered orders
-        // Supabase stringifies arrays in 'in' filter, so we might need a simpler query or just fetch all
         const { data: itemsResult, error: itemsResultError } = await supabase
           .from('sales_order_items')
           .select('item_name, quantity, order_id');
@@ -36,21 +67,51 @@ export const useRealDashboardMetrics = (storeId?: string) => {
         }
       }
 
-      // Get total purchases (filtered by store if set)
+      // Get total purchases (filtered by store and scoped to selected financial year)
       let purchaseQuery = supabase.from('purchases').select('total_cost');
       if (effectiveStoreId) purchaseQuery = purchaseQuery.eq('store_id', effectiveStoreId);
+      purchaseQuery = purchaseQuery
+        .gte('date', selectedYear.start_date)
+        .lte('date', selectedYear.end_date);
       const { data: purchasesData, error: purchasesError } = await purchaseQuery;
       
       if (purchasesError) throw purchasesError;
       
-      // Get inventory metrics (filtered by store if set)
-      let itemsQuery = supabase.from('items').select('id, name, quantity_available, cost_price, selling_price');
-      if (effectiveStoreId) itemsQuery = itemsQuery.eq('store_id', effectiveStoreId);
-      const { data: itemsData, error: itemsError } = await itemsQuery;
+      // Get inventory metrics (filtered by store if set, fallback to snapshots if closed/past)
+      let itemsData: Array<{ id: string; name: string; quantity_available: number; cost_price: number; selling_price: number }> = [];
+      const isClosedOrPast = selectedYear.is_closed || !selectedYear.is_active;
+
+      if (isClosedOrPast) {
+        const { data: snapshotItems, error: snapshotError } = await supabase
+          .from('year_end_snapshots')
+          .select('entity_id, entity_name, closing_quantity, closing_amount, metadata')
+          .eq('financial_year_id', selectedYear.id)
+          .eq('snapshot_type', 'stock');
+          
+        if (snapshotError) throw snapshotError;
+        
+        itemsData = (snapshotItems || []).map(item => ({
+          id: item.entity_id,
+          name: item.entity_name || 'Unknown Item',
+          quantity_available: Number(item.closing_quantity || 0),
+          cost_price: Number((item.metadata as any)?.cost_price || 0),
+          selling_price: Number((item.metadata as any)?.selling_price || 0)
+        }));
+      } else {
+        let itemsQuery = supabase.from('items').select('id, name, quantity_available, cost_price, selling_price');
+        if (effectiveStoreId) itemsQuery = itemsQuery.eq('store_id', effectiveStoreId);
+        const { data: rawItems, error: itemsError } = await itemsQuery;
+        
+        if (itemsError) throw itemsError;
+        itemsData = (rawItems || []).map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity_available: Number(item.quantity_available || 0),
+          cost_price: Number(item.cost_price || 0),
+          selling_price: Number(item.selling_price || 0)
+        }));
+      }
       
-      if (itemsError) throw itemsError;
-      
-      // ...rest of data fetching
       const { data: materialsData, error: materialsError } = await supabase
         .from('materials')
         .select('quantity_available, cost_price');
@@ -58,22 +119,29 @@ export const useRealDashboardMetrics = (storeId?: string) => {
       
       const { data: rawOutstandingData, error: outstandingError } = await supabase
         .from('sale_payment_status')
-        .select('balance_due, delivery_status')
+        .select('balance_due, delivery_status, sale_date')
         .gt('balance_due', 0);
       if (outstandingError) throw outstandingError;
 
       const outstandingData = (rawOutstandingData || []).filter(
-        item => item.delivery_status !== 'Cancelled' && item.delivery_status?.toLowerCase() !== 'cancelled'
+        item => item.delivery_status !== 'Cancelled' && 
+                item.delivery_status?.toLowerCase() !== 'cancelled' &&
+                item.sale_date >= selectedYear.start_date &&
+                item.sale_date <= selectedYear.end_date
       );
       
       const { data: supplierLedgerData, error: supplierLedgerError } = await supabase
         .from('supplier_ledger')
-        .select('debit_amount, credit_amount');
+        .select('debit_amount, credit_amount')
+        .gte('transaction_date', selectedYear.start_date)
+        .lte('transaction_date', selectedYear.end_date);
       if (supplierLedgerError) throw supplierLedgerError;
       
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
-        .select('amount, type');
+        .select('amount, type')
+        .gte('date', selectedYear.start_date)
+        .lte('date', selectedYear.end_date);
       if (paymentsError) throw paymentsError;
 
       // 1. Basic Metrics
@@ -81,11 +149,12 @@ export const useRealDashboardMetrics = (storeId?: string) => {
       const totalPurchases = purchasesData.reduce((sum, purchase) => sum + (purchase.total_cost || 0), 0);
       const grossProfit = totalSales - totalPurchases;
 
-      // 2. Today's and Weekly Sales
-      const today = new Date();
+      // 2. Today's and Weekly Sales (clamped or anchored to year end if closed)
+      const anchorDate = isClosedOrPast ? new Date(selectedYear.end_date) : new Date();
+      const today = new Date(anchorDate);
       today.setHours(0, 0, 0, 0);
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekAgo = new Date(anchorDate);
+      weekAgo.setDate(anchorDate.getDate() - 7);
       
       let todaysSales = 0;
       let weeklySales = 0;

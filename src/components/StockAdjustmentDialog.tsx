@@ -9,6 +9,7 @@ import { useCreateStockAdjustment } from '@/hooks/useStockAdjustments';
 import { useStores } from '@/hooks/useStores';
 import { ClipboardEdit } from 'lucide-react';
 import StockLedgerItemSelector from './StockLedgerItemSelector';
+import { useYearGuard } from '@/contexts/FinancialYearContext';
 
 interface StockAdjustmentDialogProps {
   items: any[];
@@ -25,6 +26,7 @@ export default function StockAdjustmentDialog({ items }: StockAdjustmentDialogPr
 
   const { data: stores = [] } = useStores();
   const createAdjustment = useCreateStockAdjustment();
+  const { readOnly } = useYearGuard();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +57,7 @@ export default function StockAdjustmentDialog({ items }: StockAdjustmentDialogPr
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-blue-600 hover:bg-blue-700" disabled={readOnly}>
           <ClipboardEdit className="w-4 h-4 mr-2" />
           Stock Adjustment
         </Button>

@@ -12,8 +12,10 @@ import { useStores } from '@/hooks/useStores';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import MultiMaterialPurchaseForm from '@/components/MultiMaterialPurchaseForm';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useYearGuard } from '@/contexts/FinancialYearContext';
 export default function MaterialPurchases() {
   const isMobile = useIsMobile();
+  const { readOnly } = useYearGuard();
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +108,7 @@ export default function MaterialPurchases() {
                 </SelectItem>)}
             </SelectContent>
           </Select>
-          <MultiMaterialPurchaseForm trigger={<Button className="cyber-button font-semibold w-full sm:w-auto text-primary-foreground">
+          <MultiMaterialPurchaseForm trigger={<Button className="cyber-button font-semibold w-full sm:w-auto text-primary-foreground" disabled={readOnly}>
                 <Plus className="w-4 h-4 mr-2" />
                 Record Purchase
               </Button>} />

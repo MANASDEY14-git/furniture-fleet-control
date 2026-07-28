@@ -18,6 +18,7 @@ import { CancelOrderDialog } from './CancelOrderDialog';
 import { useCancelSalesOrder } from '@/hooks/useSalesOrders';
 import { useConvertQuoteToOrder } from '@/hooks/useConvertQuoteToOrder';
 import { useUpdateQuoteStatus } from '@/hooks/useUpdateQuoteStatus';
+import { useYearGuard } from '@/contexts/FinancialYearContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,6 +80,7 @@ function MobileOrderCard({
   isUpdatingQuoteStatus?: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { readOnly } = useYearGuard();
 
   return (
     <Card className={cn("mb-3 transition-all duration-500", isHighlighted && "ring-2 ring-primary/50 bg-primary/5")}>
@@ -155,7 +157,7 @@ function MobileOrderCard({
                 <Select 
                   value={order.delivery_status} 
                   onValueChange={(value: DeliveryStatus) => handleStatusChange(order.sale_id, value, order)}
-                  disabled={order.delivery_status === 'Cancelled'}
+                  disabled={order.delivery_status === 'Cancelled' || readOnly}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue>
@@ -179,41 +181,41 @@ function MobileOrderCard({
                     {onUpdateQuoteStatus && order.quote_status !== 'accepted' && order.quote_status !== 'rejected' && (
                       <div className="flex gap-2">
                         {order.quote_status === 'draft' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            disabled={isUpdatingQuoteStatus}
-                            onClick={() => onUpdateQuoteStatus(order.sale_id, 'sent')}
-                          >
-                            <Send className="w-4 h-4 mr-1.5" />
-                            Mark Sent
-                          </Button>
-                        )}
-                        {(order.quote_status === 'draft' || order.quote_status === 'sent') && (
-                          <>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                              disabled={isUpdatingQuoteStatus}
-                              onClick={() => onUpdateQuoteStatus(order.sale_id, 'accepted')}
+                              className="flex-1"
+                              disabled={isUpdatingQuoteStatus || readOnly}
+                              onClick={() => onUpdateQuoteStatus(order.sale_id, 'sent')}
                             >
-                              <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                              Accept
+                              <Send className="w-4 h-4 mr-1.5" />
+                              Mark Sent
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
-                              disabled={isUpdatingQuoteStatus}
-                              onClick={() => onUpdateQuoteStatus(order.sale_id, 'rejected')}
-                            >
-                              <XCircle className="w-4 h-4 mr-1.5" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
+                          )}
+                          {(order.quote_status === 'draft' || order.quote_status === 'sent') && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                disabled={isUpdatingQuoteStatus || readOnly}
+                                onClick={() => onUpdateQuoteStatus(order.sale_id, 'accepted')}
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                                Accept
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10"
+                                disabled={isUpdatingQuoteStatus || readOnly}
+                                onClick={() => onUpdateQuoteStatus(order.sale_id, 'rejected')}
+                              >
+                                <XCircle className="w-4 h-4 mr-1.5" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
                       </div>
                     )}
 
@@ -226,7 +228,7 @@ function MobileOrderCard({
                             <Button
                               size="lg"
                               className="w-full bg-primary text-primary-foreground font-bold hover:shadow-md active:scale-95 transition-all"
-                              disabled={isConverting}
+                              disabled={isConverting || readOnly}
                             >
                               <ArrowRightLeft className="w-4 h-4 mr-2" />
                               {isConverting ? 'Converting...' : 'Convert to Order'}
@@ -267,6 +269,7 @@ function MobileOrderCard({
                       size="sm"
                       className="flex-1"
                       onClick={() => setRecordingPayment(order)}
+                      disabled={readOnly}
                     >
                       <Receipt className="w-4 h-4 mr-2" />
                       Payment
@@ -296,6 +299,7 @@ export default function SalesTable({
   const isMobile = useIsMobile();
   const [cancellingOrder, setCancellingOrder] = useState<any>(null);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const { readOnly } = useYearGuard();
   const cancelOrderMutation = useCancelSalesOrder();
   const convertQuoteMutation = useConvertQuoteToOrder();
   const updateQuoteStatusMutation = useUpdateQuoteStatus();
@@ -439,7 +443,7 @@ export default function SalesTable({
                     <Select 
                       value={order.delivery_status} 
                       onValueChange={(value: DeliveryStatus) => handleStatusChange(order.sale_id, value, order)}
-                      disabled={order.delivery_status === 'Cancelled'}
+                      disabled={order.delivery_status === 'Cancelled' || readOnly}
                     >
                       <SelectTrigger className="w-36">
                         <SelectValue>
@@ -463,7 +467,7 @@ export default function SalesTable({
                           {order.quote_status !== 'accepted' && order.quote_status !== 'rejected' && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" disabled={updateQuoteStatusMutation.isPending}>
+                                <Button variant="outline" size="sm" disabled={updateQuoteStatusMutation.isPending || readOnly}>
                                   Update Status
                                 </Button>
                               </DropdownMenuTrigger>
@@ -493,7 +497,7 @@ export default function SalesTable({
                                 <Button
                                   size="sm"
                                   className="bg-primary text-primary-foreground font-bold px-4 py-2 hover:shadow-md active:scale-95 transition-all"
-                                  disabled={convertQuoteMutation.isPending}
+                                  disabled={convertQuoteMutation.isPending || readOnly}
                                 >
                                   <ArrowRightLeft className="w-4 h-4 mr-1.5" />
                                   {convertQuoteMutation.isPending ? 'Converting...' : 'Convert to Order'}
@@ -533,6 +537,7 @@ export default function SalesTable({
                           size="sm"
                           className="text-muted-foreground hover:text-emerald-600"
                           onClick={() => setRecordingPayment(order)}
+                          disabled={readOnly}
                         >
                           <Receipt className="w-4 h-4" />
                         </Button>

@@ -11,6 +11,8 @@ interface SalesHeaderProps {
   getSupplierName: (supplierId: string) => string;
   documentType?: 'order' | 'quote';
 }
+import { useYearGuard } from '@/contexts/FinancialYearContext';
+
 export default function SalesHeader({
   filteredOrders,
   dateFilter,
@@ -19,6 +21,8 @@ export default function SalesHeader({
   documentType = 'order'
 }: SalesHeaderProps) {
   const isMobile = useIsMobile();
+  const { readOnly } = useYearGuard();
+
   if (isMobile) {
     return <div className="space-y-4">
         <div className="text-center">
@@ -26,7 +30,7 @@ export default function SalesHeader({
           <p className="text-muted-foreground text-sm">{documentType === 'quote' ? 'Manage your quotations' : 'Track sales orders with advance payments and delivery tracking'}</p>
         </div>
         <div className="flex flex-col gap-3">
-          <EnhancedSalesOrderForm documentType={documentType} trigger={<Button className="font-semibold w-full h-12">
+          <EnhancedSalesOrderForm documentType={documentType} trigger={<Button className="font-semibold w-full h-12" disabled={readOnly}>
                 <Plus className="w-5 h-5 mr-2" />
                 {documentType === 'quote' ? 'New Quote' : 'Create Order'}
               </Button>} />
@@ -61,7 +65,7 @@ export default function SalesHeader({
         'Status': order.delivery_status,
         'Delivery Date': order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : 'Not Set'
       }))} filename={`sales-orders-${dateFilter}`} type="sales" />
-        <EnhancedSalesOrderForm documentType={documentType} trigger={<Button className="font-semibold">
+        <EnhancedSalesOrderForm documentType={documentType} trigger={<Button className="font-semibold" disabled={readOnly}>
               <Plus className="w-4 h-4 mr-2" />
               {documentType === 'quote' ? 'New Quote' : 'Create Order'}
             </Button>} />
