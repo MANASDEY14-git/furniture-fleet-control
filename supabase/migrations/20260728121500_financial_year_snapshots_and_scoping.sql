@@ -329,7 +329,8 @@ RETURNS TABLE (
   delivered_at timestamptz,
   delivery_date text,
   document_type text,
-  quote_status text
+  quote_status text,
+  salesperson_name text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -365,7 +366,8 @@ BEGIN
     so.delivered_at,
     so.delivery_date::text,
     so.document_type,
-    so.quote_status
+    so.quote_status,
+    so.salesperson_name
   FROM public.sales_orders so
   WHERE (_store_id IS NULL OR so.store_id = _store_id)
     AND so.date BETWEEN p_start_date AND p_end_date
@@ -419,6 +421,7 @@ BEGIN
       total_names.n AS num_salespeople,
       soi.quantity,
       soi.total_price,
+      soi.item_id AS item_id,
       COALESCE(soi.discount, 0) AS discount_pct,
       -- Split values
       (soi.total_price / total_names.n) AS split_revenue,
