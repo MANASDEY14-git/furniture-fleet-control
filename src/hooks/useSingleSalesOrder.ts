@@ -37,6 +37,7 @@ interface SecureSalesOrder {
   cancelled_at: string | null;
   cancellation_reason: string | null;
   sales_order_items: SalesOrderItem[];
+  salesperson_name: string | null;
 }
 
 export const useSingleSalesOrder = (orderId: string | null) => {
@@ -84,7 +85,8 @@ export const useSingleSalesOrder = (orderId: string | null) => {
         delivery_date: row.delivery_date,
         cancelled_at: row.cancelled_at,
         cancellation_reason: row.cancellation_reason,
-        sales_order_items: items
+        sales_order_items: items,
+        salesperson_name: row.salesperson_name
       } as SecureSalesOrder;
     },
   });
