@@ -1,6 +1,8 @@
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { YearSwitcher } from '@/components/YearSwitcher';
+import { ReadOnlyYearBanner } from '@/components/ReadOnlyYearBanner';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -16,7 +18,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-accent" />
             
             <div className="flex-1" />
-            
+
+            <YearSwitcher />
+
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
             </span>
@@ -25,6 +29,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {/* Main content */}
           <main className="flex-1 p-3 sm:p-4 lg:p-8">
             <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 lg:p-8 min-h-full">
+              <ReadOnlyYearBanner />
               {children}
             </div>
           </main>
