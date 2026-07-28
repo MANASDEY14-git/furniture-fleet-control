@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
 
 export type PaymentMethod = 'cash' | 'upi' | 'bank_transfer' | 'debit_card' | 'credit_card' | 'cheque' | 'online_wallet' | 'other';
 
@@ -50,14 +51,19 @@ export interface CreatePaymentData {
 }
 
 export const usePayments = () => {
+  const { selectedYear } = useFinancialYear();
   return useQuery({
-    queryKey: ['payments'],
+    queryKey: ['payments', selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('payments')
         .select('*')
         .order('created_at', { ascending: false });
-      
+      if (selectedYear) {
+        query = query.gte('date', selectedYear.start_date).lte('date', selectedYear.end_date);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data as Payment[];
     },

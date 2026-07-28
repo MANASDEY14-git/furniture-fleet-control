@@ -1,17 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
 import type { Purchase, CreatePurchaseData } from '@/types';
 
 export const usePurchases = () => {
+  const { selectedYear } = useFinancialYear();
   return useQuery({
-    queryKey: ['purchases'],
+    queryKey: ['purchases', selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async (): Promise<Purchase[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('purchases')
         .select('*')
         .order('created_at', { ascending: false });
-      
+      if (selectedYear) {
+        query = query.gte('date', selectedYear.start_date).lte('date', selectedYear.end_date);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data as Purchase[];
     },
