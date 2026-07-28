@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Search, ArrowUp, ArrowDown } from 'lucide-react';
+import { Eye, Search, ArrowUp, ArrowDown, Pencil } from 'lucide-react';
 import StockAdjustmentDialog from '@/components/StockAdjustmentDialog';
+import ItemOpeningBalanceDialog from '@/components/ItemOpeningBalanceDialog';
 import DateFilterSelector from '@/components/DateFilterSelector';
 import StoreSelector from '@/components/StoreSelector';
 import StockLedgerItemSelector from '@/components/StockLedgerItemSelector';
@@ -146,6 +147,11 @@ export default function StockLedger() {
             filename={`stock-ledger-${format(new Date(), 'yyyy-MM-dd')}`} 
             type="stock-ledger" 
           />
+          <ItemOpeningBalanceDialog 
+            defaultItemId={selectedItem === 'all' ? undefined : selectedItem}
+            defaultStoreId={selectedStore === 'all' ? undefined : selectedStore}
+            items={items}
+          />
           <StockAdjustmentDialog items={items} />
         </div>
       </div>
@@ -208,10 +214,28 @@ export default function StockLedger() {
       {/* Summary Statistics - Only show when specific item selected */}
       {selectedItem !== 'all' && stockData.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <Card className="bg-slate-700/50 border-blue-500/30">
+          <Card className="bg-slate-700/50 border-blue-500/30 group relative">
             <CardContent className="p-3 sm:p-4">
-              <p className="text-blue-200 text-xs sm:text-sm mb-1">Opening Balance</p>
-              <p className="text-white text-lg sm:text-2xl font-bold">{openingBalance}</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-blue-200 text-xs sm:text-sm mb-1">Opening Balance</p>
+                  <p className="text-white text-lg sm:text-2xl font-bold">{openingBalance}</p>
+                </div>
+                <ItemOpeningBalanceDialog 
+                  defaultItemId={selectedItem}
+                  defaultStoreId={selectedStore === 'all' ? undefined : selectedStore}
+                  items={items}
+                  trigger={
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  }
+                />
+              </div>
             </CardContent>
           </Card>
           <Card className="bg-green-900/30 border-green-500/30">
