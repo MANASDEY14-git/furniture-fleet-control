@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
 
 export interface SupplierLedgerEntry {
   id: string;
@@ -36,8 +37,9 @@ export interface SupplierBalance {
 }
 
 export const useSupplierLedger = (supplierId?: string, storeId?: string) => {
+  const { selectedYear } = useFinancialYear();
   return useQuery({
-    queryKey: ['supplier-ledger', supplierId, storeId],
+    queryKey: ['supplier-ledger', supplierId, storeId, selectedYear?.id],
     queryFn: async () => {
       let query = supabase
         .from('supplier_ledger')
@@ -54,9 +56,14 @@ export const useSupplierLedger = (supplierId?: string, storeId?: string) => {
       if (storeId && storeId !== 'all') {
         query = query.eq('store_id', storeId);
       }
+      if (selectedYear) {
+        query = query
+          .gte('transaction_date', selectedYear.start_date)
+          .lte('transaction_date', selectedYear.end_date);
+      }
 
       const { data, error } = await query;
-      
+
       if (error) throw error;
       return data as SupplierLedgerEntry[];
     },
