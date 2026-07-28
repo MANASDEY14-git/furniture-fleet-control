@@ -1,64 +1,66 @@
-Goal
-Make the Sales Person(s) field in the sales order creation form fully connected to the `sales_orders.salesperson_name` column, and verify the data flows correctly into the sales table and sales intelligence.
+# Financial Year Snapshots & Year-Scoped UI
 
-Current state (verified from the codebase and DB)
+Adopt the existing April–March financial-year model (`financial_years` already has FY 2025-26 closed and FY 2026-27 active) as the app-wide time boundary. Prior years become immutable snapshots; the UI defaults to the active year, with a header switcher to view any past year read-only.
 
-- `sales_orders.salesperson_name` exists as a nullable `text` column.
-- The `create_sales_order_secure` RPC already accepts `_salesperson_name` and inserts it into `sales_orders.salesperson_name` using `NULLIF(TRIM(_salesperson_name), '')`.
-- `useCreateSalesOrder` already passes `salesperson_name` to the RPC.
-- `EnhancedSalesOrderForm` (the form used by the Sales page) captures `salespeople` in state and submits it on mobile.
-- Real salesperson data is already being saved in the DB (e.g., SUBHO, MADHUMITA).
-- `get_sales_intelligence_summary` exists and is already used by `useSalesIntelligence`.
-- `SalesTable` already displays `salesperson_name` and the 50-50 split badge when a comma is present.
+## 1. Data model (already mostly in place, minor additions)
 
-Gaps found
+Tables in use: `financial_years`, `year_end_snapshots`, `item_opening_balances`, `supplier_opening_balances`, plus RPC `perform_year_end_closing(p_year_id)`.
 
-1. The **desktop layout** of `EnhancedSalesOrderForm` does NOT show a Sales Person(s) input field. It only appears in the mobile layout.
-2. The **mobile layout** of `EnhancedSalesOrderForm` shows two separate Sales Person(s) inputs for the same field (one labeled "Sales Person(s) *" near the top, another labeled "Attended Salesperson / Team (50-50 Split)" in the customer section). They both write to the same `formData.salespeople` value, which is confusing and redundant.
-3. The older `SalesOrderForm.tsx` has a Sales Person(s) input, but `salespeople` is not declared in the initial `formData` state, and the field is not passed to `createSalesOrder.mutateAsync`. Saving from this form would silently drop the salesperson value.
+Additions:
+- New RPC `get_active_financial_year()` — returns the row where `is_active = true AND is_closed = false` (based on `CURRENT_DATE` between `start_date` and `end_date`).
+- New RPC `close_and_rollover_financial_year()` — idempotent: for any FY whose `end_date < CURRENT_DATE` and `is_closed = false`, calls `perform_year_end_closing`, then inserts the next FY row (Apr 15 → Apr 14 next year), sets it `is_active = true`, and seeds `item_opening_balances` / `supplier_opening_balances` for the new year from the snapshot.
+- Verify `perform_year_end_closing` writes `year_end_snapshots` rows for: inventory (qty + value per item/store), customer balances, supplier balances, bank balances. Patch any missing snapshot types.
 
-Plan
+## 2. Auto-close on rollover
 
-1. Fix the active sales form (`EnhancedSalesOrderForm.tsx`)
-   - Add a single Sales Person(s) input to the **desktop** layout, placed in the Basic Order Info row alongside Order Number, Store, and Date.
-   - Remove the duplicate salespeople inputs from the **mobile** layout and keep only one clearly labeled input.
-   - Ensure the helper text about the 50-50 split (comma-separated reps) is still visible on both layouts.
-   - Keep the existing submit logic that sends `salesperson_name: formData.salespeople?.trim() || null`.
+- Enable `pg_cron` + `pg_net`.
+- Daily cron at 00:15 IST calls `close_and_rollover_financial_year()` via RPC. Idempotent — no-op on non-boundary days.
+- Log outcome to a lightweight `system_events` row for audit.
 
-2. Fix or remove the old form (`SalesOrderForm.tsx`)
-   - Option A (recommended): Add `salespeople` to the `formData` initial state and pass `salesperson_name` in `handleSubmit` so it works consistently.
-   - Option B: If the old form is no longer used, remove the broken salespeople input to avoid future confusion.
-   - The plan will implement Option A unless the user confirms the old form is unused.
+## 3. Frontend: active-year context
 
-3. Verify database integration end-to-end
-   - Confirm `create_sales_order_secure` inserts into `salesperson_name` correctly (already true, but re-check after any changes).
-   - Confirm `get_sales_intelligence_summary` splits comma-separated names and divides revenue/profit equally (already true, but re-check with a test order).
-   - Confirm `useComputedSalePaymentStatus` returns `salesperson_name` so the sales table shows it (already true).
+- `FinancialYearContext` provider (mounted above routes) exposing `{ activeYear, selectedYear, setSelectedYear, isViewingPast }`. Defaults `selectedYear` to the DB active FY; persisted in localStorage.
+- Header `YearSwitcher` dropdown listing all `financial_years` (closed rows badged "Closed · read-only"). Selecting a past year sets a global read-only banner and disables Create/Edit/Delete buttons app-wide via a `useYearGuard()` hook.
 
-4. Add validation/persistence checks
-   - Add a `required` attribute only if the user wants Sales Person(s) mandatory. Default: optional, since the DB column is nullable.
-   - Trim whitespace and strip leading/trailing commas before saving.
+## 4. Query scoping
 
-5. Test plan
-   - Create a sales order on desktop with a single salesperson (e.g., "SUBHO") and verify the value appears in the sales table and Sales Intelligence.
-   - Create a sales order on mobile with two comma-separated salespeople (e.g., "Amit, Ravi") and verify the 50-50 split appears in Sales Intelligence.
-   - Verify existing real orders with salesperson names still display correctly.
+All list/dashboard hooks receive `selectedYear.start_date` and `selectedYear.end_date` and add a `.gte()/.lte()` filter on the relevant date column:
 
-Technical details
+| Area | Hook / RPC | Date column |
+| --- | --- | --- |
+| Sales | `usePaginatedSalesOrders`, `useSecureSalesOrders`, `get_sales_orders_secure` | `sales_orders.date` |
+| Purchases | `usePurchases`, `usePaginatedPurchases` | `purchases.date` |
+| Material purchases | `useMaterialPurchases` | `material_purchases.date` |
+| Payments | `usePayments`, `useBankTransactions` | `payments.date` |
+| Customer ledger | `useCustomerLedger`, `customer_summary` | `customer_ledger.transaction_date` |
+| Supplier ledger | `useSupplierLedger` | `supplier_ledger.transaction_date` |
+| Stock ledger | `useStockLedger` | derive opening from `item_opening_balances` + movements in-window |
+| Dashboards | `useEnhancedDashboardMetrics`, `useKpiMetrics`, `useRealDashboardMetrics` | date column per source |
+| Intelligence | `get_sales_intelligence_summary`, `get_inventory_intelligence` | add `p_start_date`, `p_end_date` params |
 
-- Files to edit:
-  - `src/components/EnhancedSalesOrderForm.tsx` — add desktop input, clean up mobile duplicate.
-  - `src/components/SalesOrderForm.tsx` — wire `salespeople` into state and submission, or remove the input.
-- Files to verify (no edits expected):
-  - `src/hooks/useSalesOrders.ts` (already passes `salesperson_name`)
-  - `src/hooks/useComputedSalePaymentStatus.ts` (already passes `salesperson_name` through)
-  - `src/components/sales/SalesTable.tsx` (already renders `salesperson_name`)
-  - `src/hooks/useSalesIntelligence.ts` (already calls the real RPC)
-- Database functions to verify:
-  - `create_sales_order_secure` inserts `salesperson_name`
-  - `get_sales_intelligence_summary` splits and aggregates correctly
+RPCs updated to accept optional `p_start_date` / `p_end_date` and default to the active FY when omitted.
 
-Out of scope
+## 5. Inventory & stock ledger specifics
 
-- No new database migrations are needed; the schema and RPCs already support `salesperson_name`.
-- No changes to sales intelligence calculation logic are needed unless testing reveals an error.
+- Stock ledger opening row per item is read from `item_opening_balances` for `selectedYear`; only movements within the FY window are listed.
+- Inventory Intelligence and dashboard stock-value KPIs use the same opening + in-window movements calculation.
+- For the currently-active FY, opening balances were seeded at the previous close and are immutable.
+
+## 6. UI touch points
+
+- `Layout` / `AppSidebar` header: mount `YearSwitcher`.
+- Read-only banner ("Viewing FY 2025-26 · closed") shown across pages when `isViewingPast`.
+- `Settings → Financial Years`: list years, show close status, manual "Close now" button for admins (safety net; normally cron handles it).
+- Create/Edit dialogs (sales, purchases, payments, adjustments) blocked when a past year is selected.
+
+## 7. Backfill
+
+- Ensure FY 2025-26 has full `year_end_snapshots` rows (rerun `perform_year_end_closing` idempotently if missing).
+- Ensure `item_opening_balances` and `supplier_opening_balances` for FY 2026-27 are populated from those snapshots.
+
+## Technical notes
+
+- Migrations: extend `perform_year_end_closing` if any snapshot type missing; add `close_and_rollover_financial_year` and `get_active_financial_year`; add `p_start_date`/`p_end_date` params to intelligence RPCs (use `DROP FUNCTION IF EXISTS` before recreating).
+- Cron: schedule via `supabase--insert` (not migration) since it contains the anon key.
+- React Query keys must include `selectedYear.id` so cache doesn't bleed across years.
+- `useYearGuard()` returns `{ readOnly: boolean }` and is consumed by every mutation-triggering component to disable action buttons for past years.
