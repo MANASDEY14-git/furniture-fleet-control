@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
 interface PaginatedPurchasesConfig {
@@ -13,15 +14,16 @@ interface PaginatedPurchasesConfig {
 }
 
 export const usePaginatedPurchases = (config: PaginatedPurchasesConfig = {}) => {
-  const { 
-    pageSize = 50, 
-    searchTerm = '', 
-    storeId = 'all', 
+  const {
+    pageSize = 50,
+    searchTerm = '',
+    storeId = 'all',
     supplierId = 'all',
-    dateFilter = 'month',
+    dateFilter,
     customDateRange
   } = config;
 
+  const { selectedYear } = useFinancialYear();
   const [currentPage, setCurrentPage] = useState(1);
 
   const {
@@ -31,66 +33,71 @@ export const usePaginatedPurchases = (config: PaginatedPurchasesConfig = {}) => 
     refetch
   } = useQuery({
     queryKey: [
-      'purchases-paginated', 
-      currentPage, 
-      pageSize, 
-      searchTerm, 
-      storeId, 
+      'purchases-paginated',
+      currentPage,
+      pageSize,
+      searchTerm,
+      storeId,
       supplierId,
       dateFilter,
-      customDateRange
+      customDateRange,
+      selectedYear?.id,
     ],
+    enabled: !!selectedYear,
     queryFn: async () => {
       let query = supabase
         .from('purchases')
         .select('*', { count: 'exact' });
 
-      // Apply filters
       if (searchTerm) {
         query = query.or(`item_name.ilike.%${searchTerm}%,invoice_number.ilike.%${searchTerm}%`);
       }
-      
       if (storeId && storeId !== 'all') {
         query = query.eq('store_id', storeId);
       }
-      
       if (supplierId && supplierId !== 'all') {
         query = query.eq('supplier_id', supplierId);
       }
 
-      // Apply date filter
-      if (dateFilter !== 'month' || customDateRange) {
-        const now = new Date();
-        let startDate: Date;
-        let endDate = now;
+      let startDateStr: string | null = null;
+      let endDateStr: string | null = null;
 
+      if (dateFilter) {
+        const now = new Date();
+        let start: Date | null = null;
+        let end: Date = now;
         switch (dateFilter) {
           case 'today':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             break;
           case 'week':
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
           case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
             break;
           case 'custom':
-            if (!customDateRange) break;
-            startDate = customDateRange.from;
-            endDate = customDateRange.to;
+            if (customDateRange) {
+              start = customDateRange.from;
+              end = customDateRange.to;
+            }
             break;
-          default:
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         }
-
-        if (startDate!) {
-          query = query
-            .gte('date', startDate.toISOString().split('T')[0])
-            .lte('date', endDate.toISOString().split('T')[0]);
+        if (start) {
+          startDateStr = start.toISOString().split('T')[0];
+          endDateStr = end.toISOString().split('T')[0];
         }
       }
 
-      // Apply pagination
+      if (!startDateStr && selectedYear) {
+        startDateStr = selectedYear.start_date;
+        endDateStr = selectedYear.end_date;
+      }
+
+      if (startDateStr && endDateStr) {
+        query = query.gte('date', startDateStr).lte('date', endDateStr);
+      }
+
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
@@ -108,7 +115,7 @@ export const usePaginatedPurchases = (config: PaginatedPurchasesConfig = {}) => 
         totalPages: Math.ceil((count || 0) / pageSize)
       };
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 
   const paginationInfo = useMemo(() => {
