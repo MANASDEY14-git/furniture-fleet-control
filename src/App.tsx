@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import { StoreProvider } from '@/contexts/StoreContext';
+import { FinancialYearProvider } from '@/contexts/FinancialYearContext';
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
@@ -63,6 +64,7 @@ function App() {
             <Route path="/*" element={
               <ProtectedRoute>
                 <StoreProvider>
+                  <FinancialYearProvider>
                   <Layout>
                     <Routes>
                     <Route path="/" element={<Index />} />
@@ -90,6 +92,7 @@ function App() {
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>
+                  </FinancialYearProvider>
                 </StoreProvider>
               </ProtectedRoute>
             } />

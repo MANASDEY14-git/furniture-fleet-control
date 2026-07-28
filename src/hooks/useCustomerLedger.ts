@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
 
 export interface CustomerLedgerEntry {
   id: string;
@@ -14,21 +15,30 @@ export interface CustomerLedgerEntry {
 }
 
 export const useCustomerLedger = (customerId?: string) => {
+  const { selectedYear } = useFinancialYear();
   return useQuery({
-    queryKey: ['customer-ledger', customerId],
+    queryKey: ['customer-ledger', customerId, selectedYear?.id],
     queryFn: async () => {
       if (!customerId) return [];
-      
-      const { data, error } = await supabase
+
+      let query = supabase
         .from('customer_ledger')
         .select('*')
         .eq('customer_id', customerId)
         .order('transaction_date', { ascending: false })
         .order('created_at', { ascending: false });
 
+      if (selectedYear) {
+        query = query
+          .gte('transaction_date', selectedYear.start_date)
+          .lte('transaction_date', selectedYear.end_date);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as CustomerLedgerEntry[];
     },
     enabled: !!customerId,
   });
 };
+

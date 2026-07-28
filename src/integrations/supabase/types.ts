@@ -2793,6 +2793,7 @@ export type Database = {
         Returns: Json
       }
       can_access_customer_pii: { Args: { _user_id?: string }; Returns: boolean }
+      close_and_rollover_financial_year: { Args: never; Returns: Json }
       convert_quote_to_order: {
         Args: { _order_id: string }
         Returns: undefined
@@ -2836,6 +2837,26 @@ export type Database = {
         }[]
       }
       generate_ai_insights: { Args: never; Returns: number }
+      get_active_financial_year: {
+        Args: never
+        Returns: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          is_closed: boolean | null
+          label: string
+          start_date: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "financial_years"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_all_users_for_admin: {
         Args: never
         Returns: {

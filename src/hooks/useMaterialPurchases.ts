@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFinancialYear } from '@/contexts/FinancialYearContext';
 
 export interface MaterialPurchase {
   id: string;
@@ -50,8 +51,10 @@ export interface CreateMultipleMaterialPurchasesData {
 }
 
 export const useMaterialPurchases = (storeId?: string) => {
+  const { selectedYear } = useFinancialYear();
   return useQuery({
-    queryKey: ['material-purchases', storeId],
+    queryKey: ['material-purchases', storeId, selectedYear?.id],
+    enabled: !!selectedYear,
     queryFn: async () => {
       let query = supabase
         .from('material_purchases')
@@ -68,18 +71,24 @@ export const useMaterialPurchases = (storeId?: string) => {
           )
         `)
         .order('date', { ascending: false });
-      
+
       if (storeId) {
         query = query.eq('store_id', storeId);
       }
-      
+      if (selectedYear) {
+        query = query
+          .gte('date', selectedYear.start_date)
+          .lte('date', selectedYear.end_date);
+      }
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
       return data as MaterialPurchase[];
     },
   });
 };
+
 
 export const useCreateMaterialPurchase = () => {
   const queryClient = useQueryClient();

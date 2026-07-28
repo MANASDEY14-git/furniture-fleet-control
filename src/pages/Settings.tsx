@@ -14,6 +14,7 @@ import CategoryForm from '@/components/CategoryForm';
 import LaborCategoryForm from '@/components/LaborCategoryForm';
 import UserManagementCard from '@/components/admin/UserManagementCard';
 import BankAccountForm from '@/components/BankAccountForm';
+import FinancialYearsCard from '@/components/FinancialYearsCard';
 import { formatCurrency } from '@/utils/currencyUtils';
 
 export default function Settings() {
@@ -61,6 +62,10 @@ export default function Settings() {
 
       {/* User Management - Admin Only */}
       {isAdmin && <UserManagementCard />}
+
+      {/* Financial Years */}
+      <FinancialYearsCard isAdmin={isAdmin} />
+
 
       {/* Stores Management */}
       <Card className="futuristic-card">
