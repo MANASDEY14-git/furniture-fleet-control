@@ -81,7 +81,10 @@ export const useEnhancedDashboardMetrics = (
         };
       }
 
-      const { startDate, endDate } = getDateRange(dateFilter, customDateRange);
+      const { startDate, endDate } = getDateRange(dateFilter, customDateRange, {
+        start: selectedYear.start_date,
+        end: selectedYear.end_date,
+      });
       
       let effectiveStartDate = startDate;
       let effectiveEndDate = endDate;

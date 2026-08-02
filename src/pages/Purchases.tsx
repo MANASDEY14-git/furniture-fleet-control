@@ -29,7 +29,7 @@ export default function Purchases() {
   const { activeStoreId, accessibleStores } = useStoreContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState('all');
-  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('year');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date; } | null>(null);
   const [fabOpen, setFabOpen] = useState(false);
   const [singleItemOpen, setSingleItemOpen] = useState(false);
