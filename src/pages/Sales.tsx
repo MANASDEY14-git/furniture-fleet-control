@@ -180,7 +180,7 @@ export default function Sales() {
     updateOrderStatus.mutate({ id: orderId, delivery_status: newStatus });
   };
 
-  const handleRecordPayment = async () => {
+  const handleRecordPayment = async (details: PaymentMethodDetails) => {
     if (!recordingPayment || !paymentAmount) return;
     
     const description = paymentDescription.trim() || `Payment for order ${recordingPayment.order_number}`;
@@ -192,7 +192,9 @@ export default function Sales() {
       description: description,
       store_id: recordingPayment.store_id,
       order_description: recordingPayment.description,
+      ...details,
     });
+
     
     setRecordingPayment(null);
     setPaymentAmount('');
