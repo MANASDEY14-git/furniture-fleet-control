@@ -186,7 +186,7 @@ export default function Payments() {
     }
   };
 
-  const handleRecordOrderPayment = async () => {
+  const handleRecordOrderPayment = async (details: PaymentMethodDetails) => {
     if (!recordingPayment || !paymentAmount) return;
 
     const description = paymentDescription.trim() || `Payment for order ${recordingPayment.order_number}`;
@@ -198,7 +198,9 @@ export default function Payments() {
       description,
       store_id: recordingPayment.store_id,
       order_description: recordingPayment.order_number,
+      ...details,
     });
+
 
     setRecordingPayment(null);
     setPaymentAmount('');
