@@ -13,7 +13,7 @@ import SalesMetricsGrid from '@/components/sales/SalesMetricsGrid';
 import SalesFilters from '@/components/sales/SalesFilters';
 import SalesTable from '@/components/sales/SalesTable';
 import OrderDetailsDialog from '@/components/sales/OrderDetailsDialog';
-import PaymentRecordDialog from '@/components/sales/PaymentRecordDialog';
+import PaymentRecordDialog, { type PaymentMethodDetails } from '@/components/sales/PaymentRecordDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
