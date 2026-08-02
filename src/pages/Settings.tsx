@@ -875,7 +875,7 @@ function TelegramSettingsCard({ storeId, isAdmin }: { storeId?: string; isAdmin:
                   </Button>
                 </div>
 
-                <Separator className="my-2" />
+                <hr className="my-2 border-border/50" />
 
                 {/* Preference switches */}
                 <div className="space-y-3">
