@@ -30,6 +30,7 @@ import { useAllBankAccounts, useDeleteBankAccount } from '@/hooks/useBankAccount
 import { useLaborCategories, useDeleteLaborCategory } from '@/hooks/useLaborCategories';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { useStoreContext } from '@/contexts/StoreContext';
+import { useToast } from '@/hooks/use-toast';
 import {
   useAgentBriefings,
   useAgentSettings,
@@ -753,6 +754,7 @@ function AgentBriefingsList({ storeId }: { storeId?: string }) {
 // Sub-Component: TelegramSettingsCard
 // ────────────────────────────────────────────────────────
 function TelegramSettingsCard({ storeId, isAdmin }: { storeId?: string; isAdmin: boolean }) {
+  const { toast } = useToast();
   const {
     link,
     isLoadingLink,
@@ -793,7 +795,6 @@ function TelegramSettingsCard({ storeId, isAdmin }: { storeId?: string; isAdmin:
     return () => clearInterval(poller);
   }, [linkCode, expiryTime, refetchLink]);
 
-  const { toast } = useToast();
 
   if (!storeId) {
     return (
