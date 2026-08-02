@@ -1,8 +1,8 @@
-import { useAiInsights } from '@/hooks/useCommandCenter';
+import { useAiTableInsights } from '@/hooks/useCommandCenter';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, AlertCircle, TrendingUp, HelpCircle, Activity, Sparkles, RefreshCw, Play } from 'lucide-react';
+import { Brain, AlertCircle, TrendingUp, HelpCircle, Activity, Sparkles, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface OperationalInsightsDashboardProps {
@@ -10,23 +10,13 @@ interface OperationalInsightsDashboardProps {
 }
 
 export default function OperationalInsightsDashboard({ storeId }: OperationalInsightsDashboardProps) {
-  const { data: insights = [], isLoading, refreshInsights, isRefreshing } = useAiInsights(storeId);
+  const { data: insights = [], isLoading, refreshInsights, isRefreshing } = useAiTableInsights(storeId);
   const { toast } = useToast();
 
   const handleRefresh = async () => {
     try {
       await refreshInsights();
-      toast({
-        title: 'Insights Refreshed',
-        description: 'Successfully computed latest operational AI insights.'
-      });
-    } catch (err: any) {
-      toast({
-        title: 'Refresh Failed',
-        description: err.message,
-        variant: 'destructive'
-      });
-    }
+    } catch (err) {}
   };
 
   const getInsightIcon = (type: string) => {
@@ -48,6 +38,19 @@ export default function OperationalInsightsDashboard({ storeId }: OperationalIns
         return 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20';
       default:
         return 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'critical':
+        return 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+      case 'high':
+        return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
+      case 'medium':
+        return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+      default:
+        return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
     }
   };
 
@@ -88,36 +91,39 @@ export default function OperationalInsightsDashboard({ storeId }: OperationalIns
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    {getInsightIcon(insight.type)}
-                    <Badge variant="outline" className={`capitalize text-[9px] font-bold ${getInsightTypeColor(insight.type)}`}>
-                      {insight.type}
+                    {getInsightIcon(insight.category)}
+                    <Badge variant="outline" className={`capitalize text-[9px] font-bold ${getInsightTypeColor(insight.category)}`}>
+                      {insight.category}
+                    </Badge>
+                    <Badge variant="outline" className={`capitalize text-[9px] font-bold ${getPriorityColor(insight.priority)}`}>
+                      {insight.priority}
                     </Badge>
                   </div>
-                  {insight.relevance_score && (
+                  {insight.confidence !== undefined && (
                     <Badge className="neon-border bg-purple-500/25 text-purple-300 border-purple-500/30 font-mono text-[10px]">
-                      Relevance: {Math.round(insight.relevance_score * 100)}%
+                      Confidence: {Math.round(insight.confidence * 100)}%
                     </Badge>
                   )}
                 </div>
-                <CardTitle className="text-sm font-bold text-blue-100 mt-2">{insight.title}</CardTitle>
+                <CardTitle className="text-sm font-bold text-blue-100 mt-2 capitalize">{insight.category} Analysis</CardTitle>
                 <CardDescription className="text-xs text-blue-200 leading-relaxed pt-1">
-                  {insight.content}
+                  {insight.summary}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0 space-y-3">
-                {insight.metric_value !== null && insight.metric_value !== undefined && (
+                {insight.impact_score !== null && insight.impact_score !== undefined && (
                   <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5 text-cyan-400" />
-                    Metric Value: <span className="font-mono text-foreground font-semibold">{insight.metric_value}</span>
+                    Impact Score: <span className="font-mono text-foreground font-semibold">{insight.impact_score}/10</span>
                   </div>
                 )}
                 
-                {insight.recommended_action && (
+                {insight.recommendation && (
                   <div className="p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/10 text-xs">
                     <span className="font-bold text-cyan-400 block mb-1 flex items-center gap-1">
                       <Sparkles className="w-3.5 h-3.5" /> Recommended Action:
                     </span>
-                    <p className="text-blue-100 leading-relaxed font-medium">{insight.recommended_action}</p>
+                    <p className="text-blue-100 leading-relaxed font-medium">{insight.recommendation}</p>
                   </div>
                 )}
               </CardContent>
