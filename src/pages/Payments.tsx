@@ -17,7 +17,7 @@ import SupplierSelector from '@/components/SupplierSelector';
 import DateFilterSelector from '@/components/DateFilterSelector';
 import ExportButton from '@/components/ExportButton';
 import PaymentEntryForm from '@/components/PaymentEntryForm';
-import PaymentRecordDialog from '@/components/sales/PaymentRecordDialog';
+import PaymentRecordDialog, { type PaymentMethodDetails } from '@/components/sales/PaymentRecordDialog';
 import { PaginationControls } from '@/components/ui/pagination';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { formatCurrency } from '@/utils/currencyUtils';
