@@ -32,6 +32,13 @@ import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { useStoreContext } from '@/contexts/StoreContext';
 import { useToast } from '@/hooks/use-toast';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   useAgentBriefings,
   useAgentSettings,
   useTelegramLink,
