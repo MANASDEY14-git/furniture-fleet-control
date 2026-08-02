@@ -10,6 +10,9 @@ import TopSellingChart from '@/components/TopSellingChart';
 import DateFilterSelector from '@/components/DateFilterSelector';
 import ExportButton from '@/components/ExportButton';
 import AuditTrailViewer from '@/components/AuditTrailViewer';
+import SecurityAuditLogViewer from '@/components/SecurityAuditLogViewer';
+import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEnhancedDashboardMetrics } from '@/hooks/useEnhancedDashboardMetrics';
 import { usePurchases } from '@/hooks/usePurchases';
 import { usePayments } from '@/hooks/usePayments';
@@ -20,6 +23,9 @@ import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 export default function Reports() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  
+  const { data: roleData } = useCurrentUserRole();
+  const isAdmin = roleData?.isAdmin;
   
   const { data: metrics, isLoading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useEnhancedDashboardMetrics(dateFilter, customDateRange);
   const { data: salesOrders = [] } = useQuery({
@@ -257,7 +263,22 @@ export default function Reports() {
       </Card>
 
       {/* Audit Trail */}
-      <AuditTrailViewer />
+      {isAdmin ? (
+        <Tabs defaultValue="audit" className="w-full space-y-4">
+          <TabsList className="bg-slate-800/50 p-1 border rounded-lg max-w-md">
+            <TabsTrigger value="audit" className="text-blue-100 data-[state=active]:bg-cyan-500 data-[state=active]:text-slate-900">Data Audit Trail</TabsTrigger>
+            <TabsTrigger value="security" className="text-blue-100 data-[state=active]:bg-cyan-500 data-[state=active]:text-slate-900">Security Audit Log</TabsTrigger>
+          </TabsList>
+          <TabsContent value="audit" className="mt-0">
+            <AuditTrailViewer />
+          </TabsContent>
+          <TabsContent value="security" className="mt-0">
+            <SecurityAuditLogViewer />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <AuditTrailViewer />
+      )}
     </div>
   );
 }

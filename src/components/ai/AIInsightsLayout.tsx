@@ -7,6 +7,7 @@ import { Brain, RefreshCw, TrendingUp, Package, Target, Lightbulb } from 'lucide
 import SalesForecastDashboard from './SalesForecastDashboard';
 import RestockingAdvisor from './RestockingAdvisor';
 import SalesStrategyDashboard from './SalesStrategyDashboard';
+import OperationalInsightsDashboard from './OperationalInsightsDashboard';
 import { useRefreshAIInsights } from '@/hooks/useAIInsights';
 import { useStores } from '@/hooks/useStores';
 
@@ -87,7 +88,7 @@ export default function AIInsightsLayout() {
         {/* AI Insights Tabs */}
         {selectedStore && (
           <Tabs defaultValue="forecast" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 neon-border bg-slate-800/50">
+            <TabsList className="grid w-full grid-cols-4 neon-border bg-slate-800/50">
               <TabsTrigger value="forecast" className="flex items-center gap-2 text-blue-100 data-[state=active]:bg-cyan-500 data-[state=active]:text-slate-900">
                 <TrendingUp className="w-4 h-4" />
                 Sales Forecast
@@ -99,6 +100,10 @@ export default function AIInsightsLayout() {
               <TabsTrigger value="strategy" className="flex items-center gap-2 text-blue-100 data-[state=active]:bg-cyan-500 data-[state=active]:text-slate-900">
                 <Target className="w-4 h-4" />
                 Sales Strategy
+              </TabsTrigger>
+              <TabsTrigger value="operational" className="flex items-center gap-2 text-blue-100 data-[state=active]:bg-cyan-500 data-[state=active]:text-slate-900">
+                <Brain className="w-4 h-4" />
+                Operational Insights
               </TabsTrigger>
             </TabsList>
 
@@ -112,6 +117,10 @@ export default function AIInsightsLayout() {
 
             <TabsContent value="strategy" className="space-y-6">
               <SalesStrategyDashboard storeId={selectedStore} />
+            </TabsContent>
+
+            <TabsContent value="operational" className="space-y-6">
+              <OperationalInsightsDashboard storeId={selectedStore} />
             </TabsContent>
           </Tabs>
         )}

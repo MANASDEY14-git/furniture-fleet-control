@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SupplierForm from '@/components/SupplierForm';
+import { SupplierStoreAccessDialog } from './SupplierStoreAccessDialog';
 
 interface SupplierHeaderProps {
   isMobile: boolean;
@@ -9,8 +10,9 @@ interface SupplierHeaderProps {
 export function SupplierHeader({ isMobile }: SupplierHeaderProps) {
   if (isMobile) {
     return (
-      <div className="py-1.5">
+      <div className="py-1.5 flex justify-between items-center">
         <h1 className="text-base font-semibold text-foreground">Suppliers</h1>
+        <SupplierStoreAccessDialog />
       </div>
     );
   }
@@ -18,14 +20,17 @@ export function SupplierHeader({ isMobile }: SupplierHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-4">
       <h1 className="text-2xl font-bold text-foreground">Suppliers</h1>
-      <SupplierForm
-        trigger={
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Supplier
-          </Button>
-        }
-      />
+      <div className="flex items-center gap-2">
+        <SupplierStoreAccessDialog />
+        <SupplierForm
+          trigger={
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Supplier
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 }

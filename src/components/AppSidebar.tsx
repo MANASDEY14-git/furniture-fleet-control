@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, DollarSign, FileText,
   Settings, Calendar, Users, BookOpen, LogOut, Building2,
   TrendingUp, ChevronDown, ChevronRight, Layers, Activity, Tag,
-  CreditCard, Store, Check, Sparkles
+  CreditCard, Store, Check, Sparkles, ShieldAlert
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStoreContext } from '@/contexts/StoreContext';
+import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // ─────────────────────────────────────────────
@@ -32,6 +33,7 @@ const navigationGroups = [
     label: 'Overview',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Command Center', href: '/command-center', icon: ShieldAlert, adminOnly: true },
     ],
   },
   {
@@ -88,6 +90,9 @@ export function AppSidebar() {
     canViewAllStores,
     setActiveStore,
   } = useStoreContext();
+
+  const { data: roleData } = useCurrentUserRole();
+  const isAdminOrManager = roleData?.isAdmin || roleData?.isManager;
 
   const handleSignOut = async () => {
     await signOut();
@@ -195,6 +200,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map(item => {
+                  if ('adminOnly' in item && item.adminOnly && !isAdminOrManager) return null;
                   const isActive = location.pathname === item.href;
                   return (
                     <SidebarMenuItem key={item.name}>
@@ -276,6 +282,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map(item => {
+                  if ('adminOnly' in item && item.adminOnly && !isAdminOrManager) return null;
                   const isActive = location.pathname === item.href;
                   return (
                     <SidebarMenuItem key={item.name}>

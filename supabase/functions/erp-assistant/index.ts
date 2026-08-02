@@ -238,10 +238,30 @@ Deno.serve(async (req) => {
       metadata: contextData ? { data_queried: true } : {},
     });
 
+    const lowerMessage = message.toLowerCase();
+    const agentsConsulted: string[] = [];
+    if (lowerMessage.match(/sales|due|outstanding|balance|payment|paid|unpaid|receivable/)) {
+      agentsConsulted.push("agent-sales", "agent-finance");
+    }
+    if (lowerMessage.match(/stock|inventory|item|product|low stock|out of stock/)) {
+      agentsConsulted.push("agent-inventory");
+    }
+    if (lowerMessage.match(/supplier|purchase|vendor|payable/)) {
+      agentsConsulted.push("agent-purchases");
+    }
+    if (lowerMessage.match(/material|raw material|bom/)) {
+      if (!agentsConsulted.includes("agent-purchases")) agentsConsulted.push("agent-purchases");
+      if (!agentsConsulted.includes("agent-inventory")) agentsConsulted.push("agent-inventory");
+    }
+    if (agentsConsulted.length === 0) {
+      agentsConsulted.push("agent-sales");
+    }
+
     return new Response(
       JSON.stringify({
         response: assistantContent,
         conversation_id: convId,
+        agents_consulted: agentsConsulted,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

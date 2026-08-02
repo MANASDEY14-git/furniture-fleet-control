@@ -8,6 +8,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
+  agents_consulted?: string[];
 }
 
 export const useAssistantChat = (storeId?: string) => {
@@ -80,6 +81,7 @@ export const useAssistantChat = (storeId?: string) => {
         role: 'assistant',
         content: data.response,
         created_at: new Date().toISOString(),
+        agents_consulted: data.agents_consulted || [],
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err: any) {

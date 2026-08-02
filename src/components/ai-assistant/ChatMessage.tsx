@@ -30,6 +30,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
         ) : (
           <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">
             <ReactMarkdown>{message.content}</ReactMarkdown>
+            {message.agents_consulted && message.agents_consulted.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2 pt-1.5 border-t border-border/20 text-[9px] text-muted-foreground font-sans">
+                <span className="font-semibold select-none">Consulted:</span>
+                {message.agents_consulted.map((agent) => (
+                  <span key={agent} className="bg-background px-1.5 py-0.5 rounded border border-border/55 capitalize text-[8px] font-bold text-foreground/80">
+                    {agent.replace('agent-', '')}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
