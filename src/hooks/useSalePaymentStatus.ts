@@ -31,6 +31,11 @@ export const useRecordPayment = () => {
       description?: string;
       store_id: string;
       order_description?: string;
+      payment_method?: 'cash' | 'upi' | 'bank_transfer' | 'debit_card' | 'credit_card' | 'cheque' | 'online_wallet' | 'other';
+      bank_account_id?: string;
+      transaction_reference?: string;
+      cheque_number?: string;
+      cheque_date?: string;
     }) => {
       // Get sales order description if not provided and use it in payment description
       let finalDescription = paymentData.description || `Payment for sale`;
@@ -38,6 +43,8 @@ export const useRecordPayment = () => {
       if (!paymentData.description && paymentData.order_description) {
         finalDescription = `${paymentData.order_description} (Payment)`;
       }
+
+      const method = paymentData.payment_method || 'cash';
 
       const { data, error } = await supabase
         .from('payments')
@@ -49,7 +56,12 @@ export const useRecordPayment = () => {
           description: finalDescription,
           store_id: paymentData.store_id,
           reference_type: 'sale',
-          reference_id: paymentData.sale_id
+          reference_id: paymentData.sale_id,
+          payment_method: method,
+          bank_account_id: method !== 'cash' ? paymentData.bank_account_id ?? null : null,
+          transaction_reference: paymentData.transaction_reference ?? null,
+          cheque_number: method === 'cheque' ? paymentData.cheque_number ?? null : null,
+          cheque_date: method === 'cheque' ? paymentData.cheque_date ?? null : null,
         }])
         .select()
         .single();
@@ -65,6 +77,9 @@ export const useRecordPayment = () => {
       queryClient.invalidateQueries({ queryKey: ['real-dashboard-metrics'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-ledger'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+
       toast({
         title: "Success",
         description: "Payment recorded successfully",

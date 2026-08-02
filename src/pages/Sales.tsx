@@ -13,7 +13,7 @@ import SalesMetricsGrid from '@/components/sales/SalesMetricsGrid';
 import SalesFilters from '@/components/sales/SalesFilters';
 import SalesTable from '@/components/sales/SalesTable';
 import OrderDetailsDialog from '@/components/sales/OrderDetailsDialog';
-import PaymentRecordDialog from '@/components/sales/PaymentRecordDialog';
+import PaymentRecordDialog, { type PaymentMethodDetails } from '@/components/sales/PaymentRecordDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
@@ -180,7 +180,7 @@ export default function Sales() {
     updateOrderStatus.mutate({ id: orderId, delivery_status: newStatus });
   };
 
-  const handleRecordPayment = async () => {
+  const handleRecordPayment = async (details: PaymentMethodDetails) => {
     if (!recordingPayment || !paymentAmount) return;
     
     const description = paymentDescription.trim() || `Payment for order ${recordingPayment.order_number}`;
@@ -192,7 +192,9 @@ export default function Sales() {
       description: description,
       store_id: recordingPayment.store_id,
       order_description: recordingPayment.description,
+      ...details,
     });
+
     
     setRecordingPayment(null);
     setPaymentAmount('');

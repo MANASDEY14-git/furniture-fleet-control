@@ -17,7 +17,7 @@ import SupplierSelector from '@/components/SupplierSelector';
 import DateFilterSelector from '@/components/DateFilterSelector';
 import ExportButton from '@/components/ExportButton';
 import PaymentEntryForm from '@/components/PaymentEntryForm';
-import PaymentRecordDialog from '@/components/sales/PaymentRecordDialog';
+import PaymentRecordDialog, { type PaymentMethodDetails } from '@/components/sales/PaymentRecordDialog';
 import { PaginationControls } from '@/components/ui/pagination';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { formatCurrency } from '@/utils/currencyUtils';
@@ -186,7 +186,7 @@ export default function Payments() {
     }
   };
 
-  const handleRecordOrderPayment = async () => {
+  const handleRecordOrderPayment = async (details: PaymentMethodDetails) => {
     if (!recordingPayment || !paymentAmount) return;
 
     const description = paymentDescription.trim() || `Payment for order ${recordingPayment.order_number}`;
@@ -198,7 +198,9 @@ export default function Payments() {
       description,
       store_id: recordingPayment.store_id,
       order_description: recordingPayment.order_number,
+      ...details,
     });
+
 
     setRecordingPayment(null);
     setPaymentAmount('');
