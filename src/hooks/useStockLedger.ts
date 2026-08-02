@@ -27,7 +27,7 @@ export interface StockLedgerResult {
 interface UseStockLedgerParams {
   itemId?: string;
   storeId?: string;
-  dateFilter: 'today' | 'week' | 'month' | 'custom';
+  dateFilter: 'today' | 'week' | 'month' | 'year' | 'custom';
   customDateRange?: { from: Date; to: Date } | null;
 }
 
@@ -72,6 +72,10 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
             break;
           case 'month':
             startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            break;
+          case 'year':
+            startDate = fyStartDate;
+            endDate = fyEndDate;
             break;
           case 'custom':
             if (customDateRange) {

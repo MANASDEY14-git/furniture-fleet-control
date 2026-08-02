@@ -23,7 +23,7 @@ import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 export default function StockLedger() {
   const [selectedItem, setSelectedItem] = useState<string>('all');
   const [selectedStore, setSelectedStore] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'custom'>('month');
+  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'year' | 'custom'>('year');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [viewingTransaction, setViewingTransaction] = useState<StockLedgerEntry | null>(null);
   

@@ -3,14 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { EnhancedDashboardMetrics, TopSellingItem, LowStockItem } from '@/types';
 
-export type DateFilter = 'today' | 'week' | 'month' | 'custom';
+export type DateFilter = 'today' | 'week' | 'month' | 'year' | 'custom';
 
 interface DateRange {
   from: Date;
   to: Date;
 }
 
-const getDateRange = (filter: DateFilter, customRange?: DateRange): { startDate: string; endDate: string } => {
+const getDateRange = (
+  filter: DateFilter,
+  customRange?: DateRange,
+  yearRange?: { start: string; end: string }
+): { startDate: string; endDate: string } => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   
@@ -30,6 +34,9 @@ const getDateRange = (filter: DateFilter, customRange?: DateRange): { startDate:
         startDate: monthStart.toISOString().split('T')[0], 
         endDate: todayStr 
       };
+    case 'year':
+      if (!yearRange) return { startDate: todayStr, endDate: todayStr };
+      return { startDate: yearRange.start, endDate: yearRange.end };
     case 'custom':
       if (!customRange) return { startDate: todayStr, endDate: todayStr };
       return { 
@@ -74,7 +81,10 @@ export const useEnhancedDashboardMetrics = (
         };
       }
 
-      const { startDate, endDate } = getDateRange(dateFilter, customDateRange);
+      const { startDate, endDate } = getDateRange(dateFilter, customDateRange, {
+        start: selectedYear.start_date,
+        end: selectedYear.end_date,
+      });
       
       let effectiveStartDate = startDate;
       let effectiveEndDate = endDate;

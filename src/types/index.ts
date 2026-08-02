@@ -221,4 +221,4 @@ export interface SalesTrendData {
   profit: number;
 }
 
-export type DateFilter = 'today' | 'week' | 'month' | 'custom';
+export type DateFilter = 'today' | 'week' | 'month' | 'year' | 'custom';

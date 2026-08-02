@@ -28,7 +28,7 @@ export default function Sales() {
   const [recordingPayment, setRecordingPayment] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDescription, setPaymentDescription] = useState('');
-  const [dateFilter, setDateFilter] = useState<DateFilter>('month');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('year');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
   const [documentType, setDocumentType] = useState<'order' | 'quote'>('order');
 
@@ -128,7 +128,7 @@ export default function Sales() {
     });
 
     // Apply date filter
-    if (dateFilter !== 'month' || customDateRange) {
+    if (dateFilter !== 'year' || customDateRange) {
       const now = new Date();
       let startDate: Date;
       let endDate = now;
