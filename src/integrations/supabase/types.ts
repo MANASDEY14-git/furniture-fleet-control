@@ -2824,7 +2824,11 @@ export type Database = {
       }
       cron_check_briefings: { Args: never; Returns: undefined }
       customer_summary: {
-        Args: { store_uuid?: string }
+        Args: {
+          p_end_date?: string
+          p_start_date?: string
+          store_uuid?: string
+        }
         Returns: {
           balance_due: number
           customer_id: string
@@ -2904,10 +2908,10 @@ export type Database = {
               p_age_min_days?: number
               p_brand?: string
               p_category_id?: string
-              p_date_from?: string
-              p_date_to?: string
+              p_end_date?: string
               p_price_max?: number
               p_price_min?: number
+              p_start_date?: string
               p_store_id?: string
               p_supplier_id?: string
               p_warehouse?: string
@@ -3014,6 +3018,7 @@ export type Database = {
           id: string
           order_number: string
           sales_order_items: Json
+          salesperson_name: string
           status: string
           store_id: string
           supplier_id: string
@@ -3022,7 +3027,12 @@ export type Database = {
         }[]
       }
       get_sales_orders_for_user: {
-        Args: { _document_type?: string; _store_id?: string }
+        Args: {
+          _document_type?: string
+          _store_id?: string
+          p_end_date?: string
+          p_start_date?: string
+        }
         Returns: {
           advance_paid: number
           balance_due: number
@@ -3048,7 +3058,12 @@ export type Database = {
         }[]
       }
       get_sales_orders_secure: {
-        Args: { _store_id?: string; _user_id?: string }
+        Args: {
+          _store_id?: string
+          _user_id?: string
+          p_end_date?: string
+          p_start_date?: string
+        }
         Returns: {
           advance_paid: number
           balance_due: number
