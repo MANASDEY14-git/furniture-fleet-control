@@ -875,7 +875,7 @@ function TelegramSettingsCard({ storeId, isAdmin }: { storeId?: string; isAdmin:
                     variant="outline"
                     size="sm"
                     className="h-8 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 border-rose-500/20"
-                    onClick={unlinkTelegram}
+                    onClick={() => unlinkTelegram()}
                     disabled={isUnlinking}
                   >
                     Unlink Bot
