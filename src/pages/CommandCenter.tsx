@@ -194,11 +194,12 @@ export default function CommandCenter() {
     try {
       const { data, error } = await supabase.rpc('scan_operational_risks');
       if (error) throw error;
-      setScanResult(data);
+      const result = (data ?? {}) as any;
+      setScanResult(result);
       setLastScanTime(new Date().toLocaleTimeString());
       toast({
         title: 'Scan Completed',
-        description: `Alerts created: ${data.created || 0}, reopened: ${data.reopened || 0}, resolved: ${data.auto_resolved || 0}`,
+        description: `Alerts created: ${result.created || 0}, reopened: ${result.reopened || 0}, resolved: ${result.auto_resolved || 0}`,
       });
     } catch (err: any) {
       toast({
