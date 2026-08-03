@@ -831,7 +831,7 @@ function TelegramSettingsCard({ storeId, isAdmin }: { storeId?: string; isAdmin:
     } catch (err) {}
   };
 
-  const handleTogglePref = async (key: string, val: boolean) => {
+  const handleTogglePref = async (key: string, val: boolean | number) => {
     if (!link) return;
     const newPrefs = {
       ...link.notification_preferences,
