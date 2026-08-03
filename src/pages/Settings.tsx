@@ -51,6 +51,7 @@ import UserManagementCard from '@/components/admin/UserManagementCard';
 import BankAccountForm from '@/components/BankAccountForm';
 import FinancialYearsCard from '@/components/FinancialYearsCard';
 import { formatCurrency } from '@/utils/currencyUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Settings() {
   const { data: stores = [], isLoading: storesLoading } = useStores();
@@ -663,10 +664,28 @@ function AgentSettingsCard({ storeId, isEditable }: { storeId?: string; isEditab
 function AgentBriefingsList({ storeId }: { storeId?: string }) {
   const { data: briefings = [], isLoading, refetch } = useAgentBriefings(storeId);
   const [expandedBriefingId, setExpandedBriefingId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
   if (!storeId) {
     return null;
   }
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const { error } = await supabase.functions.invoke('agent-orchestrator', {
+        body: { store_id: storeId },
+      });
+      if (error) throw error;
+      toast({ title: 'Briefing Generated', description: 'Department specialists have reported in.' });
+      await refetch();
+    } catch (err: any) {
+      toast({ title: 'Briefing Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <Card className="shadow-sm">
@@ -675,9 +694,15 @@ function AgentBriefingsList({ storeId }: { storeId?: string }) {
           <CardTitle className="text-base">Daily Briefing Logs</CardTitle>
           <CardDescription>Review compiled diagnostic outputs from department specialists.</CardDescription>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => refetch()} title="Refresh briefs">
-          <RefreshCw className="w-4 h-4 text-muted-foreground" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button size="sm" className="h-8 text-xs font-semibold" onClick={handleGenerate} disabled={isGenerating}>
+            {isGenerating ? <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+            Generate Now
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => refetch()} title="Refresh briefs">
+            <RefreshCw className="w-4 h-4 text-muted-foreground" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         {isLoading ? (
@@ -831,7 +856,7 @@ function TelegramSettingsCard({ storeId, isAdmin }: { storeId?: string; isAdmin:
     } catch (err) {}
   };
 
-  const handleTogglePref = async (key: string, val: boolean) => {
+  const handleTogglePref = async (key: string, val: boolean | number) => {
     if (!link) return;
     const newPrefs = {
       ...link.notification_preferences,
@@ -875,7 +900,7 @@ function TelegramSettingsCard({ storeId, isAdmin }: { storeId?: string; isAdmin:
                     variant="outline"
                     size="sm"
                     className="h-8 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 border-rose-500/20"
-                    onClick={unlinkTelegram}
+                    onClick={() => unlinkTelegram()}
                     disabled={isUnlinking}
                   >
                     Unlink Bot

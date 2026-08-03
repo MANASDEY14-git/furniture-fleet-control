@@ -69,6 +69,24 @@ verify_jwt = false
 [functions.erp-assistant]
 verify_jwt = false
 
+[functions.agent-orchestrator]
+verify_jwt = false
+
+[functions.agent-sales]
+verify_jwt = false
+
+[functions.agent-inventory]
+verify_jwt = false
+
+[functions.agent-purchases]
+verify_jwt = false
+
+[functions.agent-finance]
+verify_jwt = false
+
+[functions.inventory-snapshot]
+verify_jwt = false
+
 [edge-runtime]
 enabled = true
 policy = "oneshot"

@@ -1,10 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { authorizeAgentRequest, corsHeaders, denied } from "../_shared/agentAuth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,6 +11,17 @@ Deno.serve(async (req) => {
     // Determine store_id from body or default to a store
     const body = await req.json().catch(() => ({}));
     const store_id = body.store_id;
+
+    const auth = await authorizeAgentRequest(req, store_id);
+    if (!auth.ok) return denied(auth);
+
+    // Only internal (cron / service-role) callers may brief every store at once.
+    if (!auth.internal && !store_id) {
+      return new Response(JSON.stringify({ error: "store_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -124,7 +131,7 @@ Maintain professional tone and formatting (use ₹ symbol for currency).`;
         store_id: id,
         generated_for_date: new Date().toISOString().split("T")[0],
         summary: summaryText,
-        source: "automated",
+        source: auth.internal ? "automated" : "manual",
         agent_outputs: {
           sales: salesOut,
           inventory: inventoryOut,
