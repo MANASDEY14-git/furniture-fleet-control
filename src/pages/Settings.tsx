@@ -663,10 +663,28 @@ function AgentSettingsCard({ storeId, isEditable }: { storeId?: string; isEditab
 function AgentBriefingsList({ storeId }: { storeId?: string }) {
   const { data: briefings = [], isLoading, refetch } = useAgentBriefings(storeId);
   const [expandedBriefingId, setExpandedBriefingId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
   if (!storeId) {
     return null;
   }
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const { error } = await supabase.functions.invoke('agent-orchestrator', {
+        body: { store_id: storeId },
+      });
+      if (error) throw error;
+      toast({ title: 'Briefing Generated', description: 'Department specialists have reported in.' });
+      await refetch();
+    } catch (err: any) {
+      toast({ title: 'Briefing Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <Card className="shadow-sm">
@@ -675,9 +693,15 @@ function AgentBriefingsList({ storeId }: { storeId?: string }) {
           <CardTitle className="text-base">Daily Briefing Logs</CardTitle>
           <CardDescription>Review compiled diagnostic outputs from department specialists.</CardDescription>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => refetch()} title="Refresh briefs">
-          <RefreshCw className="w-4 h-4 text-muted-foreground" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button size="sm" className="h-8 text-xs font-semibold" onClick={handleGenerate} disabled={isGenerating}>
+            {isGenerating ? <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 mr-1.5" />}
+            Generate Now
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => refetch()} title="Refresh briefs">
+            <RefreshCw className="w-4 h-4 text-muted-foreground" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         {isLoading ? (
