@@ -411,7 +411,7 @@ export const useTelegramLink = (storeId?: string) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as TelegramLink;
+      return data as unknown as TelegramLink;
     },
   });
 
