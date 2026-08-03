@@ -51,6 +51,7 @@ import UserManagementCard from '@/components/admin/UserManagementCard';
 import BankAccountForm from '@/components/BankAccountForm';
 import FinancialYearsCard from '@/components/FinancialYearsCard';
 import { formatCurrency } from '@/utils/currencyUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Settings() {
   const { data: stores = [], isLoading: storesLoading } = useStores();
