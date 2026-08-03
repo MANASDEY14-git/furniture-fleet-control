@@ -1,10 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { authorizeAgentRequest, corsHeaders, denied } from "../_shared/agentAuth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,13 +8,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { store_id } = await req.json();
+    const { store_id } = await req.json().catch(() => ({ store_id: null }));
     if (!store_id) {
       return new Response(JSON.stringify({ error: "store_id is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const auth = await authorizeAgentRequest(req, store_id);
+    if (!auth.ok) return denied(auth);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
