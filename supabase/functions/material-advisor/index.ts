@@ -101,17 +101,44 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Resolve the store that owns this BOM component and verify caller access
+    const { data: componentRow, error: componentErr } = await supabase
+      .from('bom_components')
+      .select('id, bom:bom_id(id, item:item_id(id, store_id))')
+      .eq('id', componentId)
+      .maybeSingle();
+
+    if (componentErr) {
+      console.error('Failed to resolve BOM component store:', componentErr);
+      return new Response(JSON.stringify({ error: 'Unable to verify component access' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const storeId = (componentRow as any)?.bom?.item?.store_id ?? null;
+    if (!componentRow || !storeId) {
+      return new Response(JSON.stringify({ error: 'Component not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const { data: hasAccess, error: accessErr } = await authClient.rpc('user_has_store_access', { _store_id: storeId });
+    if (accessErr) {
+      console.error('user_has_store_access failed:', accessErr);
+      return new Response(JSON.stringify({ error: 'Unable to verify store access' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (!hasAccess) {
+      return new Response(JSON.stringify({ error: 'Forbidden: no access to this store' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Get BOM component options
     const { data: componentOptions } = await supabase
       .from('bom_component_options')
       .select('*, materials(*)')
       .eq('bom_component_id', componentId);
 
-    // Get historical customization data
+    // Get historical customization data (scoped to the caller's store)
     const { data: historicalCustomizations } = await supabase
       .from('sales_customizations')
-      .select('selected_material_id, selected_option_name, sales_orders!inner(customer_name)')
-      .eq('bom_component_id', componentId);
+      .select('selected_material_id, selected_option_name, sales_orders!inner(customer_name, store_id)')
+      .eq('bom_component_id', componentId)
+      .eq('sales_orders.store_id', storeId);
 
     // Generate AI-powered recommendations
     const recommendations = await generateMaterialRecommendations(
