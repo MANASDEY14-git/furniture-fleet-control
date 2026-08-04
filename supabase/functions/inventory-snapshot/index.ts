@@ -9,8 +9,15 @@ serve(async (req) => {
   }
 
   try {
+    // Internal-only job: requires the service-role bearer token (cron / orchestrator).
     const auth = await authorizeAgentRequest(req);
     if (!auth.ok) return denied(auth);
+    if (!auth.internal) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: internal job invocation only" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
