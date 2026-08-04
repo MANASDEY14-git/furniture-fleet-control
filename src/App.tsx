@@ -33,6 +33,7 @@ import Customers from '@/pages/Customers';
 import CustomerProfile from '@/pages/CustomerProfile';
 import NotFound from '@/pages/NotFound';
 import CommandCenter from '@/pages/CommandCenter';
+import Help from '@/pages/Help';
 import { AssistantBubble } from '@/components/ai-assistant/AssistantBubble';
 import './App.css';
 

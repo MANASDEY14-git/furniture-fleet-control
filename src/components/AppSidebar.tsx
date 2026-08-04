@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, DollarSign, FileText,
   Settings, Calendar, Users, BookOpen, LogOut, Building2,
   TrendingUp, ChevronDown, ChevronRight, Layers, Activity, Tag,
-  CreditCard, Store, Check, Sparkles, ShieldAlert
+  CreditCard, Store, Check, Sparkles, ShieldAlert, LifeBuoy
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -60,6 +60,7 @@ const navigationGroups = [
       { name: 'Bank Book', href: '/bank-book', icon: Building2 },
       { name: 'Reports',   href: '/reports',   icon: FileText  },
       { name: 'Settings',  href: '/settings',  icon: Settings  },
+      { name: 'Help & Guide', href: '/help',   icon: LifeBuoy  },
     ],
   },
 ];
