@@ -2901,100 +2901,53 @@ export type Database = {
         }[]
       }
       get_edge_internal_secret: { Args: never; Returns: string }
-      get_inventory_intelligence:
-        | {
-            Args: {
-              p_age_max_days?: number
-              p_age_min_days?: number
-              p_brand?: string
-              p_category_id?: string
-              p_end_date?: string
-              p_price_max?: number
-              p_price_min?: number
-              p_start_date?: string
-              p_store_id?: string
-              p_supplier_id?: string
-              p_warehouse?: string
-            }
-            Returns: {
-              brand: string
-              cash_locked: number
-              category_id: string
-              category_name: string
-              cost_price: number
-              days_since_last_sale: number
-              days_to_sell: number
-              gross_profit_period: number
-              hero_score: number
-              image_url: string
-              inventory_cost: number
-              inventory_value: number
-              item_id: string
-              item_name: string
-              last_sold_date: string
-              monthly_velocity: number
-              quantity_available: number
-              recommended_action: string
-              reorder_status: string
-              revenue_period: number
-              selling_price: number
-              stock_age_bucket: string
-              stock_age_days: number
-              stock_receive_date: string
-              store_id: string
-              store_name: string
-              supplier_id: string
-              supplier_name: string
-              units_sold_period: number
-              warehouse: string
-            }[]
-          }
-        | {
-            Args: {
-              age_bucket_filter?: string
-              brand_filter?: string
-              category_id_filter?: string
-              date_from?: string
-              date_to?: string
-              price_max?: number
-              price_min?: number
-              store_id_filter?: string
-              supplier_id_filter?: string
-              warehouse_filter?: string
-            }
-            Returns: {
-              avg_days_between_sales: number
-              brand: string
-              cash_locked: number
-              category_id: string
-              category_name: string
-              cost_price: number
-              days_since_last_sale: number
-              days_to_sell: number
-              gross_profit_period: number
-              hero_score: number
-              id: string
-              image_url: string
-              inventory_cost: number
-              inventory_value: number
-              last_sold_date: string
-              monthly_velocity: number
-              name: string
-              quantity_available: number
-              recommended_action: string
-              reorder_status: string
-              revenue_period: number
-              selling_price: number
-              stock_age_bucket: string
-              stock_age_days: number
-              stock_coverage_days: number
-              stock_receive_date: string
-              supplier_id: string
-              supplier_name: string
-              units_sold_period: number
-              warehouse: string
-            }[]
-          }
+      get_inventory_intelligence: {
+        Args: {
+          p_age_max_days?: number
+          p_age_min_days?: number
+          p_brand?: string
+          p_category_id?: string
+          p_end_date?: string
+          p_price_max?: number
+          p_price_min?: number
+          p_start_date?: string
+          p_store_id?: string
+          p_supplier_id?: string
+          p_warehouse?: string
+        }
+        Returns: {
+          brand: string
+          cash_locked: number
+          category_id: string
+          category_name: string
+          cost_price: number
+          days_since_last_sale: number
+          days_to_sell: number
+          gross_profit_period: number
+          hero_score: number
+          image_url: string
+          inventory_cost: number
+          inventory_value: number
+          item_id: string
+          item_name: string
+          last_sold_date: string
+          monthly_velocity: number
+          quantity_available: number
+          recommended_action: string
+          reorder_status: string
+          revenue_period: number
+          selling_price: number
+          stock_age_bucket: string
+          stock_age_days: number
+          stock_receive_date: string
+          store_id: string
+          store_name: string
+          supplier_id: string
+          supplier_name: string
+          units_sold_period: number
+          warehouse: string
+        }[]
+      }
       get_sales_intelligence_summary: {
         Args: { _end_date?: string; _start_date?: string; _store_id?: string }
         Returns: Json
