@@ -87,6 +87,9 @@ verify_jwt = false
 [functions.inventory-snapshot]
 verify_jwt = false
 
+[functions.telegram-daily-digest]
+verify_jwt = false
+
 [edge-runtime]
 enabled = true
 policy = "oneshot"
