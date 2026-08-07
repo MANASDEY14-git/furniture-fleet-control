@@ -357,7 +357,11 @@ function buildMorning(
   L.push(`• To collect from customers: ${inr(s.receivables)}`);
   if (s.topDebtor)
     L.push(`• Largest pending: ${s.topDebtor.name} — ${inr(s.topDebtor.amount)}`);
-  L.push(`• Owed to suppliers: ${inr(s.payables)}`);
+  L.push(
+    s.payables >= 0
+      ? `• Owed to suppliers: ${inr(s.payables)}`
+      : `• Advance sitting with suppliers: ${inr(-s.payables)}`,
+  );
   L.push(`• Bank balance: ${inr(s.bankBalance)}`);
   L.push(`• Stock on hand: ${inr(s.stockValue)}`);
   L.push("");
@@ -422,7 +426,9 @@ function eveningFacts(
     `Still to collect from customers: ${inr(s.receivables)}${
       s.topDebtor ? ` (largest: ${s.topDebtor.name} ${inr(s.topDebtor.amount)})` : ""
     }`,
-    `Owed to suppliers: ${inr(s.payables)}`,
+    s.payables >= 0
+      ? `Owed to suppliers: ${inr(s.payables)}`
+      : `Advance already paid to suppliers (nothing owed): ${inr(-s.payables)}`,
     `Stock on hand: ${inr(s.stockValue)}; ${s.zeroStockCount} item(s) at zero, ${s.negativeStockCount} negative`,
     `Deliveries completed today: ${today.deliveriesDone}`,
     `Deliveries past promised date: ${s.overdueDeliveries}`,
@@ -683,7 +689,7 @@ Deno.serve(async (req) => {
           store_id: storeId,
           generated_for_date: today,
           summary: text,
-          source: internal ? "automated" : "manual",
+          source: internal ? "scheduled" : "manual",
           agent_outputs: { mode: "evening", facts: prompt },
         });
         if (briefErr) console.error("[digest] briefing insert failed:", briefErr);
