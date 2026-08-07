@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { YearSwitcher } from '@/components/YearSwitcher';
+import ThemeToggle from '@/components/ThemeToggle';
 import { ReadOnlyYearBanner } from '@/components/ReadOnlyYearBanner';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex-1" />
 
             <YearSwitcher />
+            <ThemeToggle />
 
             <span className="text-sm text-muted-foreground hidden sm:block">
               {user?.email}
