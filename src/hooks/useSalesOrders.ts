@@ -1,5 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/utils/currencyUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { DeliveryStatus, CreateSalesOrderData, SalesOrder } from '@/types';
@@ -142,40 +143,47 @@ export const useCancelSalesOrder = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ 
-      orderId, 
-      cancellationReason 
-    }: { 
-      orderId: string; 
+    mutationFn: async ({
+      orderId,
+      cancellationReason,
+      settlement = 'credit',
+      refundMethod = 'cash',
+      refundBankAccountId = null,
+    }: {
+      orderId: string;
       cancellationReason: string;
+      settlement?: 'credit' | 'refund';
+      refundMethod?: string;
+      refundBankAccountId?: string | null;
     }) => {
-      const { data, error } = await supabase
-        .from('sales_orders')
-        .update({ 
-          delivery_status: 'Cancelled',
-          cancellation_reason: cancellationReason,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['secure-sales-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['items'] });
-      queryClient.invalidateQueries({ queryKey: ['materials'] });
-      queryClient.invalidateQueries({ queryKey: ['material-stock-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['sale-payment-status'] });
-      toast({ 
-        title: "Order Cancelled", 
-        description: "Stock has been restored to inventory" 
+      const { data, error } = await supabase.rpc('cancel_sales_order', {
+        _order_id: orderId,
+        _reason: cancellationReason,
+        _settlement: settlement,
+        _refund_method: refundMethod as any,
+        _refund_bank_account_id: refundBankAccountId ?? undefined,
       });
+
+      if (error) throw error;
+      return data as any;
     },
-    onError: (error) => {
+    onSuccess: (result: any) => {
+      ['sales-orders', 'secure-sales-orders', 'items', 'materials', 'material-stock-movements',
+       'sale-payment-status', 'customer-ledger', 'customers', 'customer-credit', 'payments',
+       'bank-accounts', 'followup-worklist', 'dashboard-metrics', 'enhanced-dashboard-metrics']
+        .forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
+
+      const refunded = Number(result?.refunded || 0);
+      const credited = Number(result?.credited || 0);
+      const detail = refunded > 0
+        ? `Stock restored. ${formatCurrency(refunded)} recorded as refund.`
+        : credited > 0
+          ? `Stock restored. ${formatCurrency(credited)} kept as customer credit.`
+          : 'Stock restored and order removed from all KPIs.';
+
+      toast({ title: 'Order Cancelled', description: detail });
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: `Failed to cancel order: ${error.message}`,
@@ -184,3 +192,4 @@ export const useCancelSalesOrder = () => {
     },
   });
 };
+

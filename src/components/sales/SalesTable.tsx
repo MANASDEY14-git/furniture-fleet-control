@@ -13,7 +13,7 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { CancelOrderDialog } from './CancelOrderDialog';
+import { CancelOrderDialog, type CancelConfirmPayload } from './CancelOrderDialog';
 import { useCancelSalesOrder } from '@/hooks/useSalesOrders';
 import { useConvertQuoteToOrder } from '@/hooks/useConvertQuoteToOrder';
 import { useUpdateQuoteStatus } from '@/hooks/useUpdateQuoteStatus';
@@ -311,11 +311,14 @@ export default function SalesTable({
     }
   };
 
-  const handleCancelConfirm = (reason: string) => {
+  const handleCancelConfirm = (payload: CancelConfirmPayload) => {
     if (cancellingOrder) {
       cancelOrderMutation.mutate({
         orderId: cancellingOrder.sale_id,
-        cancellationReason: reason
+        cancellationReason: payload.reason,
+        settlement: payload.settlement,
+        refundMethod: payload.refundMethod,
+        refundBankAccountId: payload.refundBankAccountId
       });
     }
   };
@@ -561,6 +564,7 @@ export default function SalesTable({
         onConfirm={handleCancelConfirm}
         orderNumber={cancellingOrder?.order_number || ''}
         itemCount={cancellingOrder?.sales_order_items?.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0) || 0}
+        collectedAmount={Number(cancellingOrder?.total_paid || 0)}
       />
     </Card>
   );
