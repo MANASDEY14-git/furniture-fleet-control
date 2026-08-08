@@ -5,6 +5,8 @@ import {
   Settings, Calendar, Users, BookOpen, LogOut, Building2,
   TrendingUp, ChevronDown, ChevronRight, Layers, Activity, Tag,
   CreditCard, Store, Check, Sparkles, ShieldAlert, LifeBuoy
+  PhoneCall,
+  PackageSearch,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -39,6 +41,7 @@ const navigationGroups = [
   {
     label: 'Sales',
     items: [
+      { name: "Today's Follow-ups",   href: '/daily-worklist',        icon: PhoneCall    },
       { name: 'Sales Intelligence', href: '/sales-intelligence', icon: Sparkles     },
       { name: 'Sales Orders',          href: '/sales',                  icon: ShoppingCart },
       { name: 'Customers',             href: '/customers',              icon: Users        },
@@ -49,6 +52,7 @@ const navigationGroups = [
   {
     label: 'Purchasing',
     items: [
+      { name: 'Reorder & Dead Stock', href: '/reorder',        icon: PackageSearch },
       { name: 'Purchase Orders', href: '/purchases',         icon: TrendingUp   },
       { name: 'Suppliers',       href: '/suppliers',         icon: Users        },
       { name: 'Supplier Ledger', href: '/supplier-ledger',   icon: BookOpen     },

@@ -34,11 +34,16 @@ Deno.serve(async (req) => {
       .eq("store_id", store_id)
       .gte("date", thirtyDaysAgo.toISOString().split("T")[0]);
 
-    const totalSales = sales?.reduce((sum, s) => sum + (s.total_amount || 0), 0) || 0;
-    const completedSales = sales?.filter(s => s.delivery_status === "Delivered").length || 0;
-    const pendingSales = sales?.filter(s => s.delivery_status !== "Delivered" && s.delivery_status !== "Cancelled").length || 0;
+    const status = (s: any) => String(s?.delivery_status || "").trim().toLowerCase();
+    // Cancelled orders never count towards sales figures
+    const activeSales = (sales || []).filter((s) => status(s) !== "cancelled");
+    const cancelledCount = (sales || []).length - activeSales.length;
 
-    const statsText = `In the last 30 days, we recorded ₹${totalSales.toLocaleString("en-IN")} in sales across ${sales?.length || 0} orders. Completed deliveries: ${completedSales}, pending orders: ${pendingSales}.`;
+    const totalSales = activeSales.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    const completedSales = activeSales.filter((s) => status(s) === "delivered").length;
+    const pendingSales = activeSales.filter((s) => status(s) !== "delivered").length;
+
+    const statsText = `In the last 30 days, we recorded ₹${totalSales.toLocaleString("en-IN")} in sales across ${activeSales.length} active orders (${cancelledCount} cancelled orders excluded). Completed deliveries: ${completedSales}, pending orders: ${pendingSales}.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");

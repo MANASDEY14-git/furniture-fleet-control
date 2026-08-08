@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { EnhancedDashboardMetrics, TopSellingItem, LowStockItem } from '@/types';
+import { isCountableOrder } from '@/utils/orderFilters';
 
 export type DateFilter = 'today' | 'week' | 'month' | 'year' | 'custom';
 
@@ -108,6 +109,7 @@ export const useEnhancedDashboardMetrics = (
           id,
           total_amount,
           date,
+          delivery_status,
           sales_order_items (
             id,
             quantity,
@@ -129,8 +131,11 @@ export const useEnhancedDashboardMetrics = (
         console.error('Error fetching sales orders:', salesError);
       }
       
-      const totalSales = salesOrdersData?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
-      const totalCost = salesOrdersData?.reduce((orderSum, order) => {
+      // Cancelled orders never count towards any KPI
+      const countableOrders = (salesOrdersData || []).filter(isCountableOrder);
+
+      const totalSales = countableOrders?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
+      const totalCost = countableOrders?.reduce((orderSum, order) => {
         const orderCost = order.sales_order_items?.reduce((itemSum, item) => {
           const costPerItem = Number(item.items?.cost_price || 0);
           return itemSum + (costPerItem * (item.quantity || 0));
@@ -148,6 +153,7 @@ export const useEnhancedDashboardMetrics = (
           id,
           total_amount,
           date,
+          delivery_status,
           sales_order_items (
             id,
             quantity,
@@ -169,8 +175,10 @@ export const useEnhancedDashboardMetrics = (
         console.error('Error fetching all sales orders:', allSalesError);
       }
       
-      const allTotalSales = allSalesOrdersData?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
-      const allTotalCost = allSalesOrdersData?.reduce((orderSum, order) => {
+      const allCountableOrders = (allSalesOrdersData || []).filter(isCountableOrder);
+
+      const allTotalSales = allCountableOrders?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
+      const allTotalCost = allCountableOrders?.reduce((orderSum, order) => {
         const orderCost = order.sales_order_items?.reduce((itemSum, item) => {
           const costPerItem = Number(item.items?.cost_price || 0);
           return itemSum + (costPerItem * (item.quantity || 0));
@@ -278,7 +286,7 @@ export const useEnhancedDashboardMetrics = (
       }
       
       // Calculate top selling items from sales_order_items
-      const itemSales = allSalesOrdersData?.reduce((acc, order) => {
+      const itemSales = allCountableOrders?.reduce((acc, order) => {
         order.sales_order_items?.forEach(item => {
           const key = item.item_name || 'Unknown Item';
           if (!acc[key]) {
@@ -307,7 +315,7 @@ export const useEnhancedDashboardMetrics = (
         date.setDate(trendEndDate.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
-        const dayOrders = allSalesOrdersData?.filter(order => order.date === dateStr) || [];
+        const dayOrders = allCountableOrders?.filter(order => order.date === dateStr) || [];
         const dayRevenue = dayOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
         const dayCosts = dayOrders.reduce((orderSum, order) => {
           const orderCost = order.sales_order_items?.reduce((itemSum, item) => {

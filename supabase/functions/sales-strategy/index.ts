@@ -78,7 +78,7 @@ serve(async (req) => {
       .from('sales_order_items')
       .select('item_id, quantity, unit_price, sales_orders!inner(date, store_id, delivery_status)')
       .eq('sales_orders.store_id', storeId)
-      .neq('sales_orders.delivery_status', 'Cancelled')
+      .not('sales_orders.delivery_status', 'ilike', 'cancelled')
       .gte('sales_orders.date', cutoff90);
 
     // Aggregate per item

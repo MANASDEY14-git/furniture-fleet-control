@@ -303,7 +303,7 @@ async function queryBusinessData(supabase: any, message: string, storeId: string
       .eq("store_id", storeId)
       .gte("date", monthStart)
       .lte("date", monthEnd)
-      .neq("delivery_status", "Cancelled");
+      .not("delivery_status", "ilike", "cancelled");
 
     if (sales && sales.length > 0) {
       const totalRevenue = sales.filter((s: any) => s.document_type !== 'quote').reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0);
@@ -327,7 +327,7 @@ async function queryBusinessData(supabase: any, message: string, storeId: string
       .select("order_number, customer_name, total_amount, balance_due, date, delivery_status")
       .eq("store_id", storeId)
       .gt("balance_due", 0)
-      .neq("delivery_status", "Cancelled")
+      .not("delivery_status", "ilike", "cancelled")
       .order("balance_due", { ascending: false })
       .limit(15);
 

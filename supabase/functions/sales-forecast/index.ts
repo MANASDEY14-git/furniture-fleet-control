@@ -261,7 +261,7 @@ serve(async (req) => {
       .from('sales_orders')
       .select('date, total_amount, delivery_status')
       .eq('store_id', storeId)
-      .neq('delivery_status', 'Cancelled')
+      .not('delivery_status', 'ilike', 'cancelled')
       .gte('date', new Date(Date.now() - 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
       .order('date', { ascending: true });
 

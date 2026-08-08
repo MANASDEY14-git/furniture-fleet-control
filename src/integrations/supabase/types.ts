@@ -1371,6 +1371,77 @@ export type Database = {
           },
         ]
       }
+      order_followups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          done_at: string | null
+          id: string
+          kind: string
+          next_action_date: string | null
+          note: string | null
+          order_id: string
+          outcome: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          id?: string
+          kind?: string
+          next_action_date?: string | null
+          note?: string | null
+          order_id: string
+          outcome?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          id?: string
+          kind?: string
+          next_action_date?: string | null
+          note?: string | null
+          order_id?: string
+          outcome?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_followups_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sale_payment_status"
+            referencedColumns: ["sale_id"]
+          },
+          {
+            foreignKeyName: "order_followups_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_order_material_cost"
+            referencedColumns: ["sales_order_id"]
+          },
+          {
+            foreignKeyName: "order_followups_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_followups_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -2793,6 +2864,16 @@ export type Database = {
         Returns: Json
       }
       can_access_customer_pii: { Args: { _user_id?: string }; Returns: boolean }
+      cancel_sales_order: {
+        Args: {
+          _order_id: string
+          _reason: string
+          _refund_bank_account_id?: string
+          _refund_method?: Database["public"]["Enums"]["payment_method_type"]
+          _settlement?: string
+        }
+        Returns: Json
+      }
       close_and_rollover_financial_year: { Args: never; Returns: Json }
       convert_quote_to_order: {
         Args: { _order_id: string }
@@ -2900,7 +2981,34 @@ export type Database = {
           upi_id: string
         }[]
       }
+      get_customer_credit: { Args: { _customer_id: string }; Returns: number }
       get_edge_internal_secret: { Args: never; Returns: string }
+      get_followup_worklist: {
+        Args: { _store_id: string }
+        Returns: {
+          age_bucket: string
+          age_days: number
+          balance_due: number
+          collected: number
+          customer_id: string
+          customer_name: string
+          customer_phone: string
+          delivery_date: string
+          delivery_status: string
+          document_type: string
+          kind: string
+          last_followup_at: string
+          last_note: string
+          next_action_date: string
+          order_date: string
+          order_id: string
+          order_number: string
+          priority: number
+          quote_status: string
+          snoozed: boolean
+          total_amount: number
+        }[]
+      }
       get_inventory_intelligence: {
         Args: {
           p_age_max_days?: number
@@ -2946,6 +3054,28 @@ export type Database = {
           supplier_name: string
           units_sold_period: number
           warehouse: string
+        }[]
+      }
+      get_reorder_intelligence: {
+        Args: { _store_id: string; _window_days?: number }
+        Returns: {
+          brand: string
+          bucket: string
+          cost_price: number
+          days_since_sale: number
+          item_id: string
+          item_name: string
+          last_sale_date: string
+          quantity_available: number
+          selling_price: number
+          stock_value: number
+          suggested_qty: number
+          supplier_id: string
+          supplier_name: string
+          units_sold: number
+          warehouse: string
+          weekly_velocity: number
+          weeks_of_cover: number
         }[]
       }
       get_sales_intelligence_summary: {
