@@ -1,5 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
+import { isCountableOrder } from '@/utils/orderFilters';
 import { supabase } from '@/integrations/supabase/client';
 import type { DashboardMetrics } from '@/types/erp';
 
@@ -51,7 +52,7 @@ export const useRealDashboardMetrics = (storeId?: string) => {
       if (salesError) throw salesError;
       
       // Filter out cancelled orders from sales
-      const salesData = (rawSalesData as any[]).filter(sale => sale.delivery_status !== 'Cancelled');
+      const salesData = (rawSalesData as any[]).filter(isCountableOrder);
       
       // Fetch sales order items for Best-Selling Products
       const saleIds = salesData.map(s => s.id);
@@ -124,7 +125,7 @@ export const useRealDashboardMetrics = (storeId?: string) => {
       if (outstandingError) throw outstandingError;
 
       const outstandingData = (rawOutstandingData || []).filter(
-        item => item.delivery_status !== 'Cancelled' && 
+        item => isCountableOrder(item) && 
                 item.delivery_status?.toLowerCase() !== 'cancelled' &&
                 item.sale_date >= selectedYear.start_date &&
                 item.sale_date <= selectedYear.end_date
@@ -176,7 +177,8 @@ export const useRealDashboardMetrics = (storeId?: string) => {
         }
 
         // Pending Orders (not cancelled, not delivered)
-        if (sale.delivery_status === 'Pending' || (!['Delivered', 'Shipped', 'Cancelled'].includes(sale.delivery_status))) {
+        const normalisedStatus = String(sale.delivery_status || '').trim().toLowerCase();
+        if (!['delivered', 'shipped', 'cancelled'].includes(normalisedStatus)) {
           pendingOrders++;
         }
 
