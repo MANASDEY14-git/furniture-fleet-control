@@ -5,6 +5,8 @@ import {
   Settings, Calendar, Users, BookOpen, LogOut, Building2,
   TrendingUp, ChevronDown, ChevronRight, Layers, Activity, Tag,
   CreditCard, Store, Check, Sparkles, ShieldAlert, LifeBuoy
+  PhoneCall,
+  PackageSearch,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
