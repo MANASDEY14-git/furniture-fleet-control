@@ -143,7 +143,7 @@ export default function EnhancedPurchaseForm({
           Record a single item purchase from your selected supplier and store.
         </DialogDescription>
       </DialogHeader>
-      <Card className="border-none shadow-none">
+      <Card className="border-none shadow-none bg-transparent">
         <CardHeader>
           <div className="space-y-3">
             <div className="flex items-center space-x-2">

@@ -186,7 +186,7 @@ export default function RefactoredMultiItemPurchaseForm({
           Create a purchase order with multiple items from your selected supplier and store.
         </DialogDescription>
       </DialogHeader>
-      <Card className="border-none shadow-none">
+      <Card className="border-none shadow-none bg-transparent">
         <CardContent className={isMobile ? 'p-0 pt-4' : 'pt-6'}>
           <form onSubmit={handleSubmit} className="space-y-6">
             <PurchaseFormBasicInfo formData={formData} stores={stores} onFormDataChange={handleFormDataChange} />
