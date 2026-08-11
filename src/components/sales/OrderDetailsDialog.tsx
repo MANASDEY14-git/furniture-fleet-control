@@ -271,22 +271,33 @@ export default function OrderDetailsDialog({
     </div>
   );
 
-  const PaymentsContent = () => (
-    <div className={`${isMobile ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-3 gap-4'} p-4 bg-muted rounded-lg`}>
-      <div className="text-center">
-        <p className="text-muted-foreground text-sm">Total Amount</p>
-        <p className={`text-foreground font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{formatCurrency(viewingOrder.total_price)}</p>
+  const PaymentsContent = () => {
+    const roundOff = Number(viewingOrder.round_off || order?.round_off || 0);
+    return (
+      <div className="space-y-4">
+        {roundOff !== 0 && (
+          <div className="flex justify-between items-center text-sm px-4 py-2 bg-muted/50 rounded-lg">
+            <span className="text-muted-foreground">Round Off</span>
+            <span className="font-medium text-foreground">{formatCurrency(roundOff)}</span>
+          </div>
+        )}
+        <div className={`${isMobile ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-3 gap-4'} p-4 bg-muted rounded-lg`}>
+          <div className="text-center">
+            <p className="text-muted-foreground text-sm">Total Amount</p>
+            <p className={`text-foreground font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{formatCurrency(viewingOrder.total_price)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-muted-foreground text-sm">Total Paid</p>
+            <p className={`text-foreground font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{formatCurrency(viewingOrder.total_paid)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-muted-foreground text-sm">Balance Due</p>
+            <p className={`text-foreground font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{formatCurrency(viewingOrder.balance_due)}</p>
+          </div>
+        </div>
       </div>
-      <div className="text-center">
-        <p className="text-muted-foreground text-sm">Total Paid</p>
-        <p className={`text-foreground font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{formatCurrency(viewingOrder.total_paid)}</p>
-      </div>
-      <div className="text-center">
-        <p className="text-muted-foreground text-sm">Balance Due</p>
-        <p className={`text-foreground font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{formatCurrency(viewingOrder.balance_due)}</p>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const tabbedContent = (
     <Tabs value={currentTab} onValueChange={setActiveTab} className="w-full">

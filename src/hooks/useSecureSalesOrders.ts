@@ -23,6 +23,7 @@ export interface SecureSalesOrder {
   document_type?: string;
   quote_status?: string;
   salesperson_name?: string;
+  round_off?: number;
 }
 
 import { useFinancialYear } from '@/contexts/FinancialYearContext';

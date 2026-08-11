@@ -74,6 +74,7 @@ export const useComputedSalePaymentStatus = (storeId?: string, documentType: 'or
       balance_due: balanceDue,
       quote_status: order.quote_status || 'draft',
       salesperson_name: order.salesperson_name || '',
+      round_off: order.round_off || 0,
     };
   });
 

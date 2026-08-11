@@ -64,4 +64,5 @@ export interface SalePaymentStatus {
   balance_due: number;
   quote_status?: string;
   salesperson_name?: string;
+  round_off?: number;
 }
