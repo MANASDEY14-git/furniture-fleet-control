@@ -109,13 +109,19 @@ export default function PurchaseDetailsDialog({
           <Separator />
 
           {/* Total */}
+          {Number(purchase.round_off) ? (
+            <div className="flex justify-between items-center text-sm px-3">
+              <span className="text-muted-foreground">Round Off</span>
+              <span className="font-medium">{formatCurrency(Number(purchase.round_off))}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between items-center p-3 bg-primary/10 rounded-md">
             <span className="font-medium flex items-center gap-2">
               <IndianRupee className="h-4 w-4" />
               Total Cost
             </span>
             <span className="text-lg font-bold text-primary">
-              {formatCurrency(purchase.total_cost)}
+              {formatCurrency(Number(purchase.total_cost) + Number(purchase.round_off || 0))}
             </span>
           </div>
         </div>
