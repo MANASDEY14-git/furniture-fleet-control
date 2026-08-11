@@ -54,6 +54,7 @@ export default function RefactoredMultiItemPurchaseForm({
     supplierId: '',
     storeId: ''
   });
+  const [roundOff, setRoundOff] = useState('');
 
   const [items, setItems] = useState<PurchaseItem[]>([{
     id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0,
@@ -124,7 +125,12 @@ export default function RefactoredMultiItemPurchaseForm({
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
-  const getTotalAmount = () => items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const getItemsSubtotal = () => items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const getRoundOff = () => {
+    const parsed = parseFloat(roundOff);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+  const getTotalAmount = () => getItemsSubtotal() + getRoundOff();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
