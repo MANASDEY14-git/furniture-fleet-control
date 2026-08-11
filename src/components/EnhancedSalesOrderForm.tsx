@@ -217,8 +217,15 @@ export default function EnhancedSalesOrderForm({
       orderItemId: item.id
     });
   };
-  const getTotalAmount = () => {
+  const getItemsSubtotal = () => {
     return items.reduce((sum, item) => sum + item.totalPrice, 0);
+  };
+  const getRoundOff = () => {
+    const parsed = parseFloat(formData.roundOff);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+  const getTotalAmount = () => {
+    return getItemsSubtotal() + getRoundOff();
   };
   const getBalanceDue = () => {
     return getTotalAmount() - formData.advancePaid;
@@ -297,6 +304,7 @@ export default function EnhancedSalesOrderForm({
       customerAddress: '',
       deliveryDate: '',
       advancePaid: 0,
+      roundOff: '',
       description: '',
       advancePaymentMethod: 'cash',
       advanceBankAccountId: '',
