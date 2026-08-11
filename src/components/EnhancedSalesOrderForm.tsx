@@ -77,6 +77,7 @@ export default function EnhancedSalesOrderForm({
     customerAddress: '',
     deliveryDate: '',
     advancePaid: 0,
+    roundOff: '',
     description: '',
     advancePaymentMethod: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque' | 'debit_card' | 'credit_card',
     advanceBankAccountId: '',
@@ -216,8 +217,15 @@ export default function EnhancedSalesOrderForm({
       orderItemId: item.id
     });
   };
-  const getTotalAmount = () => {
+  const getItemsSubtotal = () => {
     return items.reduce((sum, item) => sum + item.totalPrice, 0);
+  };
+  const getRoundOff = () => {
+    const parsed = parseFloat(formData.roundOff);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+  const getTotalAmount = () => {
+    return getItemsSubtotal() + getRoundOff();
   };
   const getBalanceDue = () => {
     return getTotalAmount() - formData.advancePaid;
@@ -258,6 +266,7 @@ export default function EnhancedSalesOrderForm({
         customer_address: formData.customerAddress || null,
         delivery_date: formData.deliveryDate || null,
         advance_paid: documentType === 'quote' ? 0 : formData.advancePaid,
+        round_off: getRoundOff(),
         description: formData.description || null,
         salesperson_name: formData.salespeople?.trim() || null,
         document_type: documentType,
@@ -296,6 +305,7 @@ export default function EnhancedSalesOrderForm({
       customerAddress: '',
       deliveryDate: '',
       advancePaid: 0,
+      roundOff: '',
       description: '',
       advancePaymentMethod: 'cash',
       advanceBankAccountId: '',
@@ -647,6 +657,22 @@ export default function EnhancedSalesOrderForm({
 
                   <div className="bg-muted rounded-lg p-4 space-y-2">
                     <div className="flex justify-between text-sm">
+                      <span>Items Subtotal:</span>
+                      <span>₹{getItemsSubtotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center gap-3 text-sm">
+                      <Label htmlFor="round-off-mobile" className="text-sm">Round Off:</Label>
+                      <Input
+                        id="round-off-mobile"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={formData.roundOff}
+                        onChange={e => setFormData({ ...formData, roundOff: e.target.value })}
+                        className="h-9 w-28 text-right"
+                      />
+                    </div>
+                    <div className="flex justify-between text-sm border-t pt-2">
                       <span>Total Amount:</span>
                       <span className="font-semibold">₹{getTotalAmount().toFixed(2)}</span>
                     </div>
@@ -1000,6 +1026,22 @@ export default function EnhancedSalesOrderForm({
                     <CardContent className="pt-4">
                       <div className="space-y-2">
                         <div className="flex justify-between text-foreground">
+                          <span>Items Subtotal:</span>
+                          <span>₹{getItemsSubtotal().toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center gap-3 text-foreground">
+                          <Label htmlFor="round-off-desktop">Round Off:</Label>
+                          <Input
+                            id="round-off-desktop"
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={formData.roundOff}
+                            onChange={e => setFormData({ ...formData, roundOff: e.target.value })}
+                            className="h-9 w-32 text-right"
+                          />
+                        </div>
+                        <div className="flex justify-between text-foreground border-t pt-2">
                           <span>Total Amount:</span>
                           <span className="font-semibold">₹{getTotalAmount().toFixed(2)}</span>
                         </div>
@@ -1021,8 +1063,24 @@ export default function EnhancedSalesOrderForm({
               {/* Quote total summary */}
               {documentType === 'quote' && (
                 <Card className="bg-muted">
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-4 space-y-2">
                     <div className="flex justify-between text-foreground">
+                      <span>Items Subtotal:</span>
+                      <span>₹{getItemsSubtotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center gap-3 text-foreground">
+                      <Label htmlFor="round-off-quote">Round Off:</Label>
+                      <Input
+                        id="round-off-quote"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={formData.roundOff}
+                        onChange={e => setFormData({ ...formData, roundOff: e.target.value })}
+                        className="h-9 w-32 text-right"
+                      />
+                    </div>
+                    <div className="flex justify-between text-foreground border-t pt-2">
                       <span>Quote Total:</span>
                       <span className="font-semibold">₹{getTotalAmount().toFixed(2)}</span>
                     </div>
