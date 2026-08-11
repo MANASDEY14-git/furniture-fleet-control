@@ -42,7 +42,8 @@ export const useCreateSalesOrder = () => {
         total_price: item.total_price
       }));
 
-      const totalAmount = data.items.reduce((sum, item) => sum + item.total_price, 0);
+      const roundOff = data.round_off || 0;
+      const totalAmount = data.items.reduce((sum, item) => sum + item.total_price, 0) + roundOff;
 
       // Build customizations JSON for the RPC
       const customizationsJson = (data.customizations || []).map(c => ({

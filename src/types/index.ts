@@ -103,6 +103,7 @@ export interface CreateSalesOrderData {
   customer_address?: string | null;
   delivery_date?: string | null;
   advance_paid?: number;
+  round_off?: number;
   description?: string | null;
   salesperson_name?: string | null;
   document_type?: 'order' | 'quote';
