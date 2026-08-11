@@ -67,6 +67,7 @@ export const useCreateSalesOrder = () => {
         _advance_paid: data.advance_paid || 0,
         _description: data.description || null,
         _total_amount: totalAmount,
+        _round_off: roundOff,
         _items: itemsJson,
         _customizations: customizationsJson,
         _customer_id: data.customer_id || null,
