@@ -16,6 +16,7 @@ interface CreatePurchaseOrderData {
   store_id: string;
   supplier_id?: string;
   date: string;
+  round_off?: number;
   items: PurchaseOrderItem[];
 }
 
@@ -25,8 +26,9 @@ export const useCreatePurchaseOrder = () => {
 
   return useMutation({
     mutationFn: async (data: CreatePurchaseOrderData) => {
-      // Create individual purchase records for each item
-      const purchasePromises = data.items.map(item => 
+      // Create individual purchase records for each item.
+      // The invoice-level round off is stored once, on the first row.
+      const purchasePromises = data.items.map((item, index) =>
         supabase
           .from('purchases')
           .insert([{
@@ -37,6 +39,7 @@ export const useCreatePurchaseOrder = () => {
             item_name: item.item_name,
             quantity: item.quantity,
             total_cost: item.total_price,
+            round_off: index === 0 ? (data.round_off || 0) : 0,
             date: data.date,
             invoice_number: data.order_number
           }])
