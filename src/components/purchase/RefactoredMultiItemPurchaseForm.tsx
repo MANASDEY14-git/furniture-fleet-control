@@ -54,6 +54,7 @@ export default function RefactoredMultiItemPurchaseForm({
     supplierId: '',
     storeId: ''
   });
+  const [roundOff, setRoundOff] = useState('');
 
   const [items, setItems] = useState<PurchaseItem[]>([{
     id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0,
@@ -124,7 +125,12 @@ export default function RefactoredMultiItemPurchaseForm({
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
-  const getTotalAmount = () => items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const getItemsSubtotal = () => items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const getRoundOff = () => {
+    const parsed = parseFloat(roundOff);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+  const getTotalAmount = () => getItemsSubtotal() + getRoundOff();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +158,7 @@ export default function RefactoredMultiItemPurchaseForm({
     await createPurchase.mutateAsync({
       order_number: formData.invoiceNumber || `PO-${Date.now()}`,
       store_id: formData.storeId, supplier_id: formData.supplierId, date: formData.invoiceDate,
+      round_off: getRoundOff(),
       items: validItems.map(item => ({
         item_id: item.itemId, item_name: item.itemName,
         variant_id: item.variantId,
@@ -164,6 +171,7 @@ export default function RefactoredMultiItemPurchaseForm({
 
   const resetForm = () => {
     setFormData({ invoiceNumber: '', invoiceDate: new Date().toISOString().split('T')[0], supplierId: '', storeId: '' });
+    setRoundOff('');
     setItems([{
       id: '1', itemId: '', itemName: '', quantity: 0, unitPrice: 0, totalPrice: 0,
       isNewItem: false, newItemName: '', newItemSellingPrice: 0, newItemCostPrice: 0, newItemCategoryId: ''
@@ -202,6 +210,7 @@ export default function RefactoredMultiItemPurchaseForm({
               items={items} availableItems={availableItems} categories={categories}
               onAddItem={addItem} onUpdateItem={updateItem} onRemoveItem={removeItem}
               getTotalAmount={getTotalAmount} currentSupplierId={formData.supplierId}
+              itemsSubtotal={getItemsSubtotal()} roundOff={roundOff} onRoundOffChange={setRoundOff}
             />
 
             <Button

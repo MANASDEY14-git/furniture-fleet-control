@@ -42,7 +42,8 @@ export const useCreateSalesOrder = () => {
         total_price: item.total_price
       }));
 
-      const totalAmount = data.items.reduce((sum, item) => sum + item.total_price, 0);
+      const roundOff = data.round_off || 0;
+      const totalAmount = data.items.reduce((sum, item) => sum + item.total_price, 0) + roundOff;
 
       // Build customizations JSON for the RPC
       const customizationsJson = (data.customizations || []).map(c => ({
@@ -66,6 +67,7 @@ export const useCreateSalesOrder = () => {
         _advance_paid: data.advance_paid || 0,
         _description: data.description || null,
         _total_amount: totalAmount,
+        _round_off: roundOff,
         _items: itemsJson,
         _customizations: customizationsJson,
         _customer_id: data.customer_id || null,
