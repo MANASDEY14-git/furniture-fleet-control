@@ -77,6 +77,7 @@ export default function EnhancedSalesOrderForm({
     customerAddress: '',
     deliveryDate: '',
     advancePaid: 0,
+    roundOff: '',
     description: '',
     advancePaymentMethod: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque' | 'debit_card' | 'credit_card',
     advanceBankAccountId: '',
