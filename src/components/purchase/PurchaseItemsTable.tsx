@@ -82,8 +82,24 @@ export default function PurchaseItemsTable({
           ))}
         </div>
 
-        <div className="bg-primary/10 rounded-md px-4 py-3">
-          <div className="flex justify-between items-center">
+        <div className="bg-primary/10 rounded-md px-4 py-3 space-y-2">
+          <div className="flex justify-between items-center text-sm text-foreground">
+            <span>Items Subtotal</span>
+            <span>₹{itemsSubtotal.toLocaleString('en-IN')}</span>
+          </div>
+          <div className="flex justify-between items-center gap-3">
+            <Label htmlFor="purchase-round-off-mobile" className="text-sm">Round Off</Label>
+            <Input
+              id="purchase-round-off-mobile"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={roundOff}
+              onChange={e => onRoundOffChange(e.target.value)}
+              className="h-9 w-28 text-right bg-background"
+            />
+          </div>
+          <div className="flex justify-between items-center border-t pt-2">
             <span className="text-sm text-foreground">Total Amount</span>
             <span className="text-xl font-bold text-foreground">
               ₹{getTotalAmount().toLocaleString('en-IN')}
@@ -142,10 +158,29 @@ export default function PurchaseItemsTable({
       </div>
 
       <div className="flex justify-end">
-        <div className="bg-primary/10 rounded-md px-6 py-3">
-          <span className="text-lg font-bold text-foreground">
-            Total Amount: ₹{getTotalAmount().toLocaleString('en-IN')}
-          </span>
+        <div className="bg-primary/10 rounded-md px-6 py-3 space-y-2 min-w-[18rem]">
+          <div className="flex justify-between items-center text-sm text-foreground">
+            <span>Items Subtotal</span>
+            <span>₹{itemsSubtotal.toLocaleString('en-IN')}</span>
+          </div>
+          <div className="flex justify-between items-center gap-3">
+            <Label htmlFor="purchase-round-off" className="text-sm">Round Off</Label>
+            <Input
+              id="purchase-round-off"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={roundOff}
+              onChange={e => onRoundOffChange(e.target.value)}
+              className="h-9 w-32 text-right bg-background"
+            />
+          </div>
+          <div className="flex justify-between items-center border-t pt-2">
+            <span className="text-sm text-foreground">Total Amount</span>
+            <span className="text-lg font-bold text-foreground">
+              ₹{getTotalAmount().toLocaleString('en-IN')}
+            </span>
+          </div>
         </div>
       </div>
     </div>
