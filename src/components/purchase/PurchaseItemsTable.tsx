@@ -1,5 +1,7 @@
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import PurchaseItemRow from './PurchaseItemRow';
 import MobilePurchaseItemCard from './MobilePurchaseItemCard';
@@ -29,6 +31,9 @@ interface PurchaseItemsTableProps {
   onRemoveItem: (id: string) => void;
   getTotalAmount: () => number;
   currentSupplierId?: string;
+  itemsSubtotal: number;
+  roundOff: string;
+  onRoundOffChange: (value: string) => void;
 }
 
 export default function PurchaseItemsTable({
@@ -39,7 +44,10 @@ export default function PurchaseItemsTable({
   onUpdateItem,
   onRemoveItem,
   getTotalAmount,
-  currentSupplierId
+  currentSupplierId,
+  itemsSubtotal,
+  roundOff,
+  onRoundOffChange
 }: PurchaseItemsTableProps) {
   const isMobile = useIsMobile();
   const hasNewItems = items.some(item => item.isNewItem);
