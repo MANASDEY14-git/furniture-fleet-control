@@ -266,6 +266,7 @@ export default function EnhancedSalesOrderForm({
         customer_address: formData.customerAddress || null,
         delivery_date: formData.deliveryDate || null,
         advance_paid: documentType === 'quote' ? 0 : formData.advancePaid,
+        round_off: getRoundOff(),
         description: formData.description || null,
         salesperson_name: formData.salespeople?.trim() || null,
         document_type: documentType,
