@@ -3132,6 +3132,7 @@ export type Database = {
           description: string
           id: string
           order_number: string
+          round_off: number
           sales_order_items: Json
           salesperson_name: string
           status: string
@@ -3164,6 +3165,7 @@ export type Database = {
           id: string
           order_number: string
           quote_status: string
+          round_off: number
           salesperson_name: string
           status: string
           store_id: string
