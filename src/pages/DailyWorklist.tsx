@@ -10,44 +10,83 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Phone, PhoneCall, Truck, FileClock, IndianRupee, CheckCircle2 } from 'lucide-react';
+import { Phone, PhoneCall, Truck, FileClock, IndianRupee, CheckCircle2, BellOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { useFollowupWorklist, useLogFollowup, type FollowupRow, type FollowupKind } from '@/hooks/useFollowupWorklist';
 import { useStoreContext } from '@/contexts/StoreContext';
 
-const KIND_META: Record<FollowupKind, { label: string; icon: any; hint: string }> = {
-  collect: { label: 'Money to collect', icon: IndianRupee, hint: 'Delivered or advanced orders with balance pending' },
-  paid_not_delivered: { label: 'Paid, not delivered', icon: Truck, hint: 'Customer has paid in full and is still waiting' },
-  delivery_slipping: { label: 'Delivery promise slipping', icon: PhoneCall, hint: 'Promised date is today or already past' },
-  cold_quote: { label: 'Quotes going cold', icon: FileClock, hint: 'Sent quotes with no movement' },
+const KIND_META: Record<FollowupKind, { label: string; icon: any; hint: string; emptyReason: string }> = {
+  collection: {
+    label: 'Money to collect',
+    icon: IndianRupee,
+    hint: 'Orders with a balance still pending',
+    emptyReason: 'No order in this store has a pending balance right now.',
+  },
+  paid_undelivered: {
+    label: 'Paid, not delivered',
+    icon: Truck,
+    hint: 'Customer has paid in full and is still waiting',
+    emptyReason: 'Every fully paid order has already been marked delivered.',
+  },
+  delivery_slipping: {
+    label: 'Delivery promise slipping',
+    icon: PhoneCall,
+    hint: 'Promised delivery date is already past',
+    emptyReason: 'No undelivered order has a promised date in the past. Orders without a promised date cannot appear here.',
+  },
+  quote_cold: {
+    label: 'Quotes going cold',
+    icon: FileClock,
+    hint: 'Draft or sent quotes with no movement for 3+ days',
+    emptyReason: 'No open quotes in this store — every document here was created as an order.',
+  },
+};
+
+const bucketLabel = (bucket?: string | null) => {
+  switch (bucket) {
+    case '0-7': return '0-7 days';
+    case '8-30': return '8-30 days';
+    case '30+': return '30+ days';
+    default: return bucket || '';
+  }
 };
 
 const bucketTone = (bucket?: string | null) => {
   switch (bucket) {
-    case '30+ days': return 'bg-destructive/10 text-destructive border-destructive/20';
-    case '8-30 days': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+    case '30+': return 'bg-destructive/10 text-destructive border-destructive/20';
+    case '8-30': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
     default: return 'bg-muted text-muted-foreground';
   }
 };
 
+const formatDate = (value?: string | null) =>
+  value ? new Date(value).toLocaleDateString('en-IN') : '';
+
 function FollowupCard({ row, onLog }: { row: FollowupRow; onLog: (row: FollowupRow) => void }) {
   return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm space-y-3">
+    <div className={`rounded-2xl border bg-card p-4 shadow-sm space-y-3 ${row.snoozed ? 'opacity-70' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-semibold text-foreground truncate">
             {row.customer_name || 'Walk-in customer'}
           </p>
           <p className="text-xs text-muted-foreground">
-            #{row.order_number} • {new Date(row.order_date).toLocaleDateString('en-IN')}
+            #{row.order_number} • {formatDate(row.order_date)}
           </p>
         </div>
-        {row.age_bucket && (
-          <Badge variant="outline" className={bucketTone(row.age_bucket)}>
-            {row.age_bucket}
-          </Badge>
-        )}
+        <div className="flex flex-col items-end gap-1">
+          {row.age_bucket && (
+            <Badge variant="outline" className={bucketTone(row.age_bucket)}>
+              {bucketLabel(row.age_bucket)}
+            </Badge>
+          )}
+          {row.snoozed && (
+            <Badge variant="outline" className="bg-muted text-muted-foreground">
+              <BellOff className="mr-1 h-3 w-3" /> Snoozed to {formatDate(row.snooze_until)}
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
@@ -65,10 +104,18 @@ function FollowupCard({ row, onLog }: { row: FollowupRow; onLog: (row: FollowupR
         </div>
       </div>
 
-      {row.last_note && (
-        <p className="rounded-lg bg-muted p-2 text-xs text-muted-foreground">
-          Last note: {row.last_note}
-        </p>
+      {(row.last_note || row.last_followup_at || row.next_action_date) && (
+        <div className="rounded-lg bg-muted p-2 space-y-1">
+          {row.last_note && (
+            <p className="text-xs text-foreground">{row.last_note}</p>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            {row.last_followup_at
+              ? `Last contacted ${formatDate(row.last_followup_at)}${row.last_followup_by ? ` by ${row.last_followup_by}` : ''}`
+              : 'Never contacted'}
+            {row.next_action_date ? ` • Call back ${formatDate(row.next_action_date)}` : ''}
+          </p>
+        </div>
       )}
 
       <div className="flex flex-wrap gap-2">
@@ -105,19 +152,32 @@ export default function DailyWorklist() {
 
   const grouped = useMemo(() => {
     const base: Record<FollowupKind, FollowupRow[]> = {
-      collect: [], paid_not_delivered: [], delivery_slipping: [], cold_quote: [],
+      collection: [], paid_undelivered: [], delivery_slipping: [], quote_cold: [],
     };
-    rows.filter(r => !r.snoozed).forEach((r) => base[r.kind]?.push(r));
+    rows.forEach((r) => {
+      if (base[r.kind]) base[r.kind].push(r);
+    });
+    // Snoozed rows stay visible but sink to the bottom of their bucket.
+    (Object.keys(base) as FollowupKind[]).forEach((k) => {
+      base[k].sort((a, b) => {
+        if (a.snoozed !== b.snoozed) return a.snoozed ? 1 : -1;
+        return Number(b.priority || 0) - Number(a.priority || 0);
+      });
+    });
     return base;
   }, [rows]);
 
-  const totalPending = grouped.collect.reduce((s, r) => s + Number(r.balance_due || 0), 0);
+  const activeCount = (kind: FollowupKind) => grouped[kind].filter(r => !r.snoozed).length;
+  const totalPending = grouped.collection
+    .filter(r => !r.snoozed)
+    .reduce((s, r) => s + Number(r.balance_due || 0), 0);
 
   const submit = () => {
     if (!active) return;
     logFollowup.mutate(
       {
         orderId: active.order_id,
+        kind: active.kind,
         outcome,
         note,
         nextActionDate: nextDate || null,
@@ -160,8 +220,8 @@ export default function DailyWorklist() {
                   <Icon className="h-4 w-4" />
                   <span className="text-xs">{KIND_META[kind].label}</span>
                 </div>
-                <p className="mt-1 text-2xl font-bold text-foreground">{grouped[kind].length}</p>
-                {kind === 'collect' && (
+                <p className="mt-1 text-2xl font-bold text-foreground">{activeCount(kind)}</p>
+                {kind === 'collection' && (
                   <p className="text-xs text-amber-600">{formatCurrency(totalPending)} pending</p>
                 )}
               </CardContent>
@@ -170,11 +230,11 @@ export default function DailyWorklist() {
         })}
       </div>
 
-      <Tabs defaultValue="collect" className="space-y-4">
+      <Tabs defaultValue="collection" className="space-y-4">
         <TabsList className="flex w-full flex-wrap h-auto">
           {(Object.keys(KIND_META) as FollowupKind[]).map((kind) => (
             <TabsTrigger key={kind} value={kind} className="text-xs md:text-sm">
-              {KIND_META[kind].label} ({grouped[kind].length})
+              {KIND_META[kind].label} ({activeCount(kind)})
             </TabsTrigger>
           ))}
         </TabsList>
@@ -190,9 +250,10 @@ export default function DailyWorklist() {
                 {isLoading ? (
                   <p className="text-sm text-muted-foreground">Loading worklist...</p>
                 ) : grouped[kind].length === 0 ? (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    Nothing pending here. Good place to be.
-                  </p>
+                  <div className="py-8 text-center space-y-1">
+                    <p className="text-sm font-medium text-foreground">Nothing pending here.</p>
+                    <p className="text-xs text-muted-foreground">{KIND_META[kind].emptyReason}</p>
+                  </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {grouped[kind].map((row) => (
@@ -236,10 +297,13 @@ export default function DailyWorklist() {
                 <Input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Hide until</Label>
+                <Label>Snooze until</Label>
                 <Input type="date" value={snoozeDate} onChange={(e) => setSnoozeDate(e.target.value)} />
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Snoozed items stay on the list with a badge and sink to the bottom — nothing is hidden.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setActive(null)}>Close</Button>
