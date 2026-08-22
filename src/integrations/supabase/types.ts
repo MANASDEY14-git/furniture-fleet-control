@@ -1382,6 +1382,7 @@ export type Database = {
           note: string | null
           order_id: string
           outcome: string | null
+          snooze_until: string | null
           store_id: string
           updated_at: string
         }
@@ -1395,6 +1396,7 @@ export type Database = {
           note?: string | null
           order_id: string
           outcome?: string | null
+          snooze_until?: string | null
           store_id: string
           updated_at?: string
         }
@@ -1408,6 +1410,7 @@ export type Database = {
           note?: string | null
           order_id?: string
           outcome?: string | null
+          snooze_until?: string | null
           store_id?: string
           updated_at?: string
         }
@@ -3030,6 +3033,7 @@ export type Database = {
           document_type: string
           kind: string
           last_followup_at: string
+          last_followup_by: string
           last_note: string
           next_action_date: string
           order_date: string
@@ -3037,6 +3041,7 @@ export type Database = {
           order_number: string
           priority: number
           quote_status: string
+          snooze_until: string
           snoozed: boolean
           total_amount: number
         }[]

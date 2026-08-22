@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStoreContext } from '@/contexts/StoreContext';
 import { useToast } from '@/hooks/use-toast';
 
-export type FollowupKind = 'collect' | 'paid_not_delivered' | 'delivery_slipping' | 'cold_quote';
+// These values must match exactly what get_followup_worklist returns.
+export type FollowupKind = 'collection' | 'paid_undelivered' | 'delivery_slipping' | 'quote_cold';
 
 export interface FollowupRow {
   kind: FollowupKind;
@@ -24,8 +25,10 @@ export interface FollowupRow {
   age_days: number;
   age_bucket: string | null;
   last_followup_at: string | null;
+  last_followup_by: string | null;
   last_note: string | null;
   next_action_date: string | null;
+  snooze_until: string | null;
   snoozed: boolean;
 }
 
@@ -40,7 +43,7 @@ export const useFollowupWorklist = () => {
         _store_id: activeStoreId,
       });
       if (error) throw error;
-      return (data || []) as FollowupRow[];
+      return (data || []) as unknown as FollowupRow[];
     },
     enabled: !!activeStoreId && activeStoreId !== 'all',
     staleTime: 60_000,
@@ -55,12 +58,14 @@ export const useLogFollowup = () => {
   return useMutation({
     mutationFn: async ({
       orderId,
+      kind,
       outcome,
       note,
       nextActionDate,
       snoozeUntil,
     }: {
       orderId: string;
+      kind: FollowupKind | string;
       outcome: string;
       note?: string;
       nextActionDate?: string | null;
@@ -70,6 +75,7 @@ export const useLogFollowup = () => {
       const { error } = await supabase.from('order_followups').insert({
         order_id: orderId,
         store_id: activeStoreId!,
+        kind,
         outcome,
         note: note || null,
         next_action_date: nextActionDate || null,
@@ -80,6 +86,7 @@ export const useLogFollowup = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followup-worklist'] });
+      queryClient.invalidateQueries({ queryKey: ['order-followups'] });
       toast({ title: 'Follow-up logged' });
     },
     onError: (error: any) =>
