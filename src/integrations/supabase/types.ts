@@ -622,6 +622,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          credit_limit: number
           email: string | null
           gst_number: string | null
           id: string
@@ -634,6 +635,7 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          credit_limit?: number
           email?: string | null
           gst_number?: string | null
           id?: string
@@ -646,6 +648,7 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          credit_limit?: number
           email?: string | null
           gst_number?: string | null
           id?: string
@@ -1949,6 +1952,7 @@ export type Database = {
           date: string
           delivered_at: string | null
           delivery_date: string | null
+          delivery_delay_reason: string | null
           delivery_status: string
           description: string | null
           document_type: string | null
@@ -1980,6 +1984,7 @@ export type Database = {
           date: string
           delivered_at?: string | null
           delivery_date?: string | null
+          delivery_delay_reason?: string | null
           delivery_status?: string
           description?: string | null
           document_type?: string | null
@@ -2011,6 +2016,7 @@ export type Database = {
           date?: string
           delivered_at?: string | null
           delivery_date?: string | null
+          delivery_delay_reason?: string | null
           delivery_status?: string
           description?: string | null
           document_type?: string | null
@@ -3017,6 +3023,48 @@ export type Database = {
         }[]
       }
       get_customer_credit: { Args: { _customer_id: string }; Returns: number }
+      get_customer_money_summary: {
+        Args: { _customer_id: string }
+        Returns: {
+          credit_held: number
+          credit_limit: number
+          last_order_date: string
+          open_orders: number
+          outstanding: number
+          total_billed: number
+          total_collected: number
+        }[]
+      }
+      get_delivery_performance: {
+        Args: { _months?: number; _store_id: string }
+        Returns: {
+          avg_delay_days: number
+          delivered_count: number
+          late_count: number
+          month: string
+          on_time_count: number
+          on_time_rate: number
+        }[]
+      }
+      get_dispatch_board: {
+        Args: { _store_id: string }
+        Returns: {
+          balance_due: number
+          bucket: string
+          customer_address: string
+          customer_id: string
+          customer_name: string
+          customer_phone: string
+          days_overdue: number
+          delivery_date: string
+          delivery_status: string
+          items_count: number
+          order_date: string
+          order_id: string
+          order_number: string
+          total_amount: number
+        }[]
+      }
       get_edge_internal_secret: { Args: never; Returns: string }
       get_followup_worklist: {
         Args: { _store_id: string }
@@ -3091,6 +3139,28 @@ export type Database = {
           supplier_name: string
           units_sold_period: number
           warehouse: string
+        }[]
+      }
+      get_receivables_aging: {
+        Args: { _store_id: string }
+        Returns: {
+          bucket_0_30: number
+          bucket_31_60: number
+          bucket_61_90: number
+          bucket_90_plus: number
+          credit_limit: number
+          customer_id: string
+          customer_name: string
+          customer_phone: string
+          last_followup_at: string
+          last_note: string
+          next_action_date: string
+          oldest_age_days: number
+          oldest_unpaid_date: string
+          open_orders: number
+          outstanding: number
+          total_billed: number
+          total_collected: number
         }[]
       }
       get_reorder_intelligence: {
