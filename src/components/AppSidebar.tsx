@@ -44,7 +44,6 @@ const navigationGroups = [
     label: 'Sales & Work',
     items: [
       { name: 'Sales Hub', href: '/sales', icon: ShoppingCart },
-      { name: 'Sales Intelligence', href: '/sales-intelligence', icon: Sparkles },
       { name: 'Customers', href: '/customers', icon: Users },
       { name: 'Daily Work Hub', href: '/work', icon: Activity },
     ],
@@ -61,7 +60,6 @@ const navigationGroups = [
     label: 'Finance & Admin',
     items: [
       { name: 'Finance Hub', href: '/finance', icon: DollarSign },
-      { name: 'Reports', href: '/reports', icon: FileText },
       { name: 'Settings', href: '/settings', icon: Settings },
     ],
   },
