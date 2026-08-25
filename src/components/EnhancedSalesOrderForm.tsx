@@ -469,6 +469,7 @@ export default function EnhancedSalesOrderForm({
                     inputClassName="h-12 text-base"
                     labelClassName="text-sm font-medium"
                   />
+                  <CustomerCreditWarning customerId={formData.customerId} pendingAmount={getTotalAmount()} />
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
