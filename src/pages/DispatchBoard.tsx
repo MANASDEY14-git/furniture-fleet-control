@@ -1,8 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Truck, AlertTriangle, CalendarClock, CalendarDays, HelpCircle, Phone } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Truck, AlertTriangle, CalendarClock, CalendarDays, HelpCircle, Phone, Check } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { useDispatchBoard, useDeliveryPerformance, type DispatchRow, type DispatchBucket } from '@/hooks/useDispatchBoard';
 import { useStoreContext } from '@/contexts/StoreContext';
