@@ -43,7 +43,8 @@ export function CustomerForm({
       email: formData.email || null,
       address: formData.address || null,
       gst_number: formData.gst_number || null,
-      notes: formData.notes || null
+      notes: formData.notes || null,
+      credit_limit: formData.credit_limit ? Number(formData.credit_limit) : 0
     });
     
     if (onSuccess) onSuccess();
