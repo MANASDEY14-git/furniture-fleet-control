@@ -63,6 +63,38 @@ export default function DispatchBoard() {
   const { activeStoreId } = useStoreContext();
   const { data: rows = [], isLoading } = useDispatchBoard();
   const { data: performance = [] } = useDeliveryPerformance(6);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [deliverRow, setDeliverRow] = useState<DispatchRow | null>(null);
+  const [delayReason, setDelayReason] = useState('');
+
+  const markDelivered = useMutation({
+    mutationFn: async ({ row, reason }: { row: DispatchRow; reason: string }) => {
+      const { error } = await supabase
+        .from('sales_orders')
+        .update({
+          delivery_status: 'Delivered',
+          delivered_at: new Date().toISOString(),
+          delivery_delay_reason: reason.trim() || null,
+        })
+        .eq('id', row.order_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dispatch-board'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-performance'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['followup-worklist'] });
+      toast({ title: 'Marked delivered', description: 'The dispatch board has been updated.' });
+      setDeliverRow(null);
+      setDelayReason('');
+    },
+    onError: (e: Error) =>
+      toast({ title: 'Could not update order', description: e.message, variant: 'destructive' }),
+  });
+
+  const isLate = (deliverRow?.days_overdue ?? 0) > 0;
+
 
   const grouped = useMemo(() => {
     const base: Record<DispatchBucket, DispatchRow[]> = { overdue: [], today: [], this_week: [], later: [], unscheduled: [] };
