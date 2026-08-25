@@ -223,15 +223,14 @@ export default function Sales({
 
   const content = (
     <div className="space-y-8">
-      {!hideHeader && (
-        <SalesHeader 
-          filteredOrders={filteredOrders}
-          dateFilter={dateFilter}
-          getStoreName={getStoreName}
-          getSupplierName={getSupplierName}
-          documentType={documentType}
-        />
-      )}
+      <SalesHeader 
+        filteredOrders={filteredOrders}
+        dateFilter={dateFilter}
+        getStoreName={getStoreName}
+        getSupplierName={getSupplierName}
+        documentType={documentType}
+        compact={hideHeader}
+      />
 
       {!hideTabs && (
         <Tabs value={documentType} onValueChange={(v) => setDocumentType(v as 'order' | 'quote')} className="w-full">
