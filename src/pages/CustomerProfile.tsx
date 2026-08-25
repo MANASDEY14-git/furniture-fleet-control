@@ -97,6 +97,7 @@ export default function CustomerProfile() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-0 space-y-6">
+          <CustomerCreditPanel customerId={customer.id} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 border-border/50">
               <CardHeader>
