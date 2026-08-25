@@ -12,6 +12,8 @@ import Dashboard from '@/pages/Dashboard';
 import Onboarding from '@/pages/Onboarding';
 import PendingApproval from '@/pages/PendingApproval';
 import DailyWorklist from './pages/DailyWorklist';
+import Collections from './pages/Collections';
+import DispatchBoard from './pages/DispatchBoard';
 import ReorderIntelligence from './pages/ReorderIntelligence';
 import Sales from '@/pages/Sales';
 import SalesIntelligence from '@/pages/SalesIntelligence';
