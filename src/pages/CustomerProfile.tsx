@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, User, Phone, Mail, MapPin, Building, FileText, Settings, Navigation } from 'lucide-react';
 import { CustomerAddressManager } from '@/components/customers/CustomerAddressManager';
 import { CustomerLedgerView } from '@/components/customers/CustomerLedgerView';
+import { CustomerCreditPanel } from '@/components/customers/CustomerCreditPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CustomerProfile() {
