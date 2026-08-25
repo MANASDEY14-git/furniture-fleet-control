@@ -821,6 +821,7 @@ export default function EnhancedSalesOrderForm({
                     inputClassName=""
                     labelClassName=""
                   />
+                  <CustomerCreditWarning customerId={formData.customerId} pendingAmount={getTotalAmount()} />
                   <div className="space-y-4">
                     {documentType !== 'quote' && (
                       <div className="space-y-2">
