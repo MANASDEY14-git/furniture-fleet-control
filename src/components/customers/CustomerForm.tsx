@@ -121,7 +121,22 @@ export function CustomerForm({
           placeholder="GSTIN (optional)"
         />
       </div>
-      
+
+      <div className="space-y-2">
+        <Label>Credit Limit</Label>
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          value={formData.credit_limit}
+          onChange={(e) => setFormData({...formData, credit_limit: e.target.value})}
+          placeholder="0 = no limit"
+        />
+        <p className="text-xs text-muted-foreground">
+          A warning shows on new orders once this customer owes more than this amount.
+        </p>
+      </div>
+
       <div className="space-y-2">
         <Label>Notes</Label>
         <Textarea 
