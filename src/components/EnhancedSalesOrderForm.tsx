@@ -32,6 +32,7 @@ import VariantSelector from '@/components/sales/VariantSelector';
 import BankAccountSelector from '@/components/BankAccountSelector';
 import CustomerSelector from '@/components/sales/CustomerSelector';
 import type { Customer } from '@/hooks/useCustomers';
+import { CustomerCreditWarning } from '@/components/customers/CustomerCreditWarning';
 interface ProductCustomization {
   componentId: string;
   componentName: string;
@@ -469,6 +470,7 @@ export default function EnhancedSalesOrderForm({
                     inputClassName="h-12 text-base"
                     labelClassName="text-sm font-medium"
                   />
+                  <CustomerCreditWarning customerId={formData.customerId} pendingAmount={getTotalAmount()} />
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
@@ -821,6 +823,7 @@ export default function EnhancedSalesOrderForm({
                     inputClassName=""
                     labelClassName=""
                   />
+                  <CustomerCreditWarning customerId={formData.customerId} pendingAmount={getTotalAmount()} />
                   <div className="space-y-4">
                     {documentType !== 'quote' && (
                       <div className="space-y-2">

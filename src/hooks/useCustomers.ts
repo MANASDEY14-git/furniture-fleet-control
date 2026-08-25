@@ -11,6 +11,7 @@ export interface Customer {
   address: string | null;
   gst_number: string | null;
   notes: string | null;
+  credit_limit: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +24,7 @@ export interface CreateCustomerData {
   address?: string | null;
   gst_number?: string | null;
   notes?: string | null;
+  credit_limit?: number | null;
 }
 
 export const useCustomers = (storeId?: string) => {

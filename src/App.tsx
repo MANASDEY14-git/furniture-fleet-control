@@ -12,6 +12,8 @@ import Dashboard from '@/pages/Dashboard';
 import Onboarding from '@/pages/Onboarding';
 import PendingApproval from '@/pages/PendingApproval';
 import DailyWorklist from './pages/DailyWorklist';
+import Collections from './pages/Collections';
+import DispatchBoard from './pages/DispatchBoard';
 import ReorderIntelligence from './pages/ReorderIntelligence';
 import Sales from '@/pages/Sales';
 import SalesIntelligence from '@/pages/SalesIntelligence';
@@ -75,6 +77,8 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/sales" element={<Sales />} />
                     <Route path="/daily-worklist" element={<DailyWorklist />} />
+                    <Route path="/collections" element={<Collections />} />
+                    <Route path="/dispatch-board" element={<DispatchBoard />} />
                     <Route path="/reorder" element={<ReorderIntelligence />} />
                     <Route path="/sales-intelligence" element={<SalesIntelligence />} />
                     <Route path="/delivery-calendar" element={<DeliveryCalendar />} />

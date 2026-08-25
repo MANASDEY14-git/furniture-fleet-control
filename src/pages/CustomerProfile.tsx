@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, User, Phone, Mail, MapPin, Building, FileText, Settings, Navigation } from 'lucide-react';
 import { CustomerAddressManager } from '@/components/customers/CustomerAddressManager';
 import { CustomerLedgerView } from '@/components/customers/CustomerLedgerView';
+import { CustomerCreditPanel } from '@/components/customers/CustomerCreditPanel';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CustomerProfile() {
@@ -97,6 +98,7 @@ export default function CustomerProfile() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-0 space-y-6">
+          <CustomerCreditPanel customerId={customer.id} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 border-border/50">
               <CardHeader>

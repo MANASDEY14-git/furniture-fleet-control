@@ -7,6 +7,8 @@ import {
   CreditCard, Store, Check, Sparkles, ShieldAlert, LifeBuoy,
   PhoneCall,
   PackageSearch,
+  Wallet,
+  Truck,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -42,6 +44,8 @@ const navigationGroups = [
     label: 'Sales',
     items: [
       { name: "Today's Follow-ups",   href: '/daily-worklist',        icon: PhoneCall    },
+      { name: 'Collections',           href: '/collections',            icon: Wallet       },
+      { name: 'Dispatch Board',        href: '/dispatch-board',         icon: Truck        },
       { name: 'Sales Intelligence', href: '/sales-intelligence', icon: Sparkles     },
       { name: 'Sales Orders',          href: '/sales',                  icon: ShoppingCart },
       { name: 'Customers',             href: '/customers',              icon: Users        },

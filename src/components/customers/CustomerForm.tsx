@@ -25,7 +25,8 @@ export function CustomerForm({
     email: '',
     address: '',
     gst_number: '',
-    notes: ''
+    notes: '',
+    credit_limit: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +43,8 @@ export function CustomerForm({
       email: formData.email || null,
       address: formData.address || null,
       gst_number: formData.gst_number || null,
-      notes: formData.notes || null
+      notes: formData.notes || null,
+      credit_limit: formData.credit_limit ? Number(formData.credit_limit) : 0
     });
     
     if (onSuccess) onSuccess();
@@ -119,7 +121,22 @@ export function CustomerForm({
           placeholder="GSTIN (optional)"
         />
       </div>
-      
+
+      <div className="space-y-2">
+        <Label>Credit Limit</Label>
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          value={formData.credit_limit}
+          onChange={(e) => setFormData({...formData, credit_limit: e.target.value})}
+          placeholder="0 = no limit"
+        />
+        <p className="text-xs text-muted-foreground">
+          A warning shows on new orders once this customer owes more than this amount.
+        </p>
+      </div>
+
       <div className="space-y-2">
         <Label>Notes</Label>
         <Textarea 

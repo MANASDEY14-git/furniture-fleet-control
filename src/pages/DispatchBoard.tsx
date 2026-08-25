@@ -1,8 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Truck, AlertTriangle, CalendarClock, CalendarDays, HelpCircle, Phone } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Truck, AlertTriangle, CalendarClock, CalendarDays, HelpCircle, Phone, Check } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { useDispatchBoard, useDeliveryPerformance, type DispatchRow, type DispatchBucket } from '@/hooks/useDispatchBoard';
 import { useStoreContext } from '@/contexts/StoreContext';
@@ -18,7 +24,7 @@ const COLUMNS: { key: DispatchBucket; label: string; hint: string; icon: typeof 
 const formatDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Not set';
 
-function OrderCard({ row }: { row: DispatchRow }) {
+function OrderCard({ row, onDeliver }: { row: DispatchRow; onDeliver: (row: DispatchRow) => void }) {
   return (
     <div className="rounded-xl border bg-card p-3 space-y-2">
       <div className="flex items-start justify-between gap-2">
@@ -39,11 +45,16 @@ function OrderCard({ row }: { row: DispatchRow }) {
         {row.delivery_status && <Badge variant="secondary">{row.delivery_status}</Badge>}
       </div>
       {row.customer_address && <p className="text-[11px] text-muted-foreground line-clamp-2">{row.customer_address}</p>}
-      {row.customer_phone && (
-        <Button size="sm" variant="outline" asChild className="h-7 px-2">
-          <a href={`tel:${row.customer_phone}`}><Phone className="h-3 w-3 mr-1" /> Call</a>
+      <div className="flex gap-2">
+        {row.customer_phone && (
+          <Button size="sm" variant="outline" asChild className="h-7 px-2">
+            <a href={`tel:${row.customer_phone}`}><Phone className="h-3 w-3 mr-1" /> Call</a>
+          </Button>
+        )}
+        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => onDeliver(row)}>
+          <Check className="h-3 w-3 mr-1" /> Delivered
         </Button>
-      )}
+      </div>
     </div>
   );
 }
@@ -52,6 +63,38 @@ export default function DispatchBoard() {
   const { activeStoreId } = useStoreContext();
   const { data: rows = [], isLoading } = useDispatchBoard();
   const { data: performance = [] } = useDeliveryPerformance(6);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [deliverRow, setDeliverRow] = useState<DispatchRow | null>(null);
+  const [delayReason, setDelayReason] = useState('');
+
+  const markDelivered = useMutation({
+    mutationFn: async ({ row, reason }: { row: DispatchRow; reason: string }) => {
+      const { error } = await supabase
+        .from('sales_orders')
+        .update({
+          delivery_status: 'Delivered',
+          delivered_at: new Date().toISOString(),
+          delivery_delay_reason: reason.trim() || null,
+        })
+        .eq('id', row.order_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dispatch-board'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-performance'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['followup-worklist'] });
+      toast({ title: 'Marked delivered', description: 'The dispatch board has been updated.' });
+      setDeliverRow(null);
+      setDelayReason('');
+    },
+    onError: (e: Error) =>
+      toast({ title: 'Could not update order', description: e.message, variant: 'destructive' }),
+  });
+
+  const isLate = (deliverRow?.days_overdue ?? 0) > 0;
+
 
   const grouped = useMemo(() => {
     const base: Record<DispatchBucket, DispatchRow[]> = { overdue: [], today: [], this_week: [], later: [], unscheduled: [] };
@@ -127,7 +170,9 @@ export default function DispatchBoard() {
                   {!list.length ? (
                     <p className="text-xs text-muted-foreground">Nothing here.</p>
                   ) : (
-                    list.map((r) => <OrderCard key={r.order_id} row={r} />)
+                    list.map((r) => (
+                      <OrderCard key={r.order_id} row={r} onDeliver={(row) => { setDeliverRow(row); setDelayReason(''); }} />
+                    ))
                   )}
                 </CardContent>
               </Card>
@@ -153,6 +198,39 @@ export default function DispatchBoard() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!deliverRow} onOpenChange={(open) => { if (!open) { setDeliverRow(null); setDelayReason(''); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mark #{deliverRow?.order_number} delivered</DialogTitle>
+            <DialogDescription>
+              {isLate
+                ? `This order is ${deliverRow?.days_overdue} day(s) past the promised date. Record why so the pattern is visible later.`
+                : 'Delivered on or before the promised date. Nothing else needed.'}
+            </DialogDescription>
+          </DialogHeader>
+          {isLate && (
+            <div className="space-y-2">
+              <Label>Reason for the delay {isLate && <span className="text-red-600">*</span>}</Label>
+              <Textarea
+                value={delayReason}
+                onChange={(e) => setDelayReason(e.target.value)}
+                placeholder="e.g. Fabric arrived late from supplier, vehicle breakdown, customer postponed"
+                className="resize-none"
+              />
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDeliverRow(null)}>Cancel</Button>
+            <Button
+              disabled={markDelivered.isPending || (isLate && !delayReason.trim())}
+              onClick={() => deliverRow && markDelivered.mutate({ row: deliverRow, reason: delayReason })}
+            >
+              Confirm delivered
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
