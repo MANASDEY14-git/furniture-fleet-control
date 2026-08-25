@@ -10,6 +10,7 @@ interface SalesHeaderProps {
   getStoreName: (storeId: string) => string;
   getSupplierName: (supplierId: string) => string;
   documentType?: 'order' | 'quote';
+  compact?: boolean;
 }
 import { useYearGuard } from '@/contexts/FinancialYearContext';
 
