@@ -45,11 +45,16 @@ function OrderCard({ row, onDeliver }: { row: DispatchRow; onDeliver: (row: Disp
         {row.delivery_status && <Badge variant="secondary">{row.delivery_status}</Badge>}
       </div>
       {row.customer_address && <p className="text-[11px] text-muted-foreground line-clamp-2">{row.customer_address}</p>}
-      {row.customer_phone && (
-        <Button size="sm" variant="outline" asChild className="h-7 px-2">
-          <a href={`tel:${row.customer_phone}`}><Phone className="h-3 w-3 mr-1" /> Call</a>
+      <div className="flex gap-2">
+        {row.customer_phone && (
+          <Button size="sm" variant="outline" asChild className="h-7 px-2">
+            <a href={`tel:${row.customer_phone}`}><Phone className="h-3 w-3 mr-1" /> Call</a>
+          </Button>
+        )}
+        <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => onDeliver(row)}>
+          <Check className="h-3 w-3 mr-1" /> Delivered
         </Button>
-      )}
+      </div>
     </div>
   );
 }
