@@ -198,6 +198,39 @@ export default function DispatchBoard() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!deliverRow} onOpenChange={(open) => { if (!open) { setDeliverRow(null); setDelayReason(''); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mark #{deliverRow?.order_number} delivered</DialogTitle>
+            <DialogDescription>
+              {isLate
+                ? `This order is ${deliverRow?.days_overdue} day(s) past the promised date. Record why so the pattern is visible later.`
+                : 'Delivered on or before the promised date. Nothing else needed.'}
+            </DialogDescription>
+          </DialogHeader>
+          {isLate && (
+            <div className="space-y-2">
+              <Label>Reason for the delay {isLate && <span className="text-red-600">*</span>}</Label>
+              <Textarea
+                value={delayReason}
+                onChange={(e) => setDelayReason(e.target.value)}
+                placeholder="e.g. Fabric arrived late from supplier, vehicle breakdown, customer postponed"
+                className="resize-none"
+              />
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDeliverRow(null)}>Cancel</Button>
+            <Button
+              disabled={markDelivered.isPending || (isLate && !delayReason.trim())}
+              onClick={() => deliverRow && markDelivered.mutate({ row: deliverRow, reason: delayReason })}
+            >
+              Confirm delivered
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
