@@ -7,6 +7,8 @@ import {
   CreditCard, Store, Check, Sparkles, ShieldAlert, LifeBuoy,
   PhoneCall,
   PackageSearch,
+  Wallet,
+  Truck,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
