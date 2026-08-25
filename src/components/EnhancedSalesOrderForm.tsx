@@ -32,6 +32,7 @@ import VariantSelector from '@/components/sales/VariantSelector';
 import BankAccountSelector from '@/components/BankAccountSelector';
 import CustomerSelector from '@/components/sales/CustomerSelector';
 import type { Customer } from '@/hooks/useCustomers';
+import { CustomerCreditWarning } from '@/components/customers/CustomerCreditWarning';
 interface ProductCustomization {
   componentId: string;
   componentName: string;
