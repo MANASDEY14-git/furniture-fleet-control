@@ -18,7 +18,11 @@ import MobileFloatingActionButton from '@/components/mobile/MobileFloatingAction
 
 const STORAGE_KEY = 'erp-selected-supplier';
 
-export default function Suppliers() {
+export default function Suppliers({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const { data: suppliers = [], isLoading } = useSuppliers();
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const [filters, setFilters] = useState<FilterState>({ search: '', status: 'all', store: 'all', sort: 'name' });
@@ -182,7 +186,7 @@ export default function Suppliers() {
       <div className="flex flex-col h-[calc(100vh-4rem)] -mx-4">
         {/* Sticky header block - merged Header + Stats + Search */}
         <div className="sticky top-0 z-20 bg-background border-b px-3 pb-2">
-          <SupplierHeader isMobile />
+          <SupplierHeader isMobile hideTitle={hideHeader} />
           <SupplierStatsBar data={summaryData} isMobile />
           <SupplierFilters
             filters={filters}
@@ -248,7 +252,7 @@ export default function Suppliers() {
   // Desktop layout
   return (
     <div className="flex flex-col h-[calc(100vh-theme(spacing.16))]">
-      <SupplierHeader isMobile={false} />
+      <SupplierHeader isMobile={false} hideTitle={hideHeader} />
       <SupplierStatsBar data={summaryData} isMobile={false} />
       <SupplierFilters
         filters={filters}

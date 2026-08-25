@@ -23,7 +23,11 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import { useFinancialYear } from '@/contexts/FinancialYearContext';
 import { useYearGuard } from '@/contexts/FinancialYearContext';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
-export default function Purchases() {
+export default function Purchases({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const isMobile = useIsMobile();
   const { readOnly } = useYearGuard();
   const { activeStoreId, accessibleStores } = useStoreContext();
@@ -90,10 +94,12 @@ export default function Purchases() {
     return (
       <PullToRefresh onRefresh={async () => { await refetch(); }}>
         <div className="space-y-4 p-4 pb-24">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Purchases</h1>
-          <p className="text-muted-foreground text-sm">Track your orders</p>
-        </div>
+        {!hideHeader && (
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-foreground">Purchases</h1>
+            <p className="text-muted-foreground text-sm">Track your orders</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <Card>
@@ -200,10 +206,14 @@ export default function Purchases() {
   }
   return <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Purchase Management</h1>
-          <p className="text-muted-foreground">Track and manage all purchase orders</p>
-        </div>
+        {!hideHeader ? (
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Purchase Management</h1>
+            <p className="text-muted-foreground">Track and manage all purchase orders</p>
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="flex gap-2">
           <ExportButton data={filteredPurchases.map(purchase => ({
           'Date': new Date(purchase.date).toLocaleDateString('en-GB'),

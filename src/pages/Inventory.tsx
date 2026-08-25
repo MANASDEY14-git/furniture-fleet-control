@@ -22,7 +22,13 @@ import ItemForm from '@/components/ItemForm';
 import { ErrorBoundary, QueryErrorFallback } from '@/components/ui/error-boundary';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function Inventory() {
+export default function Inventory({
+  hideHeader = false,
+  onSelectLedgerItem
+}: {
+  hideHeader?: boolean;
+  onSelectLedgerItem?: (itemId: string) => void;
+}) {
   const { activeStoreId, accessibleStores } = useStoreContext();
   const [searchTerm, setSearchTerm] = useState('');
   const { data: categories = [] } = useCategories();
@@ -138,6 +144,7 @@ export default function Inventory() {
                   suppliers={suppliers}
                   selectedItems={selectedItems}
                   onClearSelection={handleClearSelection}
+                  hideTitle={hideHeader}
                 />
 
                 {/* Mobile Alert Banner */}
@@ -201,6 +208,7 @@ export default function Inventory() {
                   suppliers={suppliers}
                   selectedItems={selectedItems}
                   onClearSelection={handleClearSelection}
+                  hideTitle={hideHeader}
                 />
                 <ItemForm 
                   trigger={
@@ -227,6 +235,7 @@ export default function Inventory() {
                   isLoading={isLoading}
                   pagination={pagination}
                   onPageChange={goToPage}
+                  onSelectLedgerItem={onSelectLedgerItem}
                 />
               </div>
             </div>

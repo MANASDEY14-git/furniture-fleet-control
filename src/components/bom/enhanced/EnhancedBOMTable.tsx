@@ -17,9 +17,10 @@ interface EnhancedBOMTableProps {
   selectedCategory: string;
   selectedStore?: string;
   onSelectItem?: (item: { id: string; name: string }) => void;
+  selectedMaterialId?: string | null;
 }
 
-export function EnhancedBOMTable({ searchTerm, selectedCategory, selectedStore, onSelectItem }: EnhancedBOMTableProps) {
+export function EnhancedBOMTable({ searchTerm, selectedCategory, selectedStore, onSelectItem, selectedMaterialId }: EnhancedBOMTableProps) {
   const [selectedBOM, setSelectedBOM] = useState<BOMListItem | null>(null);
   const [showWizard, setShowWizard] = useState(false);
   const [selectedItemForEdit, setSelectedItemForEdit] = useState<{ id: string; name: string; bomId?: string } | null>(null);
@@ -40,13 +41,19 @@ export function EnhancedBOMTable({ searchTerm, selectedCategory, selectedStore, 
   // Get item IDs for the selected store
   const storeItemIds = new Set(items.map(item => item.id));
 
-  // Filter BOMs based on status filter AND store filter
+  // Filter BOMs based on status filter AND store filter AND selected material
   const filteredBOMList = bomList.filter(bom => {
     // First check store filter - only show BOMs for items in the selected store
     if (selectedStore && selectedStore !== 'all') {
       if (!storeItemIds.has(bom.item_id)) {
         return false;
       }
+    }
+    
+    // Check material filter if selectedMaterialId is passed
+    if (selectedMaterialId) {
+      const hasMaterial = bom.bom_components?.some((comp: any) => comp.material_id === selectedMaterialId);
+      if (!hasMaterial) return false;
     }
     
     // Then check status filter

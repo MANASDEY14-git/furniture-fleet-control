@@ -139,7 +139,11 @@ function FollowupCard({ row, onLog }: { row: FollowupRow; onLog: (row: FollowupR
   );
 }
 
-export default function DailyWorklist() {
+export default function DailyWorklist({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const { activeStoreId } = useStoreContext();
   const { data: rows = [], isLoading } = useFollowupWorklist();
   const logFollowup = useLogFollowup();
@@ -203,12 +207,14 @@ export default function DailyWorklist() {
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Today's Follow-ups</h1>
-        <p className="text-muted-foreground text-sm">
-          The short list of customers to call today. Cancelled orders are never shown here.
-        </p>
-      </div>
+      {!hideHeader && (
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Today's Follow-ups</h1>
+          <p className="text-muted-foreground text-sm">
+            The short list of customers to call today. Cancelled orders are never shown here.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {(Object.keys(KIND_META) as FollowupKind[]).map((kind) => {

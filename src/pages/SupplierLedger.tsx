@@ -107,7 +107,11 @@ function MobileTransactionCard({
   );
 }
 
-export default function SupplierLedger() {
+export default function SupplierLedger({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [selectedStore, setSelectedStore] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -264,13 +268,17 @@ export default function SupplierLedger() {
     <div className="space-y-4 md:space-y-6 pb-20 md:pb-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold glow-text flex items-center gap-2">
-            <FileText className="h-6 w-6 md:h-8 md:w-8" />
-            Supplier Ledger
-          </h1>
-          <p className="text-sm md:text-base text-blue-300">Transaction history with running balance</p>
-        </div>
+        {!hideHeader ? (
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold glow-text flex items-center gap-2">
+              <FileText className="h-6 w-6 md:h-8 md:w-8" />
+              Supplier Ledger
+            </h1>
+            <p className="text-sm md:text-base text-blue-300">Transaction history with running balance</p>
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="flex gap-2">
           {isMobile && (
             <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>

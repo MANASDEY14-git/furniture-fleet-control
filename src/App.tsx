@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -11,34 +11,21 @@ import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import Onboarding from '@/pages/Onboarding';
 import PendingApproval from '@/pages/PendingApproval';
-import DailyWorklist from './pages/DailyWorklist';
-import Collections from './pages/Collections';
-import DispatchBoard from './pages/DispatchBoard';
-import ReorderIntelligence from './pages/ReorderIntelligence';
-import Sales from '@/pages/Sales';
 import SalesIntelligence from '@/pages/SalesIntelligence';
-import DeliveryCalendar from '@/pages/DeliveryCalendar';
 import EnhancedPayments from '@/pages/EnhancedPayments';
-import Inventory from '@/pages/Inventory';
-import InventoryIntelligence from '@/pages/InventoryIntelligence';
-import Purchases from '@/pages/Purchases';
-import Payments from '@/pages/Payments';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
-import Suppliers from '@/pages/Suppliers';
-import SupplierLedger from '@/pages/SupplierLedger';
-import Materials from '@/pages/Materials';
-import MaterialPurchases from '@/pages/MaterialPurchases';
-import MaterialStockLedger from '@/pages/MaterialStockLedger';
-import StockLedger from '@/pages/StockLedger';
-import BOMManagement from '@/pages/BOMManagement';
-import BankBook from '@/pages/BankBook';
 import Customers from '@/pages/Customers';
 import CustomerProfile from '@/pages/CustomerProfile';
 import NotFound from '@/pages/NotFound';
 import CommandCenter from '@/pages/CommandCenter';
-import Help from '@/pages/Help';
 import { AssistantBubble } from '@/components/ai-assistant/AssistantBubble';
+import MaterialsHub from '@/pages/hubs/MaterialsHub';
+import InventoryHub from '@/pages/hubs/InventoryHub';
+import PurchasingHub from '@/pages/hubs/PurchasingHub';
+import WorkHub from '@/pages/hubs/WorkHub';
+import SalesHub from '@/pages/hubs/SalesHub';
+import FinanceHub from '@/pages/hubs/FinanceHub';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -73,37 +60,47 @@ function App() {
                   <FinancialYearProvider>
                   <Layout>
                     <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/sales" element={<Sales />} />
-                    <Route path="/daily-worklist" element={<DailyWorklist />} />
-                    <Route path="/collections" element={<Collections />} />
-                    <Route path="/dispatch-board" element={<DispatchBoard />} />
-                    <Route path="/reorder" element={<ReorderIntelligence />} />
-                    <Route path="/sales-intelligence" element={<SalesIntelligence />} />
-                    <Route path="/delivery-calendar" element={<DeliveryCalendar />} />
-                    <Route path="/enhanced-payments" element={<EnhancedPayments />} />
-                    <Route path="/inventory" element={<Inventory />} />
-                    <Route path="/inventory-intelligence" element={<InventoryIntelligence />} />
-                    <Route path="/purchases" element={<Purchases />} />
-                    <Route path="/payments" element={<Payments />} />
-                    <Route path="/suppliers" element={<Suppliers />} />
-                    <Route path="/supplier-ledger" element={<SupplierLedger />} />
-                    <Route path="/materials" element={<Materials />} />
-                    <Route path="/material-purchases" element={<MaterialPurchases />} />
-                    <Route path="/material-stock-ledger" element={<MaterialStockLedger />} />
-                    <Route path="/bom-management" element={<BOMManagement />} />
-                    <Route path="/stock-ledger" element={<StockLedger />} />
-                    <Route path="/bank-book" element={<BankBook />} />
-                    <Route path="/customers" element={<Customers />} />
-                    <Route path="/customers/:id" element={<CustomerProfile />} />
-                    <Route path="/reports" element={<Reports />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/command-center" element={<CommandCenter />} />
-                    <Route path="/help" element={<Help />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      
+                      {/* Hubs */}
+                      <Route path="/sales" element={<SalesHub />} />
+                      <Route path="/work" element={<WorkHub />} />
+                      <Route path="/inventory" element={<InventoryHub />} />
+                      <Route path="/purchasing" element={<PurchasingHub />} />
+                      <Route path="/materials" element={<MaterialsHub />} />
+                      <Route path="/finance" element={<FinanceHub />} />
+
+                      {/* Standalone pages */}
+                      <Route path="/sales-intelligence" element={<SalesIntelligence />} />
+                      <Route path="/enhanced-payments" element={<EnhancedPayments />} />
+                      <Route path="/customers" element={<Customers />} />
+                      <Route path="/customers/:id" element={<CustomerProfile />} />
+                      <Route path="/reports" element={<Reports />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/command-center" element={<CommandCenter />} />
+
+                      {/* Old Redirects */}
+                      <Route path="/material-purchases" element={<Navigate to="/materials?tab=purchases" replace />} />
+                      <Route path="/material-stock-ledger" element={<Navigate to="/materials?tab=ledger" replace />} />
+                      <Route path="/bom-management" element={<Navigate to="/materials?tab=bom" replace />} />
+                      <Route path="/inventory-intelligence" element={<Navigate to="/inventory?tab=intelligence" replace />} />
+                      <Route path="/stock-ledger" element={<Navigate to="/inventory?tab=ledger" replace />} />
+                      <Route path="/purchases" element={<Navigate to="/purchasing?tab=purchases" replace />} />
+                      <Route path="/reorder" element={<Navigate to="/purchasing?tab=reorder" replace />} />
+                      <Route path="/suppliers" element={<Navigate to="/purchasing?tab=suppliers" replace />} />
+                      <Route path="/supplier-ledger" element={<Navigate to="/purchasing?tab=ledger" replace />} />
+                      <Route path="/daily-worklist" element={<Navigate to="/work?tab=followups" replace />} />
+                      <Route path="/collections" element={<Navigate to="/work?tab=collections" replace />} />
+                      <Route path="/dispatch-board" element={<Navigate to="/work?tab=dispatch" replace />} />
+                      <Route path="/delivery-calendar" element={<Navigate to="/work?tab=delivery" replace />} />
+                      <Route path="/payments" element={<Navigate to="/finance?tab=payments" replace />} />
+                      <Route path="/bank-book" element={<Navigate to="/finance?tab=bank-book" replace />} />
+                      <Route path="/help" element={<Navigate to="/settings?tab=help" replace />} />
+
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Layout>
                   </FinancialYearProvider>
                 </StoreProvider>
               </ProtectedRoute>

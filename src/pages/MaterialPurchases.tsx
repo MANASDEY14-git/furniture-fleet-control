@@ -13,7 +13,13 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import MultiMaterialPurchaseForm from '@/components/MultiMaterialPurchaseForm';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useYearGuard } from '@/contexts/FinancialYearContext';
-export default function MaterialPurchases() {
+export default function MaterialPurchases({
+  hideHeader = false,
+  selectedMaterialId
+}: {
+  hideHeader?: boolean;
+  selectedMaterialId?: string | null;
+}) {
   const isMobile = useIsMobile();
   const { readOnly } = useYearGuard();
   const [selectedStoreId, setSelectedStoreId] = useState<string>('');
@@ -30,9 +36,10 @@ export default function MaterialPurchases() {
     data: suppliers = []
   } = useSuppliers();
   const filteredPurchases = purchases.filter(purchase => {
+    const matchesMaterial = !selectedMaterialId || purchase.material_id === selectedMaterialId;
     const matchesSearch = purchase.materials.name.toLowerCase().includes(searchTerm.toLowerCase()) || purchase.invoice_number && purchase.invoice_number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSupplier = !selectedSupplierId || purchase.supplier_id === selectedSupplierId;
-    return matchesSearch && matchesSupplier;
+    return matchesMaterial && matchesSearch && matchesSupplier;
   });
 
   // Calculate summary metrics
@@ -92,10 +99,17 @@ export default function MaterialPurchases() {
   return <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Header */}
       <div className="flex flex-col gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-cyan-300 glow-text">Material Purchases</h1>
-          <p className="text-sm md:text-base text-blue-200">Track all raw material purchases and invoices</p>
-        </div>
+        {!hideHeader && (
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-cyan-300 glow-text">Material Purchases</h1>
+            <p className="text-sm md:text-base text-blue-200">Track all raw material purchases and invoices</p>
+          </div>
+        )}
+        {selectedMaterialId && filteredPurchases.length > 0 && (
+          <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg text-sm text-blue-200">
+            Showing purchases for selected material: <span className="font-semibold text-cyan-300">{filteredPurchases[0]?.materials.name}</span>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
             <SelectTrigger className="w-full sm:w-[200px] neon-border bg-slate-800/50 text-blue-100">

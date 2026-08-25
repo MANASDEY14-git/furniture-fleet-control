@@ -20,8 +20,23 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 
-export default function StockLedger() {
-  const [selectedItem, setSelectedItem] = useState<string>('all');
+import { useEffect } from 'react';
+
+export default function StockLedger({
+  hideHeader = false,
+  selectedItemId
+}: {
+  hideHeader?: boolean;
+  selectedItemId?: string | null;
+}) {
+  const [selectedItem, setSelectedItem] = useState<string>(selectedItemId || 'all');
+  
+  useEffect(() => {
+    if (selectedItemId) {
+      setSelectedItem(selectedItemId);
+    }
+  }, [selectedItemId]);
+
   const [selectedStore, setSelectedStore] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'year' | 'custom'>('year');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
@@ -139,9 +154,25 @@ export default function StockLedger() {
   const mobileContent = (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-xl sm:text-2xl font-bold text-white">Stock Ledger</h1>
-        <div className="flex flex-wrap items-center gap-2">
+      {!hideHeader ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Stock Ledger</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <ExportButton 
+              data={stockData} 
+              filename={`stock-ledger-${format(new Date(), 'yyyy-MM-dd')}`} 
+              type="stock-ledger" 
+            />
+            <ItemOpeningBalanceDialog 
+              defaultItemId={selectedItem === 'all' ? undefined : selectedItem}
+              defaultStoreId={selectedStore === 'all' ? undefined : selectedStore}
+              items={items}
+            />
+            <StockAdjustmentDialog items={items} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <ExportButton 
             data={stockData} 
             filename={`stock-ledger-${format(new Date(), 'yyyy-MM-dd')}`} 
@@ -154,7 +185,7 @@ export default function StockLedger() {
           />
           <StockAdjustmentDialog items={items} />
         </div>
-      </div>
+      )}
 
       {/* Filters */}
       <Card className="bg-slate-800/50 border-blue-500/30">

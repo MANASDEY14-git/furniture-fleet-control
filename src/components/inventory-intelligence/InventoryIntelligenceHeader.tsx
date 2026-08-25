@@ -8,6 +8,7 @@ interface InventoryIntelligenceHeaderProps {
   isLoading: boolean;
   onRefresh: () => void;
   activeStoreName?: string;
+  hideTitle?: boolean;
 }
 
 export function InventoryIntelligenceHeader({
@@ -15,30 +16,35 @@ export function InventoryIntelligenceHeader({
   isLoading,
   onRefresh,
   activeStoreName = 'All Stores',
+  hideTitle = false,
 }: InventoryIntelligenceHeaderProps) {
   const lastUpdated = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4 print:hidden">
-      <div>
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Inventory Intelligence Dashboard
-            </h1>
-            <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-              <span>Real-time stock velocity, hero products & cash-lock analytics</span>
-              <span className="inline-block h-1 w-1 rounded-full bg-muted-foreground" />
-              <span>Store: <strong className="text-foreground font-medium">{activeStoreName}</strong></span>
-              <span className="inline-block h-1 w-1 rounded-full bg-muted-foreground" />
-              <span>Updated: {lastUpdated}</span>
-            </p>
+      {!hideTitle ? (
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Inventory Intelligence Dashboard
+              </h1>
+              <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                <span>Real-time stock velocity, hero products & cash-lock analytics</span>
+                <span className="inline-block h-1 w-1 rounded-full bg-muted-foreground" />
+                <span>Store: <strong className="text-foreground font-medium">{activeStoreName}</strong></span>
+                <span className="inline-block h-1 w-1 rounded-full bg-muted-foreground" />
+                <span>Updated: {lastUpdated}</span>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div />
+      )}
 
       <div className="flex items-center gap-2">
         <Button

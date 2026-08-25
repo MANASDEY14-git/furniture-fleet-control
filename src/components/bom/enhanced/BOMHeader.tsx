@@ -11,6 +11,7 @@ interface BOMHeaderProps {
   onCreateNew: () => void;
   onViewAnalytics: () => void;
   onViewTemplates: () => void;
+  hideTitle?: boolean;
 }
 
 export function BOMHeader({
@@ -21,21 +22,50 @@ export function BOMHeader({
   onCreateNew,
   onViewAnalytics,
   onViewTemplates,
+  hideTitle = false,
 }: BOMHeaderProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Enhanced BOM Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage product components, materials, and cost analysis with advanced features
-          </p>
+      {!hideTitle ? (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Enhanced BOM Management
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage product components, materials, and cost analysis with advanced features
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={onViewTemplates}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Templates
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={onViewAnalytics}
+              className="gap-2"
+            >
+              <Calculator className="h-4 w-4" />
+              Analytics
+            </Button>
+            <Button 
+              onClick={onCreateNew}
+              className="gap-2 bg-primary hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              Create BOM
+            </Button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-3">
+      ) : (
+        <div className="flex justify-end gap-3">
           <Button 
             variant="outline" 
             onClick={onViewTemplates}
@@ -60,7 +90,7 @@ export function BOMHeader({
             Create BOM
           </Button>
         </div>
-      </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

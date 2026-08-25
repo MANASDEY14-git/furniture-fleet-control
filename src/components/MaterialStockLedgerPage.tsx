@@ -14,10 +14,23 @@ import { supabase } from '@/integrations/supabase/client';
 import MaterialStockMovementDetailsDialog from '@/components/MaterialStockMovementDetailsDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export default function MaterialStockLedgerPage() {
+export default function MaterialStockLedgerPage({
+  hideHeader = false,
+  selectedMaterialId
+}: {
+  hideHeader?: boolean;
+  selectedMaterialId?: string | null;
+}) {
   const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMaterial, setSelectedMaterial] = useState<string>('all');
+  const [selectedMaterial, setSelectedMaterial] = useState<string>(selectedMaterialId || 'all');
+  
+  useEffect(() => {
+    if (selectedMaterialId) {
+      setSelectedMaterial(selectedMaterialId);
+    }
+  }, [selectedMaterialId]);
+
   const [movementTypeFilter, setMovementTypeFilter] = useState<string>('all');
 
   const { data: materials = [] } = useMaterials();
@@ -124,10 +137,12 @@ export default function MaterialStockLedgerPage() {
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-cyan-300 glow-text">Material Stock Ledger</h1>
-        <p className="text-sm md:text-base text-blue-200">Track all material stock movements</p>
-      </div>
+      {!hideHeader && (
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-cyan-300 glow-text">Material Stock Ledger</h1>
+          <p className="text-sm md:text-base text-blue-200">Track all material stock movements</p>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">

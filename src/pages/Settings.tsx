@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import Help from './Help';
 import {
   Plus, Pencil, Trash2, Settings as SettingsIcon, Building2, Wrench,
   Bot, Send, RefreshCw, Clock, Sparkles, Key, Check, Info, ShieldAlert,
@@ -54,6 +56,13 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Settings() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'registry';
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value }, { replace: true });
+  };
+
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const { data: bankAccounts = [], isLoading: bankAccountsLoading } = useAllBankAccounts();
@@ -101,12 +110,13 @@ export default function Settings() {
         </div>
       </div>
 
-      <Tabs defaultValue="registry" className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 max-w-2xl bg-muted/60 p-1 border rounded-xl">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 max-w-3xl bg-muted/60 p-1 border rounded-xl">
           <TabsTrigger value="registry" className="font-semibold text-xs py-2 rounded-lg">Store Registry</TabsTrigger>
           <TabsTrigger value="agents" className="font-semibold text-xs py-2 rounded-lg">Agents & Briefs</TabsTrigger>
           <TabsTrigger value="telegram" className="font-semibold text-xs py-2 rounded-lg">Telegram Bot</TabsTrigger>
           <TabsTrigger value="events" className="font-semibold text-xs py-2 rounded-lg">System Logs</TabsTrigger>
+          <TabsTrigger value="help" className="font-semibold text-xs py-2 rounded-lg">Help Guide</TabsTrigger>
         </TabsList>
 
         {/* TAB 1: STORE REGISTRY */}
@@ -494,6 +504,11 @@ export default function Settings() {
         {/* TAB 4: SYSTEM LOGS */}
         <TabsContent value="events" className="space-y-6">
           <SystemEventsLog storeId={currentStoreId} />
+        </TabsContent>
+
+        {/* TAB 5: HELP GUIDE */}
+        <TabsContent value="help" className="space-y-6">
+          <Help />
         </TabsContent>
       </Tabs>
     </div>

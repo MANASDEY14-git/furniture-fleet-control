@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Pencil, Trash2, AlertTriangle, ChevronRight, Package } from 'lucide-react';
+import { Pencil, Trash2, AlertTriangle, ChevronRight, Package, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -36,6 +36,7 @@ interface InventoryTableProps {
     hasPrevious: boolean;
   };
   onPageChange?: (page: number) => void;
+  onSelectLedgerItem?: (itemId: string) => void;
 }
 
 const calculateStockAge = (stockReceiveDate?: string) => {
@@ -77,6 +78,7 @@ function ItemRowWithVariants({
   onItemSelection: (id: string, checked: boolean) => void;
   onToggleExpand: (id: string) => void;
   onDeleteItem: (id: string) => void;
+  onSelectLedgerItem?: (itemId: string) => void;
 }) {
   const { data: variants = [] } = useItemVariants(item.id);
   const hasVariants = variants.length > 0;
@@ -162,6 +164,17 @@ function ItemRowWithVariants({
                 </Button>
               }
             />
+            {onSelectLedgerItem && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40"
+                onClick={() => onSelectLedgerItem(item.id)}
+                title="View Stock Ledger"
+              >
+                <Activity className="w-4 h-4" />
+              </Button>
+            )}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
@@ -202,7 +215,8 @@ export default function InventoryTable({
   onDeleteItem,
   isLoading,
   pagination,
-  onPageChange
+  onPageChange,
+  onSelectLedgerItem
 }: InventoryTableProps) {
   const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price' | 'age'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -376,6 +390,7 @@ export default function InventoryTable({
                   onItemSelection={onItemSelection}
                   onToggleExpand={toggleExpand}
                   onDeleteItem={onDeleteItem}
+                  onSelectLedgerItem={onSelectLedgerItem}
                 />
               );
             })}

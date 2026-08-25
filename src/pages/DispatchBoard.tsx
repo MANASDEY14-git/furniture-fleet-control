@@ -59,7 +59,11 @@ function OrderCard({ row, onDeliver }: { row: DispatchRow; onDeliver: (row: Disp
   );
 }
 
-export default function DispatchBoard() {
+export default function DispatchBoard({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const { activeStoreId } = useStoreContext();
   const { data: rows = [], isLoading } = useDispatchBoard();
   const { data: performance = [] } = useDeliveryPerformance(6);
@@ -115,10 +119,12 @@ export default function DispatchBoard() {
 
   return (
     <div className="p-4 md:p-6 space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dispatch board</h1>
-        <p className="text-sm text-muted-foreground">Every order still to go out, grouped by the date you promised the customer.</p>
-      </div>
+      {!hideHeader && (
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dispatch board</h1>
+          <p className="text-sm text-muted-foreground">Every order still to go out, grouped by the date you promised the customer.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card className="rounded-2xl shadow-sm">

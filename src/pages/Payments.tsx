@@ -25,7 +25,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useYearGuard } from '@/contexts/FinancialYearContext';
 import type { DateFilter } from '@/hooks/useEnhancedDashboardMetrics';
 
-export default function Payments() {
+export default function Payments({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const isMobile = useIsMobile();
   const { readOnly } = useYearGuard();
   const { activeStoreId, accessibleStores } = useStoreContext();
@@ -223,12 +227,16 @@ export default function Payments() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold glow-text">Payments Management</h1>
-          <p className="text-sm sm:text-base text-blue-300">
-            Unified view of vendor payments, receipts, and customer outstanding balances
-          </p>
-        </div>
+        {!hideHeader ? (
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold glow-text">Payments Management</h1>
+            <p className="text-sm sm:text-base text-blue-300">
+              Unified view of vendor payments, receipts, and customer outstanding balances
+            </p>
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="flex flex-wrap items-center gap-3">
           <ExportButton
             data={filteredPayments.map(p => ({

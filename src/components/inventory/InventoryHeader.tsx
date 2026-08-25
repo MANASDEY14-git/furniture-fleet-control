@@ -26,6 +26,7 @@ interface InventoryHeaderProps {
   suppliers: Supplier[];
   selectedItems: string[];
   onClearSelection: () => void;
+  hideTitle?: boolean;
 }
 
 export default function InventoryHeader({
@@ -43,20 +44,37 @@ export default function InventoryHeader({
   categories,
   suppliers,
   selectedItems,
-  onClearSelection
+  onClearSelection,
+  hideTitle = false
 }: InventoryHeaderProps) {
   const isMobile = useIsMobile();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex-1">
       {/* Title and selection info */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Package className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Inventory</h1>
+      {!hideTitle ? (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Package className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Inventory</h1>
+          </div>
+          {selectedItems.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {selectedItems.length} selected
+              </span>
+              <button 
+                onClick={onClearSelection}
+                className="text-xs text-primary hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          )}
         </div>
-        {selectedItems.length > 0 && (
-          <div className="flex items-center gap-2">
+      ) : (
+        selectedItems.length > 0 && (
+          <div className="flex items-center justify-end gap-2 mb-2">
             <span className="text-sm text-muted-foreground">
               {selectedItems.length} selected
             </span>
@@ -67,8 +85,8 @@ export default function InventoryHeader({
               Clear
             </button>
           </div>
-        )}
-      </div>
+        )
+      )}
 
       {/* Search and Filters */}
       <div className={`${isMobile ? 'space-y-3' : 'flex items-center gap-4'}`}>

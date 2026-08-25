@@ -91,7 +91,7 @@ export const useEnhancedBOMList = (filters: BOMSearchFilters = {}) => {
           is_active,
           updated_at,
           version,
-          bom_components(id)
+          bom_components(id, material_id)
         `)
         .eq('is_active', filters.isActive ?? true);
 
@@ -113,6 +113,7 @@ export const useEnhancedBOMList = (filters: BOMSearchFilters = {}) => {
         is_active: item.is_active,
         last_updated: item.updated_at,
         version: item.version || 1,
+        bom_components: item.bom_components || [],
       })) as BOMListItem[];
     },
     staleTime: 60000, // 1 minute

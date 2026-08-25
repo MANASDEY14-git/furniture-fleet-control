@@ -56,7 +56,11 @@ function MobileTransactionCard({ transaction }: { transaction: BankTransaction }
   );
 }
 
-export default function BankBook() {
+export default function BankBook({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   
@@ -192,12 +196,33 @@ export default function BankBook() {
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="space-y-4 pb-20">
         {/* Mobile Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-cyan-400" />
-            <h1 className="text-xl font-bold text-cyan-300">Bank Book</h1>
+        {!hideHeader ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-cyan-400" />
+              <h1 className="text-xl font-bold text-cyan-300">Bank Book</h1>
+            </div>
+            <div className="flex gap-2">
+              <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
+                <DrawerTrigger asChild>
+                  <Button variant="outline" size="icon" className="neon-border">
+                    <Filter className="w-4 h-4" />
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="futuristic-card">
+                  <DrawerHeader>
+                    <DrawerTitle className="text-cyan-300">Filter Transactions</DrawerTitle>
+                  </DrawerHeader>
+                  <div className="p-4">
+                    <FiltersContent />
+                  </div>
+                </DrawerContent>
+              </Drawer>
+              <ExportButton data={exportData} filename="bank-book" type="payments" />
+            </div>
           </div>
-          <div className="flex gap-2">
+        ) : (
+          <div className="flex justify-end gap-2">
             <Drawer open={filterDrawerOpen} onOpenChange={setFilterDrawerOpen}>
               <DrawerTrigger asChild>
                 <Button variant="outline" size="icon" className="neon-border">
@@ -215,7 +240,7 @@ export default function BankBook() {
             </Drawer>
             <ExportButton data={exportData} filename="bank-book" type="payments" />
           </div>
-        </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-3 gap-2">
@@ -259,13 +284,17 @@ export default function BankBook() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Building2 className="w-8 h-8 text-cyan-400" />
-          <div>
-            <h1 className="text-3xl font-bold glow-text">Bank Book</h1>
-            <p className="text-blue-300">View all bank transactions across accounts</p>
+        {!hideHeader ? (
+          <div className="flex items-center gap-3">
+            <Building2 className="w-8 h-8 text-cyan-400" />
+            <div>
+              <h1 className="text-3xl font-bold glow-text">Bank Book</h1>
+              <p className="text-blue-300">View all bank transactions across accounts</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div />
+        )}
         <ExportButton data={exportData} filename="bank-book" type="payments" />
       </div>
 

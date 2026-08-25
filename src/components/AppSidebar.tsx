@@ -41,47 +41,30 @@ const navigationGroups = [
     ],
   },
   {
-    label: 'Sales',
+    label: 'Sales & Work',
     items: [
-      { name: "Today's Follow-ups",   href: '/daily-worklist',        icon: PhoneCall    },
-      { name: 'Collections',           href: '/collections',            icon: Wallet       },
-      { name: 'Dispatch Board',        href: '/dispatch-board',         icon: Truck        },
-      { name: 'Sales Intelligence', href: '/sales-intelligence', icon: Sparkles     },
-      { name: 'Sales Orders',          href: '/sales',                  icon: ShoppingCart },
-      { name: 'Customers',             href: '/customers',              icon: Users        },
-      { name: 'Delivery',              href: '/delivery-calendar',      icon: Calendar     },
-      { name: 'Payments',              href: '/payments',               icon: CreditCard   },
+      { name: 'Sales Hub', href: '/sales', icon: ShoppingCart },
+      { name: 'Sales Intelligence', href: '/sales-intelligence', icon: Sparkles },
+      { name: 'Customers', href: '/customers', icon: Users },
+      { name: 'Daily Work Hub', href: '/work', icon: Activity },
     ],
   },
   {
-    label: 'Purchasing',
+    label: 'Operations',
     items: [
-      { name: 'Reorder & Dead Stock', href: '/reorder',        icon: PackageSearch },
-      { name: 'Purchase Orders', href: '/purchases',         icon: TrendingUp   },
-      { name: 'Suppliers',       href: '/suppliers',         icon: Users        },
-      { name: 'Supplier Ledger', href: '/supplier-ledger',   icon: BookOpen     },
+      { name: 'Inventory Hub', href: '/inventory', icon: Package },
+      { name: 'Purchasing Hub', href: '/purchasing', icon: TrendingUp },
+      { name: 'Materials Hub', href: '/materials', icon: Layers },
     ],
   },
   {
-    label: 'Finance & Reports',
+    label: 'Finance & Admin',
     items: [
-      { name: 'Bank Book', href: '/bank-book', icon: Building2 },
-      { name: 'Reports',   href: '/reports',   icon: FileText  },
-      { name: 'Settings',  href: '/settings',  icon: Settings  },
-      { name: 'Help & Guide', href: '/help',   icon: LifeBuoy  },
+      { name: 'Finance Hub', href: '/finance', icon: DollarSign },
+      { name: 'Reports', href: '/reports', icon: FileText },
+      { name: 'Settings', href: '/settings', icon: Settings },
     ],
   },
-];
-
-// Secondary "Operations" links tucked in a collapsible — power users only
-const operationsItems = [
-  { name: 'Inventory Intelligence', href: '/inventory-intelligence', icon: Sparkles },
-  { name: 'Inventory',             href: '/inventory',             icon: Package    },
-  { name: 'Materials',             href: '/materials',             icon: Package    },
-  { name: 'Material Purchases',    href: '/material-purchases',    icon: Tag        },
-  { name: 'Stock Ledger',          href: '/stock-ledger',          icon: BookOpen   },
-  { name: 'Material Stock Ledger', href: '/material-stock-ledger', icon: Activity   },
-  { name: 'BOM Management',        href: '/bom-management',        icon: Layers     },
 ];
 
 export function AppSidebar() {
@@ -89,7 +72,6 @@ export function AppSidebar() {
   const { signOut, user } = useAuth();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === 'collapsed';
-  const [opsOpen, setOpsOpen] = useState(false);
 
   // Store context
   const {
@@ -110,9 +92,6 @@ export function AppSidebar() {
   const handleNavClick = () => {
     if (isMobile) setOpenMobile(false);
   };
-
-  // Is any operations item currently active?
-  const opsActive = operationsItems.some(i => location.pathname === i.href);
 
   // Label shown on the store-switcher button
   const activeStoreLabel =
@@ -200,8 +179,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="bg-sidebar">
-        {/* Render Overview Group first */}
-        {navigationGroups.slice(0, 1).map(group => (
+        {navigationGroups.map(group => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="text-muted-foreground/60 text-xs uppercase tracking-wider">
               {group.label}
@@ -236,121 +214,6 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
-
-        {/* Operations — right under Overview / Dashboard */}
-        {!isCollapsed && (
-          <SidebarGroup>
-            <Collapsible open={opsOpen || opsActive} onOpenChange={setOpsOpen}>
-              <CollapsibleTrigger asChild>
-                <button className="flex w-full items-center justify-between px-2 py-1 text-muted-foreground/60 text-xs uppercase tracking-wider hover:text-muted-foreground transition-colors">
-                  <span>Operations</span>
-                  {(opsOpen || opsActive)
-                    ? <ChevronDown className="h-3 w-3" />
-                    : <ChevronRight className="h-3 w-3" />}
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {operationsItems.map(item => {
-                      const isActive = location.pathname === item.href;
-                      return (
-                        <SidebarMenuItem key={item.name}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={isActive}
-                            tooltip={item.name}
-                            className={`
-                              transition-all duration-150
-                              ${isActive
-                                ? 'bg-primary/10 text-primary font-medium'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-accent'}
-                            `}
-                          >
-                            <Link to={item.href} onClick={handleNavClick}>
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.name}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarGroup>
-        )}
-
-        {/* Render Remaining Navigation Groups (Sales, Purchasing, Finance & Reports) */}
-        {navigationGroups.slice(1).map(group => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="text-muted-foreground/60 text-xs uppercase tracking-wider">
-              {group.label}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map(item => {
-                  if ('adminOnly' in item && item.adminOnly && !isAdminOrManager) return null;
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.name}
-                        className={`
-                          transition-all duration-150
-                          ${isActive
-                            ? 'bg-primary/10 text-primary font-medium'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'}
-                        `}
-                      >
-                        <Link to={item.href} onClick={handleNavClick}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
-
-        {/* Collapsed: show ops items flat with tooltips */}
-        {isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {operationsItems.map(item => {
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.name}
-                        className={`
-                          transition-all duration-150
-                          ${isActive
-                            ? 'bg-primary/10 text-primary font-medium'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'}
-                        `}
-                      >
-                        <Link to={item.href} onClick={handleNavClick}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border/50 p-4">

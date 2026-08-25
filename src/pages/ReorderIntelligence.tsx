@@ -28,7 +28,11 @@ const toCsv = (rows: ReorderRow[]) => {
   return [header, ...body].map((line) => line.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
 };
 
-export default function ReorderIntelligence() {
+export default function ReorderIntelligence({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const { activeStoreId } = useStoreContext();
   const [windowDays, setWindowDays] = useState('90');
   const { data: rows = [], isLoading } = useReorderIntelligence(Number(windowDays));
@@ -80,12 +84,16 @@ export default function ReorderIntelligence() {
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8 space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Reorder & Dead Stock</h1>
-          <p className="text-muted-foreground text-sm">
-            What to buy this week, and what to clear out. Based on delivered demand, cancelled orders excluded.
-          </p>
-        </div>
+        {!hideHeader ? (
+          <div className="space-y-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Reorder & Dead Stock</h1>
+            <p className="text-muted-foreground text-sm">
+              What to buy this week, and what to clear out. Based on delivered demand, cancelled orders excluded.
+            </p>
+          </div>
+        ) : (
+          <div />
+        )}
         <Select value={windowDays} onValueChange={setWindowDays}>
           <SelectTrigger className="w-full md:w-44"><SelectValue /></SelectTrigger>
           <SelectContent>

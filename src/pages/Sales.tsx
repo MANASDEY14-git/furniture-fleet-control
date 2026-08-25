@@ -19,7 +19,15 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function Sales() {
+export default function Sales({
+  hideHeader = false,
+  hideTabs = false,
+  defaultDocumentType = 'order'
+}: {
+  hideHeader?: boolean;
+  hideTabs?: boolean;
+  defaultDocumentType?: 'order' | 'quote';
+}) {
   const isMobile = useIsMobile();
   const { activeStoreId, accessibleStores } = useStoreContext();
   const [selectedSupplier, setSelectedSupplier] = useState('all');
@@ -30,7 +38,11 @@ export default function Sales() {
   const [paymentDescription, setPaymentDescription] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('year');
   const [customDateRange, setCustomDateRange] = useState<{ from: Date; to: Date } | null>(null);
-  const [documentType, setDocumentType] = useState<'order' | 'quote'>('order');
+  const [documentType, setDocumentType] = useState<'order' | 'quote'>(defaultDocumentType);
+
+  useEffect(() => {
+    setDocumentType(defaultDocumentType);
+  }, [defaultDocumentType]);
 
   // Use computed sale payment status that works with secure orders
   const { data: salePaymentStatus = [], isLoading: ordersLoading, refetch: refetchSalePaymentStatus } = useComputedSalePaymentStatus(activeStoreId === 'all' ? undefined : activeStoreId, documentType);
@@ -211,20 +223,24 @@ export default function Sales() {
 
   const content = (
     <div className="space-y-8">
-      <SalesHeader 
-        filteredOrders={filteredOrders}
-        dateFilter={dateFilter}
-        getStoreName={getStoreName}
-        getSupplierName={getSupplierName}
-        documentType={documentType}
-      />
+      {!hideHeader && (
+        <SalesHeader 
+          filteredOrders={filteredOrders}
+          dateFilter={dateFilter}
+          getStoreName={getStoreName}
+          getSupplierName={getSupplierName}
+          documentType={documentType}
+        />
+      )}
 
-      <Tabs value={documentType} onValueChange={(v) => setDocumentType(v as 'order' | 'quote')} className="w-full">
-        <TabsList className="grid w-full max-w-xs grid-cols-2">
-          <TabsTrigger value="order">Orders</TabsTrigger>
-          <TabsTrigger value="quote">Quotes</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {!hideTabs && (
+        <Tabs value={documentType} onValueChange={(v) => setDocumentType(v as 'order' | 'quote')} className="w-full">
+          <TabsList className="grid w-full max-w-xs grid-cols-2">
+            <TabsTrigger value="order">Orders</TabsTrigger>
+            <TabsTrigger value="quote">Quotes</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {documentType === 'order' && <SalesMetricsGrid filteredOrders={filteredOrders} />}
 

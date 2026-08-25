@@ -13,13 +13,38 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { cn } from '@/lib/utils';
 
-export default function MaterialWorkspace() {
+export default function MaterialWorkspace({
+  hideHeader = false,
+  defaultSelectedMaterialId,
+  onSelectMaterialId
+}: {
+  hideHeader?: boolean;
+  defaultSelectedMaterialId?: string | null;
+  onSelectMaterialId?: (id: string | null) => void;
+}) {
   const { data: materials = [], isLoading } = useMaterials();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+
+  // Sync selectedMaterial with defaultSelectedMaterialId prop
+  useEffect(() => {
+    if (defaultSelectedMaterialId && (!selectedMaterial || selectedMaterial.id !== defaultSelectedMaterialId)) {
+      const found = materials.find(m => m.id === defaultSelectedMaterialId);
+      if (found) {
+        setSelectedMaterial(found);
+      }
+    }
+  }, [defaultSelectedMaterialId, materials]);
+
+  // Report selectedMaterial back to parent
+  useEffect(() => {
+    if (onSelectMaterialId) {
+      onSelectMaterialId(selectedMaterial?.id || null);
+    }
+  }, [selectedMaterial, onSelectMaterialId]);
 
   // Real-time subscription
   useEffect(() => {
@@ -81,10 +106,12 @@ export default function MaterialWorkspace() {
     return (
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="space-y-4 p-4">
-          <div className="text-center mb-4">
-            <h1 className="text-2xl font-bold glow-text">Materials</h1>
-            <p className="text-muted-foreground text-sm">Inventory Management</p>
-          </div>
+          {!hideHeader && (
+            <div className="text-center mb-4">
+              <h1 className="text-2xl font-bold glow-text">Materials</h1>
+              <p className="text-muted-foreground text-sm">Inventory Management</p>
+            </div>
+          )}
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -140,7 +167,7 @@ export default function MaterialWorkspace() {
       {!isExpanded && (
         <div className="w-[280px] flex-shrink-0 flex flex-col">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-foreground">Materials</h1>
+            {!hideHeader && <h1 className="text-xl font-bold text-foreground">Materials</h1>}
             <MaterialForm
               trigger={
                 <Button size="sm" variant="outline">

@@ -18,7 +18,13 @@ import { useEnhancedBOMList, useCreateEnhancedBOM } from '@/hooks/useEnhancedBOM
 import { useStores } from '@/hooks/useStores';
 import StoreSelector from '@/components/StoreSelector';
 
-export default function BOMManagement() {
+export default function BOMManagement({
+  hideHeader = false,
+  selectedMaterialId
+}: {
+  hideHeader?: boolean;
+  selectedMaterialId?: string | null;
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStore, setSelectedStore] = useState<string>('all');
@@ -64,7 +70,14 @@ export default function BOMManagement() {
         onCreateNew={handleCreateBOM}
         onViewAnalytics={() => setActiveTab('analytics')}
         onViewTemplates={() => setActiveTab('templates')}
+        hideTitle={hideHeader}
       />
+
+      {selectedMaterialId && bomList.length > 0 && (
+        <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg text-sm text-blue-200">
+          Filtering BOMs containing selected component material.
+        </div>
+      )}
 
       {/* Enhanced Search and Control Bar */}
       <Card className="bg-slate-800/50 border-blue-500/30">
@@ -148,6 +161,7 @@ export default function BOMManagement() {
               selectedCategory={selectedCategory}
               selectedStore={selectedStore}
               onSelectItem={(item) => setSelectedItemForBOM(item)}
+              selectedMaterialId={selectedMaterialId}
             />
           </TabsContent>
           

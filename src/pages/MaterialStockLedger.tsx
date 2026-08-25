@@ -1,5 +1,5 @@
 import MaterialStockLedgerPage from '@/components/MaterialStockLedgerPage';
 
-export default function MaterialStockLedger() {
-  return <MaterialStockLedgerPage />;
+export default function MaterialStockLedger(props: any) {
+  return <MaterialStockLedgerPage {...props} />;
 }

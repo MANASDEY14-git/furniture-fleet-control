@@ -237,4 +237,5 @@ export interface BOMListItem {
   is_active: boolean;
   last_updated: string;
   version: number;
+  bom_components?: { id: string; material_id: string | null }[];
 }

@@ -5,13 +5,14 @@ import { SupplierStoreAccessDialog } from './SupplierStoreAccessDialog';
 
 interface SupplierHeaderProps {
   isMobile: boolean;
+  hideTitle?: boolean;
 }
 
-export function SupplierHeader({ isMobile }: SupplierHeaderProps) {
+export function SupplierHeader({ isMobile, hideTitle = false }: SupplierHeaderProps) {
   if (isMobile) {
     return (
       <div className="py-1.5 flex justify-between items-center">
-        <h1 className="text-base font-semibold text-foreground">Suppliers</h1>
+        {!hideTitle && <h1 className="text-base font-semibold text-foreground">Suppliers</h1>}
         <SupplierStoreAccessDialog />
       </div>
     );
@@ -19,7 +20,8 @@ export function SupplierHeader({ isMobile }: SupplierHeaderProps) {
 
   return (
     <div className="flex items-center justify-between mb-4">
-      <h1 className="text-2xl font-bold text-foreground">Suppliers</h1>
+      {!hideTitle && <h1 className="text-2xl font-bold text-foreground">Suppliers</h1>}
+      {hideTitle && <div />}
       <div className="flex items-center gap-2">
         <SupplierStoreAccessDialog />
         <SupplierForm

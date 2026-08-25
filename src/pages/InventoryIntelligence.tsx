@@ -12,7 +12,11 @@ import { CategoryIntelligence } from '@/components/inventory-intelligence/Catego
 import { InventoryFilters } from '@/components/inventory-intelligence/InventoryFilters';
 import { ProductDetailDrawer } from '@/components/inventory-intelligence/ProductDetailDrawer';
 
-export default function InventoryIntelligence() {
+export default function InventoryIntelligence({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const { activeStoreId, activeStore } = useStoreContext();
 
   const [filters, setFilters] = useState<InventoryIntelligenceFilters>({
@@ -38,6 +42,7 @@ export default function InventoryIntelligence() {
         isLoading={isLoading}
         onRefresh={refetch}
         activeStoreName={activeStoreId === 'all' ? 'All Stores' : activeStore?.name}
+        hideTitle={hideHeader}
       />
 
       {/* Filter Bar */}

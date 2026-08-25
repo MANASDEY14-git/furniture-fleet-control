@@ -33,7 +33,11 @@ const toCsv = (rows: ReceivableRow[]) => {
   return [header, ...body].map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
 };
 
-export default function Collections() {
+export default function Collections({
+  hideHeader = false
+}: {
+  hideHeader?: boolean;
+}) {
   const { activeStoreId } = useStoreContext();
   const navigate = useNavigate();
   const { data: rows = [], isLoading } = useReceivablesAging();
@@ -81,10 +85,14 @@ export default function Collections() {
   return (
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Collections</h1>
-          <p className="text-sm text-muted-foreground">Who owes you, how old it is, and who to call first. Cancelled orders are excluded.</p>
-        </div>
+        {!hideHeader ? (
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Collections</h1>
+            <p className="text-sm text-muted-foreground">Who owes you, how old it is, and who to call first. Cancelled orders are excluded.</p>
+          </div>
+        ) : (
+          <div />
+        )}
         <Button variant="outline" onClick={download} disabled={!visible.length}>
           <Download className="h-4 w-4 mr-2" /> Export CSV
         </Button>
