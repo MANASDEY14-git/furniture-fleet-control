@@ -170,7 +170,9 @@ export default function DispatchBoard() {
                   {!list.length ? (
                     <p className="text-xs text-muted-foreground">Nothing here.</p>
                   ) : (
-                    list.map((r) => <OrderCard key={r.order_id} row={r} />)
+                    list.map((r) => (
+                      <OrderCard key={r.order_id} row={r} onDeliver={(row) => { setDeliverRow(row); setDelayReason(''); }} />
+                    ))
                   )}
                 </CardContent>
               </Card>
