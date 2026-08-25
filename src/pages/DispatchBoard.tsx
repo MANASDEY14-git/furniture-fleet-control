@@ -24,7 +24,7 @@ const COLUMNS: { key: DispatchBucket; label: string; hint: string; icon: typeof 
 const formatDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'Not set';
 
-function OrderCard({ row }: { row: DispatchRow }) {
+function OrderCard({ row, onDeliver }: { row: DispatchRow; onDeliver: (row: DispatchRow) => void }) {
   return (
     <div className="rounded-xl border bg-card p-3 space-y-2">
       <div className="flex items-start justify-between gap-2">
