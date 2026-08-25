@@ -19,10 +19,34 @@ export default function SalesHeader({
   dateFilter,
   getStoreName,
   getSupplierName,
-  documentType = 'order'
+  documentType = 'order',
+  compact = false
 }: SalesHeaderProps) {
   const isMobile = useIsMobile();
   const { readOnly } = useYearGuard();
+
+  const exportData = filteredOrders.map(order => ({
+    'Date': new Date(order.sale_date).toLocaleDateString('en-GB'),
+    'Order Number': order.order_number,
+    'Store': getStoreName(order.store_id),
+    'Customer': order.customer_name || getSupplierName(order.supplier_id || ''),
+    'Total Amount': order.total_price,
+    'Total Paid': order.total_paid,
+    'Balance Due': order.balance_due,
+    'Status': order.delivery_status,
+    'Delivery Date': order.delivery_date ? new Date(order.delivery_date).toLocaleDateString('en-GB') : 'Not Set'
+  }));
+
+  if (compact) {
+    return <div className={isMobile ? 'flex flex-col gap-3' : 'flex justify-end gap-2'}>
+        {!isMobile && <ExportButton data={exportData} filename={`sales-orders-${dateFilter}`} type="sales" />}
+        <EnhancedSalesOrderForm documentType={documentType} trigger={<Button className={isMobile ? 'font-semibold w-full h-12' : 'font-semibold'} disabled={readOnly}>
+              <Plus className="w-4 h-4 mr-2" />
+              {documentType === 'quote' ? 'New Quote' : 'Create Order'}
+            </Button>} />
+        {isMobile && <ExportButton data={exportData} filename={`sales-orders-${dateFilter}`} type="sales" />}
+      </div>;
+  }
 
   if (isMobile) {
     return <div className="space-y-4">
