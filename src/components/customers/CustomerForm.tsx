@@ -25,7 +25,8 @@ export function CustomerForm({
     email: '',
     address: '',
     gst_number: '',
-    notes: ''
+    notes: '',
+    credit_limit: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
