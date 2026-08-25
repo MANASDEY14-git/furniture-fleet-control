@@ -3,6 +3,7 @@ import { HubPage, TabOption } from '@/components/layout/HubPage';
 
 const Payments = React.lazy(() => import('../Payments'));
 const BankBook = React.lazy(() => import('../BankBook'));
+const Reports = React.lazy(() => import('../Reports'));
 
 const tabs: TabOption[] = [
   {
@@ -15,13 +16,18 @@ const tabs: TabOption[] = [
     label: 'Cash & Bank Book',
     component: BankBook,
   },
+  {
+    id: 'reports',
+    label: 'Reports',
+    component: Reports,
+  },
 ];
 
 export default function FinanceHub() {
   return (
     <HubPage
       title="Finance Hub"
-      description="Manage vendor payments, business expenses, cash flow, and bank account ledgers"
+      description="Vendor payments, business expenses, cash flow, bank ledgers, and reports"
       tabs={tabs}
       defaultTab="payments"
     />
