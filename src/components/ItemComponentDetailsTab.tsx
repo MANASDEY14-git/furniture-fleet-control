@@ -58,7 +58,7 @@ export default function ItemComponentDetailsTab({ itemId }: ItemComponentDetails
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
-          <Button onClick={() => navigate('/bom-management')}>
+          <Button onClick={() => navigate('/materials?tab=bom')}>
             <Package className="w-4 h-4 mr-2" />
             Create BOM
           </Button>
@@ -89,7 +89,7 @@ export default function ItemComponentDetailsTab({ itemId }: ItemComponentDetails
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate('/bom-management')}
+              onClick={() => navigate('/materials?tab=bom')}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               Edit BOM

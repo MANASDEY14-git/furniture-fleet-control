@@ -11,9 +11,7 @@ import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import Onboarding from '@/pages/Onboarding';
 import PendingApproval from '@/pages/PendingApproval';
-import SalesIntelligence from '@/pages/SalesIntelligence';
 import EnhancedPayments from '@/pages/EnhancedPayments';
-import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
 import Customers from '@/pages/Customers';
 import CustomerProfile from '@/pages/CustomerProfile';
@@ -72,11 +70,9 @@ function App() {
                       <Route path="/finance" element={<FinanceHub />} />
 
                       {/* Standalone pages */}
-                      <Route path="/sales-intelligence" element={<SalesIntelligence />} />
                       <Route path="/enhanced-payments" element={<EnhancedPayments />} />
                       <Route path="/customers" element={<Customers />} />
                       <Route path="/customers/:id" element={<CustomerProfile />} />
-                      <Route path="/reports" element={<Reports />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/command-center" element={<CommandCenter />} />
 
@@ -97,6 +93,8 @@ function App() {
                       <Route path="/payments" element={<Navigate to="/finance?tab=payments" replace />} />
                       <Route path="/bank-book" element={<Navigate to="/finance?tab=bank-book" replace />} />
                       <Route path="/help" element={<Navigate to="/settings?tab=help" replace />} />
+                      <Route path="/sales-intelligence" element={<Navigate to="/sales?tab=intelligence" replace />} />
+                      <Route path="/reports" element={<Navigate to="/finance?tab=reports" replace />} />
 
                       <Route path="*" element={<NotFound />} />
                     </Routes>
