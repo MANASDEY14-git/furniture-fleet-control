@@ -99,7 +99,7 @@ export default function MaterialWorkspace({
         <div className="h-full">
           <MaterialDetailPanel
             material={selectedMaterial}
-            onBack={() => setSelectedMaterial(null)}
+            onBack={() => { setIsUserSelection(false); setSelectedMaterial(null); }}
             isMobile={true}
           />
         </div>
@@ -142,7 +142,7 @@ export default function MaterialWorkspace({
                   key={material.id}
                   material={material}
                   isSelected={false}
-                  onClick={() => setSelectedMaterial(material)}
+                  onClick={() => { setIsUserSelection(true); setSelectedMaterial(material); }}
                   compact={false}
                 />
               ))
@@ -204,7 +204,7 @@ export default function MaterialWorkspace({
                     key={material.id}
                     material={material}
                     isSelected={selectedMaterial?.id === material.id}
-                    onClick={() => setSelectedMaterial(material)}
+                    onClick={() => { setIsUserSelection(true); setSelectedMaterial(material); }}
                     compact={true}
                   />
                 ))
