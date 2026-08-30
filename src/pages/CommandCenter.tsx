@@ -220,6 +220,37 @@ export default function CommandCenter() {
     }
   };
 
+  const handleRunBriefing = async () => {
+    if (!storeId) {
+      toast({
+        title: 'Select a Store',
+        description: 'Daily briefings are generated per store. Switch from "All Stores" to a single store.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsBriefingLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('agent-orchestrator', {
+        body: { store_id: storeId },
+      });
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['agent-briefings'] });
+      toast({
+        title: 'Briefing Generated',
+        description: 'The latest executive briefing is now available.',
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Briefing Failed',
+        description: err.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBriefingLoading(false);
+    }
+  };
+
   const openResolveDialog = (alert: OperationalAlert) => {
     setSelectedAlert(alert);
     setResolutionNote('');
