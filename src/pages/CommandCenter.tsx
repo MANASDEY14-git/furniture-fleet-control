@@ -350,6 +350,89 @@ export default function CommandCenter() {
         </div>
       </div>
 
+      {/* Daily Agent Briefing */}
+      {latestBriefing && storeId && (
+        <Card className="simple-card border-l-4 border-l-primary overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 bg-primary/10 rounded-xl shrink-0">
+                  <Bot className="w-5 h-5 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <CardTitle className="text-base">Daily Executive Briefing</CardTitle>
+                    <Badge variant="outline" className="text-[10px]">
+                      {latestBriefing.source === 'manual' ? 'Manual' : 'Scheduled'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Generated {new Date(latestBriefing.generated_at).toLocaleString('en-IN', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleRunBriefing}
+                disabled={isBriefingLoading}
+                variant="outline"
+                size="sm"
+              >
+                <Sparkles className={`w-4 h-4 mr-2 ${isBriefingLoading ? 'animate-pulse' : ''}`} />
+                {isBriefingLoading ? 'Running...' : 'Run Briefing'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm leading-relaxed text-foreground/90">{latestBriefing.summary}</p>
+            {latestBriefing.agent_outputs && (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {Object.entries(latestBriefing.agent_outputs).map(([key, value]) => (
+                  <div key={key} className="p-3 rounded-lg bg-muted/40 border border-border/50">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">{key}</p>
+                    <p className="text-xs text-foreground/80 line-clamp-3">{String(value)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {storeId && !latestBriefing && (
+        <Card className="simple-card border-dashed border-2">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 bg-muted rounded-xl shrink-0">
+                  <Bot className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">No daily briefing yet</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Generate your first executive briefing for {activeStore?.name}.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleRunBriefing}
+                disabled={isBriefingLoading}
+                variant="outline"
+                size="sm"
+              >
+                <Sparkles className={`w-4 h-4 mr-2 ${isBriefingLoading ? 'animate-pulse' : ''}`} />
+                {isBriefingLoading ? 'Running...' : 'Run Briefing'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Health Strip */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <RadialProgress value={latestScore.overall_score} label="Overall Score" />
