@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are an AI assistant for a furniture/manufacturing ERP application. You help users navigate the app, understand their business data, and answer questions about sales, inventory, payments, and suppliers.
+const SYSTEM_PROMPT = `You are an AI assistant for a furniture/manufacturing ERP application. You help users navigate the app, understand their business data, and answer questions about sales, inventory, payments, suppliers, and materials.
 
 ## App Navigation Knowledge
 
@@ -69,6 +69,9 @@ const SYSTEM_PROMPT = `You are an AI assistant for a furniture/manufacturing ERP
 2. Go to "BOM Management" to create Bills of Material
 3. Link materials to finished products
 
+## Specialist Agent Inputs
+When "Department Specialist" briefs are provided below, use them as authoritative context. They are real outputs from the Sales, Inventory, Purchases, and Finance agents.
+
 ## Response Guidelines
 - Be concise and helpful
 - Use bullet points and numbered steps for instructions
@@ -76,7 +79,138 @@ const SYSTEM_PROMPT = `You are an AI assistant for a furniture/manufacturing ERP
 - Use Indian Rupee (₹) as the currency
 - If you don't have enough data to answer, say so clearly
 - Always reference the specific section of the app when giving navigation help
-- When showing financial summaries, include totals and breakdowns where relevant`;
+- When showing financial summaries, include totals and breakdowns where relevant
+- If a specialist agent failed, say so and rely on the local business data`;
+
+const SPECIALISTS = [
+  { name: "agent-sales", keywords: /sales|revenue|income|turnover|order|due|outstanding|balance|payment|paid|unpaid|receivable|customer/i },
+  { name: "agent-inventory", keywords: /stock|inventory|item|product|low stock|out of stock|quantity/i },
+  { name: "agent-purchases", keywords: /supplier|purchase|vendor|payable|buy|procurement/i },
+  { name: "agent-finance", keywords: /finance|cash|bank|money|expense|profit|margin|gst|tax|ledger|account/i },
+];
+
+const AGENT_LABELS: Record<string, string> = {
+  "agent-sales": "Sales Agent",
+  "agent-inventory": "Inventory Agent",
+  "agent-purchases": "Purchases Agent",
+  "agent-finance": "Finance Agent",
+};
+
+function pickSpecialists(message: string): string[] {
+  const lower = message.toLowerCase();
+  const matched = SPECIALISTS
+    .filter((s) => s.keywords.test(lower))
+    .map((s) => s.name);
+  // If nothing matches, default to sales + finance for general business questions.
+  return matched.length > 0 ? matched : ["agent-sales", "agent-finance"];
+}
+
+async function callLovableResponses(promptText: string): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    throw new Error("LOVABLE_API_KEY is not configured");
+  }
+
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Lovable-API-Key": LOVABLE_API_KEY,
+      "X-Lovable-AIG-SDK": "fetch",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-5.6-sol",
+      instructions: SYSTEM_PROMPT,
+      input: promptText,
+      stream: true,
+      reasoning: { effort: "medium", summary: "auto" },
+      include: ["reasoning.encrypted_content"],
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("AI gateway error:", res.status, text);
+    throw new Error(`AI gateway error: ${res.status}`);
+  }
+
+  if (!res.body) {
+    throw new Error("AI gateway returned empty body");
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let output = "";
+  let reasoningSummary = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data: ")) continue;
+      const data = trimmed.slice(6);
+      if (data === "[DONE]") continue;
+      try {
+        const event = JSON.parse(data);
+        if (event.type === "response.output_text.delta") {
+          output += event.delta || "";
+        } else if (event.type === "response.reasoning_summary_text.delta") {
+          reasoningSummary += event.delta || "";
+        }
+      } catch {
+        // Ignore malformed SSE lines
+      }
+    }
+  }
+
+  // Flush any remaining buffer
+  if (buffer.trim().startsWith("data: ")) {
+    const data = buffer.trim().slice(6);
+    if (data !== "[DONE]") {
+      try {
+        const event = JSON.parse(data);
+        if (event.type === "response.output_text.delta") {
+          output += event.delta || "";
+        } else if (event.type === "response.reasoning_summary_text.delta") {
+          reasoningSummary += event.delta || "";
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  return output.trim() || reasoningSummary.trim() || "I couldn't generate a response. Please try again.";
+}
+
+async function callSpecialist(name: string, storeId: string, supabaseUrl: string, serviceKey: string): Promise<string> {
+  const url = `${supabaseUrl}/functions/v1/${name}`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ store_id: storeId }),
+    });
+    if (!res.ok) {
+      throw new Error(`Specialist ${name} HTTP error: ${res.status}`);
+    }
+    const data = await res.json();
+    return data.output || "Analysis unavailable.";
+  } catch (err) {
+    console.error(`Error calling ${name}:`, err);
+    return `**${AGENT_LABELS[name] || name}** was unable to provide a briefing.`;
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -160,108 +294,90 @@ Deno.serve(async (req) => {
       content: message,
     });
 
-    // Load conversation history (last 20 messages)
+    // Load conversation history (last 20 messages, excluding the one we just inserted)
     const { data: history } = await supabase
       .from("ai_messages")
       .select("role, content")
       .eq("conversation_id", convId)
-      .order("created_at", { ascending: true })
-      .limit(20);
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => ({ data: data ? data.reverse() : data }));
 
-    // Query business data based on message content
+    // Gather local business context
     const contextData = await queryBusinessData(supabase, message, store_id);
 
-    // Build messages for AI
-    const aiMessages: Array<{ role: string; content: string }> = [
-      { role: "system", content: SYSTEM_PROMPT },
-    ];
+    // Decide which specialists to consult
+    const agentsToCall = pickSpecialists(message);
 
+    // Call selected specialists in parallel
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const specialistOutputs: Record<string, string> = {};
+    const specialistResults = await Promise.all(
+      agentsToCall.map(async (name) => {
+        const output = await callSpecialist(name, store_id, supabaseUrl, serviceKey);
+        return { name, output };
+      })
+    );
+    for (const { name, output } of specialistResults) {
+      specialistOutputs[name] = output;
+    }
+
+    // Build the user prompt for the final synthesis
+    const historyText = (history || [])
+      .map((msg: any) => `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`)
+      .join("\n");
+
+    const promptParts: string[] = [];
+    if (historyText) {
+      promptParts.push(`## Conversation History\n${historyText}`);
+    }
     if (contextData) {
-      aiMessages.push({
-        role: "system",
-        content: `Here is the current business data context for the user's store:\n\n${contextData}`,
+      promptParts.push(`## Local Business Data\n${contextData}`);
+    }
+    if (Object.keys(specialistOutputs).length > 0) {
+      promptParts.push(
+        `## Department Specialist Briefs\n` +
+        Object.entries(specialistOutputs)
+          .map(([name, output]) => `### ${AGENT_LABELS[name] || name}\n${output}`)
+          .join("\n\n")
+      );
+    }
+    promptParts.push(`## User Question\n${message}`);
+
+    const promptText = promptParts.join("\n\n");
+
+    let assistantContent: string;
+    try {
+      assistantContent = await callLovableResponses(promptText);
+    } catch (err: any) {
+      console.error("LLM synthesis failed:", err);
+      // Fallback: return a deterministic answer using local data + specialist outputs
+      const fallbackParts = ["I wasn't able to reach the AI model, but here's what I found:"];
+      if (contextData) fallbackParts.push(contextData);
+      Object.entries(specialistOutputs).forEach(([name, output]) => {
+        fallbackParts.push(`${AGENT_LABELS[name] || name}: ${output}`);
       });
+      assistantContent = fallbackParts.join("\n\n");
     }
-
-    // Add conversation history
-    if (history && history.length > 0) {
-      for (const msg of history) {
-        aiMessages.push({ role: msg.role, content: msg.content });
-      }
-    }
-
-    // Call Lovable AI Gateway
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: aiMessages,
-        stream: false,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
-      throw new Error("AI gateway error");
-    }
-
-    const aiResult = await aiResponse.json();
-    const assistantContent = aiResult.choices?.[0]?.message?.content || "Sorry, I couldn't generate a response.";
 
     // Save assistant message
     await supabase.from("ai_messages").insert({
       conversation_id: convId,
       role: "assistant",
       content: assistantContent,
-      metadata: contextData ? { data_queried: true } : {},
+      metadata: {
+        data_queried: !!contextData,
+        agents_consulted: agentsToCall,
+      },
     });
-
-    const lowerMessage = message.toLowerCase();
-    const agentsConsulted: string[] = [];
-    if (lowerMessage.match(/sales|due|outstanding|balance|payment|paid|unpaid|receivable/)) {
-      agentsConsulted.push("agent-sales", "agent-finance");
-    }
-    if (lowerMessage.match(/stock|inventory|item|product|low stock|out of stock/)) {
-      agentsConsulted.push("agent-inventory");
-    }
-    if (lowerMessage.match(/supplier|purchase|vendor|payable/)) {
-      agentsConsulted.push("agent-purchases");
-    }
-    if (lowerMessage.match(/material|raw material|bom/)) {
-      if (!agentsConsulted.includes("agent-purchases")) agentsConsulted.push("agent-purchases");
-      if (!agentsConsulted.includes("agent-inventory")) agentsConsulted.push("agent-inventory");
-    }
-    if (agentsConsulted.length === 0) {
-      agentsConsulted.push("agent-sales");
-    }
 
     return new Response(
       JSON.stringify({
         response: assistantContent,
         conversation_id: convId,
-        agents_consulted: agentsConsulted,
+        agents_consulted: agentsToCall,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

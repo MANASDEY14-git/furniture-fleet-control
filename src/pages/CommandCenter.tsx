@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useStoreContext } from '@/contexts/StoreContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAllUsers } from '@/hooks/useAllUsers';
@@ -6,7 +7,9 @@ import {
   useOperationalAlerts,
   useBusinessKpis,
   useOperationalScores,
-  type OperationalAlert
+  useAgentBriefings,
+  type OperationalAlert,
+  type AgentBriefing
 } from '@/hooks/useCommandCenter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +44,9 @@ import {
   TrendingUp,
   AlertOctagon,
   ShieldAlert as CriticalIcon,
-  Info
+  Info,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -138,6 +143,7 @@ export default function CommandCenter() {
   const { activeStoreId, activeStore } = useStoreContext();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const storeId = activeStoreId === 'all' ? undefined : activeStoreId;
 
@@ -153,6 +159,7 @@ export default function CommandCenter() {
   const { data: kpis = [], isLoading: isLoadingKpis } = useBusinessKpis(storeId);
   const { data: scores = [], isLoading: isLoadingScores } = useOperationalScores(storeId);
   const { data: users = [] } = useAllUsers();
+  const { data: briefings = [] } = useAgentBriefings(storeId);
 
   // Dialog / Action States
   const [selectedAlert, setSelectedAlert] = useState<OperationalAlert | null>(null);
@@ -161,6 +168,7 @@ export default function CommandCenter() {
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanTime, setLastScanTime] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any>(null);
+  const [isBriefingLoading, setIsBriefingLoading] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<'active' | 'ignored' | 'resolved'>('active');
@@ -184,6 +192,8 @@ export default function CommandCenter() {
     delivery_success_rate: 100,
     gross_margin: 0,
   };
+
+  const latestBriefing = briefings[0];
 
   const getKpiTrend = (key: keyof typeof latestKpi) => {
     return kpis.map((k) => Number(k[key] || 0)).slice(-30);
@@ -209,6 +219,37 @@ export default function CommandCenter() {
       });
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const handleRunBriefing = async () => {
+    if (!storeId) {
+      toast({
+        title: 'Select a Store',
+        description: 'Daily briefings are generated per store. Switch from "All Stores" to a single store.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsBriefingLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('agent-orchestrator', {
+        body: { store_id: storeId },
+      });
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['agent-briefings'] });
+      toast({
+        title: 'Briefing Generated',
+        description: 'The latest executive briefing is now available.',
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Briefing Failed',
+        description: err.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBriefingLoading(false);
     }
   };
 
@@ -308,6 +349,89 @@ export default function CommandCenter() {
           </Button>
         </div>
       </div>
+
+      {/* Daily Agent Briefing */}
+      {latestBriefing && storeId && (
+        <Card className="simple-card border-l-4 border-l-primary overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 bg-primary/10 rounded-xl shrink-0">
+                  <Bot className="w-5 h-5 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <CardTitle className="text-base">Daily Executive Briefing</CardTitle>
+                    <Badge variant="outline" className="text-[10px]">
+                      {latestBriefing.source === 'manual' ? 'Manual' : 'Scheduled'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Generated {new Date(latestBriefing.generated_at).toLocaleString('en-IN', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleRunBriefing}
+                disabled={isBriefingLoading}
+                variant="outline"
+                size="sm"
+              >
+                <Sparkles className={`w-4 h-4 mr-2 ${isBriefingLoading ? 'animate-pulse' : ''}`} />
+                {isBriefingLoading ? 'Running...' : 'Run Briefing'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm leading-relaxed text-foreground/90">{latestBriefing.summary}</p>
+            {latestBriefing.agent_outputs && (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {Object.entries(latestBriefing.agent_outputs).map(([key, value]) => (
+                  <div key={key} className="p-3 rounded-lg bg-muted/40 border border-border/50">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">{key}</p>
+                    <p className="text-xs text-foreground/80 line-clamp-3">{String(value)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {storeId && !latestBriefing && (
+        <Card className="simple-card border-dashed border-2">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 bg-muted rounded-xl shrink-0">
+                  <Bot className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">No daily briefing yet</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Generate your first executive briefing for {activeStore?.name}.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleRunBriefing}
+                disabled={isBriefingLoading}
+                variant="outline"
+                size="sm"
+              >
+                <Sparkles className={`w-4 h-4 mr-2 ${isBriefingLoading ? 'animate-pulse' : ''}`} />
+                {isBriefingLoading ? 'Running...' : 'Run Briefing'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Health Strip */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
