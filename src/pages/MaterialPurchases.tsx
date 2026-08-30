@@ -15,10 +15,12 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useYearGuard } from '@/contexts/FinancialYearContext';
 export default function MaterialPurchases({
   hideHeader = false,
-  selectedMaterialId
+  selectedMaterialId,
+  onSelectMaterialId
 }: {
   hideHeader?: boolean;
   selectedMaterialId?: string | null;
+  onSelectMaterialId?: (id: string | null) => void;
 }) {
   const isMobile = useIsMobile();
   const { readOnly } = useYearGuard();
@@ -105,9 +107,17 @@ export default function MaterialPurchases({
             <p className="text-sm md:text-base text-blue-200">Track all raw material purchases and invoices</p>
           </div>
         )}
-        {selectedMaterialId && filteredPurchases.length > 0 && (
-          <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg text-sm text-blue-200">
-            Showing purchases for selected material: <span className="font-semibold text-cyan-300">{filteredPurchases[0]?.materials.name}</span>
+        {selectedMaterialId && (
+          <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg text-sm text-blue-200 flex items-center justify-between gap-2">
+            <span>
+              Showing purchases for selected material
+              {filteredPurchases[0] && <>: <span className="font-semibold text-cyan-300">{filteredPurchases[0].materials.name}</span></>}
+            </span>
+            {onSelectMaterialId && (
+              <Button size="sm" variant="outline" onClick={() => onSelectMaterialId(null)}>
+                Show all
+              </Button>
+            )}
           </div>
         )}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
