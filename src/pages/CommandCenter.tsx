@@ -44,7 +44,9 @@ import {
   TrendingUp,
   AlertOctagon,
   ShieldAlert as CriticalIcon,
-  Info
+  Info,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
