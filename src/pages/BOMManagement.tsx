@@ -20,10 +20,12 @@ import StoreSelector from '@/components/StoreSelector';
 
 export default function BOMManagement({
   hideHeader = false,
-  selectedMaterialId
+  selectedMaterialId,
+  onSelectMaterialId
 }: {
   hideHeader?: boolean;
   selectedMaterialId?: string | null;
+  onSelectMaterialId?: (id: string | null) => void;
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -73,9 +75,14 @@ export default function BOMManagement({
         hideTitle={hideHeader}
       />
 
-      {selectedMaterialId && bomList.length > 0 && (
-        <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg text-sm text-blue-200">
-          Filtering BOMs containing selected component material.
+      {selectedMaterialId && (
+        <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-lg text-sm text-blue-200 flex items-center justify-between gap-2">
+          <span>Filtering BOMs containing selected component material.</span>
+          {onSelectMaterialId && (
+            <Button size="sm" variant="outline" onClick={() => onSelectMaterialId(null)}>
+              Show all BOMs
+            </Button>
+          )}
         </div>
       )}
 

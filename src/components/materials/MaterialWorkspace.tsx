@@ -26,6 +26,8 @@ export default function MaterialWorkspace({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  // Only an explicit user pick should filter the other Materials Hub tabs
+  const [isUserSelection, setIsUserSelection] = useState(false);
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
@@ -35,16 +37,17 @@ export default function MaterialWorkspace({
       const found = materials.find(m => m.id === defaultSelectedMaterialId);
       if (found) {
         setSelectedMaterial(found);
+        setIsUserSelection(true);
       }
     }
   }, [defaultSelectedMaterialId, materials]);
 
-  // Report selectedMaterial back to parent
+  // Report selectedMaterial back to parent (only explicit picks act as a filter)
   useEffect(() => {
     if (onSelectMaterialId) {
-      onSelectMaterialId(selectedMaterial?.id || null);
+      onSelectMaterialId(isUserSelection ? selectedMaterial?.id || null : null);
     }
-  }, [selectedMaterial, onSelectMaterialId]);
+  }, [selectedMaterial, isUserSelection, onSelectMaterialId]);
 
   // Real-time subscription
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function MaterialWorkspace({
         <div className="h-full">
           <MaterialDetailPanel
             material={selectedMaterial}
-            onBack={() => setSelectedMaterial(null)}
+            onBack={() => { setIsUserSelection(false); setSelectedMaterial(null); }}
             isMobile={true}
           />
         </div>
@@ -139,7 +142,7 @@ export default function MaterialWorkspace({
                   key={material.id}
                   material={material}
                   isSelected={false}
-                  onClick={() => setSelectedMaterial(material)}
+                  onClick={() => { setIsUserSelection(true); setSelectedMaterial(material); }}
                   compact={false}
                 />
               ))
@@ -201,7 +204,7 @@ export default function MaterialWorkspace({
                     key={material.id}
                     material={material}
                     isSelected={selectedMaterial?.id === material.id}
-                    onClick={() => setSelectedMaterial(material)}
+                    onClick={() => { setIsUserSelection(true); setSelectedMaterial(material); }}
                     compact={true}
                   />
                 ))
