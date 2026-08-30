@@ -299,8 +299,9 @@ Deno.serve(async (req) => {
       .from("ai_messages")
       .select("role, content")
       .eq("conversation_id", convId)
-      .order("created_at", { ascending: true })
-      .limit(20);
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => ({ data: data ? data.reverse() : data }));
 
     // Gather local business context
     const contextData = await queryBusinessData(supabase, message, store_id);
