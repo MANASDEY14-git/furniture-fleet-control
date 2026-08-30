@@ -1,54 +1,98 @@
-# Consolidate the app into work hubs (fewer pages, fewer clicks)
+# AI Feature Audit & Improvement Roadmap
 
-## The argument
+## Current AI features (verified from code)
 
-Right now the sidebar exposes 23 destinations. That is the classic ERP mistake: navigation mirrors the *database* (one page per table) instead of mirroring the *job* the user is doing. Materials alone is four pages — Materials, Material Purchases, Material Stock Ledger, BOM Management — but the actual task is one: "manage my raw material stock." Every context switch loses filters, loses the selected record, and re-fetches data.
+| Feature | Where it lives | What it does today | Quality assessment |
+|---------|---------------|--------------------|--------------------|
+| **ERP Assistant** | Floating bubble (`AssistantBubble.tsx` → `AssistantChat.tsx`) | Chat with app/business questions. Uses keyword matching to guess which "agents" were consulted. Injects a small amount of sales/stock/purchase context based on the user’s message. | **Medium**. Helpful for navigation, but the "agents consulted" are faked by regex, not real specialist calls. |
+| **Sales Forecast** | Dashboard AI Insights tab (`SalesForecastDashboard.tsx`) | Deterministic statistical engine (weighted moving average + linear trend + seasonality). No LLM. | **High for what it is**. Trustworthy because it is rule-based, but users may expect an LLM explanation. |
+| **Smart Restocking** | AI Insights tab (`RestockingAdvisor.tsx`) | Edge function `restock-recommendations` suggests what to reorder. | **Medium**. Output quality depends on the prompt/data; no visible feedback loop. |
+| **Sales Strategy** | AI Insights tab (`SalesStrategyDashboard.tsx`) | Edge function `sales-strategy` suggests pricing/clearance/bundle actions. | **Medium**. Same as restocking — insight without execution. |
+| **Material Advisor** | BOM/customization flow (`useMaterialRecommendations`) | Edge function `material-advisor` recommends alternative materials. | **Low usage visibility**. Buried inside BOM; most users probably never see it. |
+| **Agent Orchestrator + 4 Specialists** | Edge functions (`agent-orchestrator`, `agent-sales`, `agent-inventory`, `agent-purchases`, `agent-finance`) | Cron/manual runs generate an executive briefing by calling four department agents and synthesizing with an LLM. Stored in `agent_briefings`. | **Medium**. The architecture is correct, but the briefings are not surfaced clearly in the UI and the synthesis uses an older model. |
+| **Mission Control / Operational Alerts** | `/command-center` (`CommandCenter.tsx`, `useCommandCenter.ts`) | Scans business data, creates/resolves/snoozes operational alerts, shows health scores and KPIs. | **High operational value**. The best-used AI feature today. |
+| **Sales Intelligence** | `/sales?tab=intelligence` (`useSalesIntelligence.ts`) | Real-data salesperson leaderboard, co-selling pairs, AI business insights cards. | **High**. Now backed by real DB data and revenue splits. |
+| **Telegram Daily Digest** | Edge function `telegram-daily-digest` | Morning factual report + evening LLM narrative. | **High**. Most polished AI touchpoint; owner-focused tone. |
+| **MCP Integration** | Connector layer | Read-only MCP tools for stores, sales, inventory. | **Low adoption**. Exists but is not a daily user feature. |
 
-The ERP fix is not deleting features; it is **hub pages with tabs plus a persistent context** — the record you selected stays selected as you move between tabs (SAP calls it a work centre, NetSuite a centre tab). Same screens, one third of the navigation, and no lost state.
+## What is working well
 
-Target: **23 sidebar links to 9**, no feature removed, all existing URLs still work.
+1. **Mission Control is the star.** It gives the owner a single place to see what is broken, assign fixes, and track resolution.
+2. **Sales Intelligence is now trustworthy** because it reads real `sales_orders` and salesperson splits.
+3. **Telegram digest has the right voice** — factual in the morning, reflective in the evening.
+4. **Agent architecture is sound** — an orchestrator plus four specialists is the right pattern for a multi-department ERP.
 
-## New navigation
+## What is holding the AI back
 
-```text
-Overview        Dashboard              /dashboard
-                Command Center        /command-center    (admin)
+1. **The ERP Assistant lies about which agents it consulted.** It regex-matches words like "sales" and tags `agent-sales`, but it never actually calls the specialist functions. This is the biggest trust issue.
+2. **No single AI memory.** The assistant, the agents, and the insights each live in separate tables and prompts. They do not learn from each other.
+3. **AI Insights tab is visually isolated.** It uses a dark/slate theme (`bg-slate-900`) while the rest of the app is Apple-like minimal light. It feels like a different product.
+4. **Agent briefings are invisible.** `agent_briefings` is populated by cron, but there is no obvious UI showing "today’s executive briefing".
+5. **Insights do not turn into actions.** Restock and strategy recommendations are read-only; the user cannot click "create purchase order" or "apply discount" from the insight.
+6. **Older models in some edge functions.** `agent-sales` and the orchestrator synthesis still use `gpt-4o-mini`; the ERP assistant uses `google/gemini-3-flash-preview`.
+7. **No feedback loop.** Users cannot thumbs-up/down an AI answer or mark a recommendation as useful/wrong.
+8. **No per-user AI preferences.** Every user sees the same assistant tone and the same alert thresholds.
 
-Daily Work      Today's Work          /work        [Follow-ups | Collections | Dispatch | Delivery Calendar]
-                Sales                 /sales       [Orders | Quotes | Intelligence]
-                Customers             /customers
+## Proposed improvement roadmap
 
-Supply          Purchasing            /purchasing  [Purchase Orders | Reorder & Dead Stock | Suppliers | Supplier Ledger]
-                Inventory             /inventory   [Stock | Intelligence | Stock Ledger]
-                Materials             /materials   [Materials | Purchases | Stock Ledger | BOM]
+### Phase 1 — Fix trust and visibility (1–2 days)
 
-Money & Admin   Finance               /finance     [Payments | Bank Book | Reports]
-                Settings              /settings    (Help moves into Settings tabs + header "?" link)
-```
+1. **Make the ERP Assistant actually call specialists.**
+   - When the user asks a business question, `erp-assistant` should invoke `agent-sales`, `agent-inventory`, `agent-purchases`, and/or `agent-finance` in parallel (using the existing internal service-role pattern).
+   - Use the real outputs as context for the final answer, and only then populate `agents_consulted`.
+   - Fall back to the current local SQL context if specialists fail or are slow.
 
-The "Operations" collapsible group disappears — its contents live inside Inventory and Materials.
+2. **Surface the daily agent briefing.**
+   - Add a "Daily Briefing" card at the top of `/command-center` showing the latest `agent_briefings` row for the selected store.
+   - Add a "Run Briefing" button that calls `agent-orchestrator` manually.
 
-## What changes for the user
+3. **Unify the AI Insights visual style.**
+   - Remove the dark/slate theme from `AIInsightsLayout.tsx` and use the same cards, badges, and light surfaces as the rest of the app.
 
-- Selecting a material and checking its purchases, ledger and BOM: 4 navigations becomes 0 (tabs inside the same page, selected material preserved).
-- Chasing money in the morning: Follow-ups to Collections to Dispatch without leaving the page.
-- Deep links keep working — `/material-purchases` redirects to `/materials?tab=purchases`, so bookmarks, the AI assistant and any in-app links do not break.
-- Tab state lives in the URL (`?tab=`), so refresh and back-button behave correctly.
+### Phase 2 — Close the action loop (2–3 days)
 
-## Technical approach
+4. **Turn recommendations into one-click actions.**
+   - From a restock recommendation, add "Create Purchase Order" that pre-fills supplier + item + quantity.
+   - From a sales strategy recommendation, add "Apply Discount" or "Create Promotion" that pre-fills the item and recommended price.
+   - From a delivery alert, add "Call Customer" or "Reschedule Delivery".
 
-1. **Shared hub shell** — new `src/components/layout/HubPage.tsx`: title, optional right-side actions, and a URL-synced tab bar (`useSearchParams`), scrollable on mobile so tabs never wrap.
-2. **Hub pages** — `src/pages/hubs/{WorkHub,PurchasingHub,InventoryHub,MaterialsHub,FinanceHub}.tsx`. Each renders the *existing* page components as tab panels. No business logic, hooks or queries are touched; existing pages are refactored only to drop their own outer page heading where it would duplicate the hub header.
-3. **Lazy loading** — tab panels loaded with `React.lazy` + `Suspense` so a hub doesn't pay for tabs the user never opens.
-4. **Shared selection context** — `MaterialsHub` holds the selected material id (and `InventoryHub` the selected item id) so tabs stay in sync; passed down as props to the existing panels.
-5. **Routing** — `src/App.tsx`: hub routes added, all old paths kept as `<Navigate replace to="/hub?tab=x">`.
-6. **Sidebar** — `src/components/AppSidebar.tsx` rewritten to the 4 groups / 9 links above, active state matched by hub prefix rather than exact path.
-7. **Sub-nav preserved** — pages that already have internal tabs (Sales orders/quotes, Customer profile) nest under the hub tab rather than gaining a second tab row.
+5. **Add an AI feedback mechanism.**
+   - Store thumbs-up/down on assistant messages, agent briefings, and operational insights.
+   - Use feedback to rank which recommendations appear first.
 
-## Rollout
+### Phase 3 — Smarter memory and personalization (3–5 days)
 
-Phase 1: hub shell + Materials hub (biggest win, 4 pages to 1).
-Phase 2: Inventory and Purchasing hubs.
-Phase 3: Daily Work and Finance hubs, then sidebar reduction and redirects.
+6. **Build a shared AI context store.**
+   - Create an `ai_context` table (store_id, key, value, source, expires_at).
+   - Populate it from Mission Control scans, agent briefings, and user questions.
+   - Feed the most relevant context into every assistant reply and every specialist prompt.
 
-Each phase is independently shippable; navigation stays usable throughout.
+7. **Per-user AI preferences.**
+   - Add `ai_user_preferences` (tone: concise/narrative, alert threshold, favorite metrics, language).
+   - Respect these in the assistant, Telegram digest, and briefing synthesis.
+
+### Phase 4 — Modernize models and add observability (2–3 days)
+
+8. **Move LLM calls to current gateway models.**
+   - ERP assistant, agent synthesis, and evening Telegram digest should use `openai/gpt-5.6-sol` via the Responses API with streaming/reasoning, or `openai/gpt-5.4-mini` for cheaper tasks.
+   - Keep sales forecast deterministic; do not add an LLM to the math.
+
+9. **Add AI observability.**
+   - Log every AI call (model, latency, tokens, status, run id) to an `ai_gateway_logs` table.
+   - Show a simple "AI Status" indicator in settings: last error, credit usage, average latency.
+
+### Phase 5 — Proactive agentic behavior (future)
+
+10. **Let agents take safe actions with approval.**
+    - Propose but do not execute: "Mark 3 orders as delivered?", "Create PO for low-stock foam?", "Snooze this alert for 3 days?".
+    - Require explicit user confirmation before any write.
+
+## What this plan does not include
+
+- No new flashy standalone AI pages. The goal is to make existing AI trustworthy and actionable.
+- No BOM-related AI work (per your instruction to leave BOM for later).
+- No changes to the deterministic sales forecast math, only to how its results are explained.
+
+## Recommended first step
+
+Start with **Phase 1 item 1**: make the ERP Assistant actually invoke the specialist agents. This is the highest-leverage fix because it repairs the most visible trust problem and reuses the edge functions you already have.
