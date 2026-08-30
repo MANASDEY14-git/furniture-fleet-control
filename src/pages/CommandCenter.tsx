@@ -143,6 +143,7 @@ export default function CommandCenter() {
   const { activeStoreId, activeStore } = useStoreContext();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const storeId = activeStoreId === 'all' ? undefined : activeStoreId;
 
@@ -158,6 +159,7 @@ export default function CommandCenter() {
   const { data: kpis = [], isLoading: isLoadingKpis } = useBusinessKpis(storeId);
   const { data: scores = [], isLoading: isLoadingScores } = useOperationalScores(storeId);
   const { data: users = [] } = useAllUsers();
+  const { data: briefings = [] } = useAgentBriefings(storeId);
 
   // Dialog / Action States
   const [selectedAlert, setSelectedAlert] = useState<OperationalAlert | null>(null);
@@ -166,6 +168,7 @@ export default function CommandCenter() {
   const [isScanning, setIsScanning] = useState(false);
   const [lastScanTime, setLastScanTime] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any>(null);
+  const [isBriefingLoading, setIsBriefingLoading] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<'active' | 'ignored' | 'resolved'>('active');
