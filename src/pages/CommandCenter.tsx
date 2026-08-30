@@ -193,6 +193,8 @@ export default function CommandCenter() {
     gross_margin: 0,
   };
 
+  const latestBriefing = briefings[0];
+
   const getKpiTrend = (key: keyof typeof latestKpi) => {
     return kpis.map((k) => Number(k[key] || 0)).slice(-30);
   };
