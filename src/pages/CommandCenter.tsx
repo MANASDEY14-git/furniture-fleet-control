@@ -6,7 +6,9 @@ import {
   useOperationalAlerts,
   useBusinessKpis,
   useOperationalScores,
-  type OperationalAlert
+  useAgentBriefings,
+  type OperationalAlert,
+  type AgentBriefing
 } from '@/hooks/useCommandCenter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
