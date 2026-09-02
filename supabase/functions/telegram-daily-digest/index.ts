@@ -587,7 +587,99 @@ async function sendTelegram(chatId: number, text: string) {
   return true;
 }
 
+/* -------------------------------------------------- movement / run record */
+
+/**
+ * True when anything actually moved for the store on `day`:
+ * sales, quotes, money in/out, purchases, deliveries, stock movement.
+ */
+async function hasMovement(
+  db: ReturnType<typeof createClient>,
+  storeId: string,
+  day: string,
+  facts: DayFacts,
+): Promise<boolean> {
+  if (
+    facts.orderCount > 0 ||
+    facts.newQuotes > 0 ||
+    facts.collected !== 0 ||
+    facts.paidOut !== 0 ||
+    facts.purchaseValue !== 0 ||
+    facts.deliveriesDone > 0
+  ) {
+    return true;
+  }
+
+  const { data: adj, error: adjErr } = await db
+    .from("stock_adjustments")
+    .select("id")
+    .eq("store_id", storeId)
+    .gte("created_at", `${day}T00:00:00`)
+    .lt("created_at", `${day}T23:59:59.999`)
+    .limit(1);
+  check(`stock adjustments ${day}`, adjErr, adj);
+  if ((adj || []).length > 0) return true;
+
+  const { data: cons, error: consErr } = await db
+    .from("material_consumptions")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("date", day)
+    .limit(1);
+  check(`material consumption ${day}`, consErr, cons);
+  if ((cons || []).length > 0) return true;
+
+  return false;
+}
+
+async function recordRun(
+  db: ReturnType<typeof createClient>,
+  storeId: string,
+  mode: Mode,
+  runDate: string,
+  status: "sent" | "skipped_no_movement" | "failed",
+  recipients: number,
+  error: string | null,
+) {
+  const { error: insErr } = await db.from("digest_runs").insert({
+    store_id: storeId,
+    mode,
+    run_date: runDate,
+    status,
+    recipients,
+    error,
+  });
+  if (insErr) console.error("[digest] digest_runs insert failed:", insErr);
+}
+
+/**
+ * If yesterday's scheduled digests never went out, say so in plain language
+ * so a silent stop is never invisible again.
+ */
+async function watchdogNote(
+  db: ReturnType<typeof createClient>,
+  storeId: string,
+  tz: string,
+): Promise<string | null> {
+  const since = localDate(tz, -2);
+  const { data, error } = await db
+    .from("digest_runs")
+    .select("status,run_date,mode")
+    .eq("store_id", storeId)
+    .gte("run_date", since);
+  if (error) {
+    console.error("[digest] watchdog lookup failed:", error);
+    return null;
+  }
+  const rows = data || [];
+  if (rows.length === 0) return null;
+  const anyOk = rows.some((r: any) => r.status === "sent" || r.status === "skipped_no_movement");
+  if (anyOk) return null;
+  return "⚠️ Heads up: yesterday's digest could not be delivered. Numbers below are current.";
+}
+
 /* ------------------------------------------------------------------ entry */
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -598,6 +690,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const mode: Mode = body.mode === "evening" ? "evening" : "morning";
     const requestedStore: string | undefined = body.store_id;
+    // `force: true` bypasses the quiet-day skip (used for manual runs/tests).
+    const force: boolean = body.force === true;
+
 
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const internalSecret = req.headers.get("X-Internal-Secret");
@@ -667,54 +762,91 @@ Deno.serve(async (req) => {
       const today = localDate(tz, 0);
       const yesterday = localDate(tz, -1);
       const tomorrow = localDate(tz, 1);
+      const window = mode === "morning" ? yesterday : today;
+
+      // ── Movement gate: quiet stores are skipped entirely ────────────────
+      const facts = await getDayFacts(db, storeId, window);
+      const moved = await hasMovement(db, storeId, window, facts);
+      if (!moved && !force) {
+        console.log(`[digest] ${storeName}: no movement on ${window}, skipping`);
+        await recordRun(db, storeId, mode, window, "skipped_no_movement", 0, null);
+        results.push({ store_id: storeId, mode, status: "skipped_no_movement" });
+        continue;
+      }
 
       let text: string;
 
-      if (mode === "morning") {
-        const facts = await getDayFacts(db, storeId, yesterday);
-        const standing = await getStanding(db, storeId, today, tz);
-        text = buildMorning(storeName, tz, facts, today, standing);
-      } else {
-        const facts = await getDayFacts(db, storeId, today);
-        // Standing for the evening note is anchored on tomorrow so
-        // "deliveries lined up" means tomorrow's deliveries.
-        const standing = await getStanding(db, storeId, tomorrow, tz);
-        const prompt = eveningFacts(storeName, tz, facts, tomorrow, standing);
-        console.log(`[digest] evening facts for ${storeId}:\n${prompt}`);
-        const composed = lovableKey ? await composeEvening(prompt, lovableKey) : null;
-        text = composed || fallbackEvening(storeName, tz, facts, standing);
+      try {
+        if (mode === "morning") {
+          const standing = await getStanding(db, storeId, today, tz);
+          const warning = await watchdogNote(db, storeId, tz);
+          text =
+            (warning ? `${warning}\n\n` : "") +
+            buildMorning(storeName, tz, facts, today, standing);
+        } else {
+          // Standing for the evening note is anchored on tomorrow so
+          // "deliveries lined up" means tomorrow's deliveries.
+          const standing = await getStanding(db, storeId, tomorrow, tz);
+          const prompt = eveningFacts(storeName, tz, facts, tomorrow, standing);
+          console.log(`[digest] evening facts for ${storeId}:\n${prompt}`);
+          const composed = lovableKey ? await composeEvening(prompt, lovableKey) : null;
+          text = composed || fallbackEvening(storeName, tz, facts, standing);
 
-        // Keep the Command Center showing exactly what the owner received.
-        const { error: briefErr } = await db.from("agent_briefings").insert({
-          store_id: storeId,
-          generated_for_date: today,
-          summary: text,
-          source: internal ? "scheduled" : "manual",
-          agent_outputs: { mode: "evening", facts: prompt },
-        });
-        if (briefErr) console.error("[digest] briefing insert failed:", briefErr);
+          // Keep the Command Center showing exactly what the owner received.
+          const { error: briefErr } = await db.from("agent_briefings").insert({
+            store_id: storeId,
+            generated_for_date: today,
+            summary: text,
+            source: internal ? "scheduled" : "manual",
+            agent_outputs: { mode: "evening", facts: prompt },
+          });
+          if (briefErr) console.error("[digest] briefing insert failed:", briefErr);
 
-        await db
-          .from("agent_settings")
-          .update({ last_briefing_at: new Date().toISOString() })
-          .eq("store_id", storeId);
+          await db
+            .from("agent_settings")
+            .update({ last_briefing_at: new Date().toISOString() })
+            .eq("store_id", storeId);
+        }
+      } catch (composeErr: any) {
+        console.error(`[digest] compose failed for ${storeId}:`, composeErr);
+        await recordRun(
+          db,
+          storeId,
+          mode,
+          window,
+          "failed",
+          0,
+          composeErr?.message ?? String(composeErr),
+        );
+        results.push({ store_id: storeId, mode, status: "failed" });
+        continue;
       }
 
-      const { data: links, error: linksErr } = await db
-        .from("telegram_links")
-        .select("chat_id,notification_preferences")
-        .eq("store_id", storeId)
-        .eq("is_active", true);
-      check("telegram links", linksErr, links);
+      // ── Recipients: everyone whose access covers this store ────────────
+      const { data: recipients, error: recErr } = await db.rpc("get_digest_recipients", {
+        _store_id: storeId,
+      });
+      check("digest recipients", recErr, recipients as unknown[] | null);
 
       let sent = 0;
-      for (const link of links || []) {
-        const ok = await sendTelegram(Number((link as any).chat_id), text);
+      for (const r of (recipients as any[]) || []) {
+        const ok = await sendTelegram(Number(r.chat_id), text);
         if (ok) sent += 1;
       }
 
+      await recordRun(
+        db,
+        storeId,
+        mode,
+        window,
+        sent > 0 ? "sent" : "failed",
+        sent,
+        sent > 0 ? null : "no message delivered",
+      );
+
       results.push({ store_id: storeId, mode, recipients: sent, chars: text.length });
     }
+
 
     return new Response(JSON.stringify({ status: "completed", results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
