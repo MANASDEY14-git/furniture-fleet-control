@@ -718,6 +718,47 @@ export type Database = {
           },
         ]
       }
+      digest_runs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          mode: string
+          recipients: number
+          run_date: string
+          status: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          mode: string
+          recipients?: number
+          run_date: string
+          status: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          mode?: string
+          recipients?: number
+          run_date?: string
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digest_runs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_years: {
         Row: {
           closed_at: string | null
