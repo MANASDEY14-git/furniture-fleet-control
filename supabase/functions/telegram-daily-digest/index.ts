@@ -690,6 +690,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const mode: Mode = body.mode === "evening" ? "evening" : "morning";
     const requestedStore: string | undefined = body.store_id;
+    // `force: true` bypasses the quiet-day skip (used for manual runs/tests).
+    const force: boolean = body.force === true;
+
 
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const internalSecret = req.headers.get("X-Internal-Secret");
