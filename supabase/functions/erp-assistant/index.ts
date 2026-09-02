@@ -105,10 +105,32 @@ function pickSpecialists(message: string): string[] {
   return matched.length > 0 ? matched : ["agent-sales", "agent-finance"];
 }
 
+class AIGatewayError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+function gatewayErrorMessage(status: number, body: string): string {
+  if (status === 429) return "The AI assistant is receiving too many requests right now. Please wait a moment and try again.";
+  if (status === 402) return "AI credits are exhausted. Please add credits in your Lovable workspace settings to keep using the assistant.";
+  if (status === 403) return "AI access is blocked for this workspace. A workspace admin needs to enable Lovable AI or raise the credit limit.";
+  if (status === 401) return "The AI assistant is not configured correctly (missing or invalid API key). Please contact your administrator.";
+  if (status === 400) return "The AI assistant could not process this request. Please try rephrasing your question.";
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed?.error?.message) return `AI service error: ${parsed.error.message}`;
+    if (parsed?.message) return `AI service error: ${parsed.message}`;
+  } catch { /* ignore */ }
+  return "The AI assistant is temporarily unavailable. Please try again in a moment.";
+}
+
 async function callLovableResponses(promptText: string): Promise<string> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
-    throw new Error("LOVABLE_API_KEY is not configured");
+    throw new AIGatewayError(401, gatewayErrorMessage(401, ""));
   }
 
   const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
@@ -131,8 +153,9 @@ async function callLovableResponses(promptText: string): Promise<string> {
   if (!res.ok) {
     const text = await res.text();
     console.error("AI gateway error:", res.status, text);
-    throw new Error(`AI gateway error: ${res.status}`);
+    throw new AIGatewayError(res.status, gatewayErrorMessage(res.status, text));
   }
+
 
   if (!res.body) {
     throw new Error("AI gateway returned empty body");
@@ -353,14 +376,21 @@ Deno.serve(async (req) => {
       assistantContent = await callLovableResponses(promptText);
     } catch (err: any) {
       console.error("LLM synthesis failed:", err);
-      // Fallback: return a deterministic answer using local data + specialist outputs
-      const fallbackParts = ["I wasn't able to reach the AI model, but here's what I found:"];
-      if (contextData) fallbackParts.push(contextData);
-      Object.entries(specialistOutputs).forEach(([name, output]) => {
-        fallbackParts.push(`${AGENT_LABELS[name] || name}: ${output}`);
-      });
-      assistantContent = fallbackParts.join("\n\n");
+      const status = err instanceof AIGatewayError ? err.status : 503;
+      const userMessage = err instanceof AIGatewayError
+        ? err.message
+        : "The AI assistant is temporarily unavailable. Please try again in a moment.";
+
+      // Do NOT persist a raw data dump as an assistant answer — surface the failure.
+      return new Response(
+        JSON.stringify({ error: userMessage, conversation_id: convId }),
+        {
+          status: status === 401 || status === 400 ? 500 : status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
+
 
     // Save assistant message
     await supabase.from("ai_messages").insert({
