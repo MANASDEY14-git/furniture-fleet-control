@@ -3087,6 +3087,12 @@ export type Database = {
           on_time_rate: number
         }[]
       }
+      get_digest_recipients: {
+        Args: { _store_id: string }
+        Returns: {
+          chat_id: number
+        }[]
+      }
       get_dispatch_board: {
         Args: { _store_id: string }
         Returns: {
