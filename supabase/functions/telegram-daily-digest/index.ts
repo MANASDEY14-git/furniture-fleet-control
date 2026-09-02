@@ -587,7 +587,99 @@ async function sendTelegram(chatId: number, text: string) {
   return true;
 }
 
+/* -------------------------------------------------- movement / run record */
+
+/**
+ * True when anything actually moved for the store on `day`:
+ * sales, quotes, money in/out, purchases, deliveries, stock movement.
+ */
+async function hasMovement(
+  db: ReturnType<typeof createClient>,
+  storeId: string,
+  day: string,
+  facts: DayFacts,
+): Promise<boolean> {
+  if (
+    facts.orderCount > 0 ||
+    facts.newQuotes > 0 ||
+    facts.collected !== 0 ||
+    facts.paidOut !== 0 ||
+    facts.purchaseValue !== 0 ||
+    facts.deliveriesDone > 0
+  ) {
+    return true;
+  }
+
+  const { data: adj, error: adjErr } = await db
+    .from("stock_adjustments")
+    .select("id")
+    .eq("store_id", storeId)
+    .gte("created_at", `${day}T00:00:00`)
+    .lt("created_at", `${day}T23:59:59.999`)
+    .limit(1);
+  check(`stock adjustments ${day}`, adjErr, adj);
+  if ((adj || []).length > 0) return true;
+
+  const { data: cons, error: consErr } = await db
+    .from("material_consumptions")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("date", day)
+    .limit(1);
+  check(`material consumption ${day}`, consErr, cons);
+  if ((cons || []).length > 0) return true;
+
+  return false;
+}
+
+async function recordRun(
+  db: ReturnType<typeof createClient>,
+  storeId: string,
+  mode: Mode,
+  runDate: string,
+  status: "sent" | "skipped_no_movement" | "failed",
+  recipients: number,
+  error: string | null,
+) {
+  const { error: insErr } = await db.from("digest_runs").insert({
+    store_id: storeId,
+    mode,
+    run_date: runDate,
+    status,
+    recipients,
+    error,
+  });
+  if (insErr) console.error("[digest] digest_runs insert failed:", insErr);
+}
+
+/**
+ * If yesterday's scheduled digests never went out, say so in plain language
+ * so a silent stop is never invisible again.
+ */
+async function watchdogNote(
+  db: ReturnType<typeof createClient>,
+  storeId: string,
+  tz: string,
+): Promise<string | null> {
+  const since = localDate(tz, -2);
+  const { data, error } = await db
+    .from("digest_runs")
+    .select("status,run_date,mode")
+    .eq("store_id", storeId)
+    .gte("run_date", since);
+  if (error) {
+    console.error("[digest] watchdog lookup failed:", error);
+    return null;
+  }
+  const rows = data || [];
+  if (rows.length === 0) return null;
+  const anyOk = rows.some((r: any) => r.status === "sent" || r.status === "skipped_no_movement");
+  if (anyOk) return null;
+  return "⚠️ Heads up: yesterday's digest could not be delivered. Numbers below are current.";
+}
+
 /* ------------------------------------------------------------------ entry */
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
