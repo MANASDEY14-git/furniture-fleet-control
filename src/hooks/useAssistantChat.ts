@@ -70,7 +70,20 @@ export const useAssistantChat = (storeId?: string) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Edge function returned non-2xx: read the JSON body for the real message.
+        let serverMessage = '';
+        try {
+          const ctx = (error as any)?.context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            serverMessage = body?.error || '';
+          }
+        } catch { /* ignore */ }
+        throw new Error(serverMessage || error.message);
+      }
+      if (data?.error) throw new Error(data.error);
+
 
       if (data.conversation_id && !conversationId) {
         setConversationId(data.conversation_id);
