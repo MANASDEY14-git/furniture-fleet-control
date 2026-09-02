@@ -376,14 +376,21 @@ Deno.serve(async (req) => {
       assistantContent = await callLovableResponses(promptText);
     } catch (err: any) {
       console.error("LLM synthesis failed:", err);
-      // Fallback: return a deterministic answer using local data + specialist outputs
-      const fallbackParts = ["I wasn't able to reach the AI model, but here's what I found:"];
-      if (contextData) fallbackParts.push(contextData);
-      Object.entries(specialistOutputs).forEach(([name, output]) => {
-        fallbackParts.push(`${AGENT_LABELS[name] || name}: ${output}`);
-      });
-      assistantContent = fallbackParts.join("\n\n");
+      const status = err instanceof AIGatewayError ? err.status : 503;
+      const userMessage = err instanceof AIGatewayError
+        ? err.message
+        : "The AI assistant is temporarily unavailable. Please try again in a moment.";
+
+      // Do NOT persist a raw data dump as an assistant answer — surface the failure.
+      return new Response(
+        JSON.stringify({ error: userMessage, conversation_id: convId }),
+        {
+          status: status === 401 || status === 400 ? 500 : status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
+
 
     // Save assistant message
     await supabase.from("ai_messages").insert({
