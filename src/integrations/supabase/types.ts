@@ -3212,40 +3212,40 @@ export type Database = {
       }
       get_reorder_intelligence: {
         Args: {
-          _horizon_days?: number | null
+          _horizon_days?: number
           _store_id: string
           _window_days?: number
         }
         Returns: {
           avg_units_per_order: number
-          brand: string | null
+          brand: string
           bucket: string
-          category_id: string | null
+          category_id: string
           category_monthly_rate: number
-          category_name: string | null
+          category_name: string
           confidence: string
           cost_price: number
-          cover_days: number | null
+          cover_days: number
           current_stock: number
           days_held: number
-          days_since_last_sale: number | null
-          days_since_sale: number | null
+          days_since_last_sale: number
+          days_since_sale: number
           decision: string
           demand_class: string
           demand_rate_basis: string
           estimated_monthly_demand: number
           evidence_sentence: string
-          first_sale_date: string | null
+          first_sale_date: string
           item_id: string
           item_name: string
-          last_purchase_date: string | null
-          last_sale_date: string | null
+          last_purchase_date: string
+          last_sale_date: string
           lead_time_demand: number
           net_stock: number
           open_demand: number
           orders_count_30d: number
-          orders_count_90d: number
           orders_count_365d: number
+          orders_count_90d: number
           orders_count_ever: number
           quantity_available: number
           selling_months_count: number
@@ -3253,14 +3253,14 @@ export type Database = {
           stock_value: number
           suggested_order_cost: number
           suggested_qty: number
-          supplier_id: string | null
+          supplier_id: string
           supplier_lead_days: number
-          supplier_name: string | null
+          supplier_name: string
           units_sold: number
           units_sold_30d: number
-          units_sold_90d: number
           units_sold_365d: number
-          warehouse: string | null
+          units_sold_90d: number
+          warehouse: string
         }[]
       }
       get_sales_intelligence_summary: {
