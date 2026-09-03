@@ -72,6 +72,12 @@ const SYSTEM_PROMPT = `You are an AI assistant for a furniture/manufacturing ERP
 ## Specialist Agent Inputs
 When "Department Specialist" briefs are provided below, use them as authoritative context. They are real outputs from the Sales, Inventory, Purchases, and Finance agents.
 
+## Reorder & Restocking Rules
+- When discussing restocking, reorders, or dead stock, quote ONLY the factual data provided by the reorder engine (actual units sold across 30d/90d/365d, orders count, last sale date, days since last sale, current stock vs open reserved demand, and supplier lead days).
+- Never invent smooth daily velocity rates or fake weeks of cover. Demand in furniture retail is intermittent (lumpy).
+- For items marked with "low confidence" (one-off sales or category fallback), explicitly state that they have insufficient history and advise manual review rather than automated purchase.
+- Cite the engine's evidence sentences for auditability.
+
 ## Response Guidelines
 - Be concise and helpful
 - Use bullet points and numbered steps for instructions
@@ -84,8 +90,8 @@ When "Department Specialist" briefs are provided below, use them as authoritativ
 
 const SPECIALISTS = [
   { name: "agent-sales", keywords: /sales|revenue|income|turnover|order|due|outstanding|balance|payment|paid|unpaid|receivable|customer/i },
-  { name: "agent-inventory", keywords: /stock|inventory|item|product|low stock|out of stock|quantity/i },
-  { name: "agent-purchases", keywords: /supplier|purchase|vendor|payable|buy|procurement/i },
+  { name: "agent-inventory", keywords: /stock|inventory|item|product|low stock|out of stock|quantity|reorder|restock|dead stock/i },
+  { name: "agent-purchases", keywords: /supplier|purchase|vendor|payable|buy|procurement|restock/i },
   { name: "agent-finance", keywords: /finance|cash|bank|money|expense|profit|margin|gst|tax|ledger|account/i },
 ];
 
@@ -491,36 +497,54 @@ ${topDues}`);
     }
   }
 
-  // Inventory / stock data
-  if (lower.match(/stock|inventory|item|product|low stock|out of stock/)) {
-    const { data: lowStock } = await supabase
-      .from("items")
-      .select("name, quantity_available, selling_price")
-      .eq("store_id", storeId)
-      .lt("quantity_available", 5)
-      .order("quantity_available", { ascending: true })
-      .limit(10);
-
+  // Inventory / stock / reorder data
+  if (lower.match(/stock|inventory|item|product|low stock|out of stock|reorder|restock|dead stock/)) {
     const { data: allItems } = await supabase
       .from("items")
       .select("id, quantity_available")
       .eq("store_id", storeId);
 
-    if (allItems) {
-      const totalItems = allItems.length;
-      const outOfStock = allItems.filter((i: any) => i.quantity_available <= 0).length;
-      const lowStockCount = allItems.filter((i: any) => i.quantity_available > 0 && i.quantity_available < 5).length;
+    // Call factual reorder intelligence RPC
+    const { data: reorderRows } = await supabase.rpc("get_reorder_intelligence", {
+      _store_id: storeId,
+      _window_days: 365,
+    });
 
-      let stockInfo = `📦 Inventory Summary:
-- Total Items: ${totalItems}
-- Out of Stock: ${outOfStock}
-- Low Stock (< 5 units): ${lowStockCount}`;
+    if (allItems || reorderRows) {
+      const totalItems = allItems?.length || 0;
+      const outOfStock = allItems?.filter((i: any) => i.quantity_available <= 0).length || 0;
+      const lowStockCount = allItems?.filter((i: any) => i.quantity_available > 0 && i.quantity_available < 5).length || 0;
 
-      if (lowStock && lowStock.length > 0) {
-        const lowStockList = lowStock.map((i: any) =>
-          `  - ${i.name}: ${i.quantity_available} units`
+      const rRows = reorderRows || [];
+      const urgentReorders = rRows.filter((r: any) => r.decision === "reorder_now" && r.confidence !== "low");
+      const reorderSoon = rRows.filter((r: any) => r.decision === "reorder_soon");
+      const deadStock = rRows.filter((r: any) => r.decision === "dead_stock");
+      const neverSold = rRows.filter((r: any) => r.decision === "never_sold");
+      const lowConf = rRows.filter((r: any) => r.confidence === "low");
+
+      const deadValue = deadStock.reduce((s: number, r: any) => s + (Number(r.stock_value) || 0), 0);
+      const neverSoldValue = neverSold.reduce((s: number, r: any) => s + (Number(r.stock_value) || 0), 0);
+
+      let stockInfo = `📦 Inventory & Factual Reorder Intelligence:
+- Total Catalog Items: ${totalItems} (Out of Stock: ${outOfStock}, Low Stock <5: ${lowStockCount})
+- Urgent Reorders (High/Med Confidence): ${urgentReorders.length} items
+- Reorder Soon: ${reorderSoon.length} items
+- Dead Stock (>180d no sales): ${deadStock.length} items with ₹${Math.round(deadValue).toLocaleString("en-IN")} locked
+- Never Sold Stock: ${neverSold.length} items with ₹${Math.round(neverSoldValue).toLocaleString("en-IN")} locked
+- Low Confidence Items (requires manual review): ${lowConf.length} items`;
+
+      if (urgentReorders.length > 0) {
+        const topUrgent = urgentReorders.slice(0, 5).map((r: any) =>
+          `  - ${r.item_name}: ${r.current_stock} in stock ${r.open_demand > 0 ? `(${r.open_demand} reserved)` : ''} — need ${r.suggested_qty} pcs. Evidence: "${r.evidence_sentence}"`
         ).join("\n");
-        stockInfo += `\n- Low stock items:\n${lowStockList}`;
+        stockInfo += `\n- Top Urgent Reorder Recommendations:\n${topUrgent}`;
+      }
+
+      if (deadStock.length > 0) {
+        const topDead = deadStock.slice(0, 3).map((r: any) =>
+          `  - ${r.item_name}: ${r.current_stock} in stock (₹${Math.round(r.stock_value).toLocaleString("en-IN")} locked, last sold ${r.days_since_last_sale || '180+'}d ago)`
+        ).join("\n");
+        stockInfo += `\n- Dead Stock Examples:\n${topDead}`;
       }
 
       parts.push(stockInfo);

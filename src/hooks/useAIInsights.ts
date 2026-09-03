@@ -23,6 +23,7 @@ export interface RestockRecommendation {
   current_stock: number;
   daily_velocity: number;
   days_until_stockout: number;
+  days_since_last_sale?: number;
   priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   action: string;
   recommended_quantity: number;
@@ -30,6 +31,18 @@ export interface RestockRecommendation {
   profit_margin: number;
   profit_percentage: number;
   reason: string;
+  demand_class?: string;
+  confidence?: 'high' | 'medium' | 'low';
+  demand_rate_basis?: string;
+  open_demand?: number;
+  net_stock?: number;
+  supplier_name?: string;
+  supplier_lead_days?: number;
+  units_sold_30d?: number;
+  units_sold_90d?: number;
+  units_sold_365d?: number;
+  orders_count_365d?: number;
+  evidence_sentence?: string;
 }
 
 export interface MaterialRecommendation {

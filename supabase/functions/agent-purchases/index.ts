@@ -35,7 +35,35 @@ Deno.serve(async (req) => {
       .gte("date", thirtyDaysAgo.toISOString().split("T")[0]);
 
     const totalPurchasesCost = purchases?.reduce((sum, p) => sum + (p.total_cost || 0), 0) || 0;
-    const statsText = `In the last 30 days, we placed ${purchases?.length || 0} purchase orders totaling ₹${totalPurchasesCost.toLocaleString("en-IN")}.`;
+
+    // Fetch factual replenishment requirements
+    const { data: reorderRows } = await supabase.rpc(
+      "get_reorder_intelligence",
+      { _store_id: store_id, _window_days: 365 }
+    );
+
+    const urgentItems = (reorderRows || []).filter((r: any) => r.decision === "reorder_now" && r.confidence !== "low");
+    const suggestedProcurementValue = urgentItems.reduce(
+      (sum: number, r: any) => sum + (Number(r.suggested_order_cost) || 0),
+      0
+    );
+
+    // Group suppliers needing orders
+    const suppliersNeedingOrders = new Map<string, number>();
+    urgentItems.forEach((r: any) => {
+      const sName = r.supplier_name || "Unassigned";
+      suppliersNeedingOrders.set(sName, (suppliersNeedingOrders.get(sName) || 0) + (Number(r.suggested_order_cost) || 0));
+    });
+
+    const supplierBreakdown = Array.from(suppliersNeedingOrders.entries())
+      .slice(0, 3)
+      .map(([sName, val]) => `${sName}: ₹${Math.round(val).toLocaleString("en-IN")}`)
+      .join(", ");
+
+    const statsText = `Procurement & Reorder Audit:
+- Purchases in Last 30 Days: ${purchases?.length || 0} purchase orders totaling ₹${totalPurchasesCost.toLocaleString("en-IN")}.
+- Urgent Replenishment Pipeline: ${urgentItems.length} items with verified repeat demand requiring ₹${Math.round(suggestedProcurementValue).toLocaleString("en-IN")} in purchase orders.
+- Key Suppliers to Reorder: ${supplierBreakdown || "No immediate supplier orders required"}.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -51,7 +79,7 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are the Purchases Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing analyzing this month's purchasing levels, procurement status, and supplier payments. Use Rupee symbol (₹)."
+            content: "You are the Purchases Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing analyzing purchasing levels, supplier lead times, and imminent replenishment requirements. Quote ONLY the factual numbers provided below (past spend, suggested purchase orders, and supplier allocations). Do not invent sales velocities."
           },
           {
             role: "user",

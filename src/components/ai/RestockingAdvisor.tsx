@@ -154,9 +154,27 @@ export default function RestockingAdvisor({ storeId }: RestockingAdvisorProps) {
               {filteredRecommendations.slice(0, 10).map((rec) => (
                 <TableRow key={rec.item_id} className="border-slate-700 hover:bg-slate-800/30">
                   <TableCell>
-                    <div>
-                      <p className="font-medium text-blue-100">{rec.item_name}</p>
-                      <p className="text-sm text-gray-400">{rec.reason}</p>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-blue-100">{rec.item_name}</p>
+                        {rec.demand_class && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 font-mono capitalize">
+                            {rec.demand_class}
+                          </span>
+                        )}
+                        {rec.confidence && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border font-mono ${
+                            rec.confidence === 'high'
+                              ? 'border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
+                              : rec.confidence === 'medium'
+                              ? 'border-amber-500/40 bg-amber-950/40 text-amber-300'
+                              : 'border-slate-600 bg-slate-800 text-slate-300'
+                          }`}>
+                            {rec.confidence} conf.
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 leading-relaxed font-sans">{rec.reason}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -167,7 +185,14 @@ export default function RestockingAdvisor({ storeId }: RestockingAdvisorProps) {
                       </div>
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-blue-100">{rec.current_stock}</TableCell>
+                  <TableCell className="text-blue-100">
+                    <span className="font-semibold">{rec.current_stock}</span>
+                    {rec.open_demand !== undefined && rec.open_demand > 0 && (
+                      <span className="text-red-400 text-xs ml-1 font-mono">
+                        (-{rec.open_demand})
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <span className={rec.days_until_stockout <= 7 ? "text-red-400" : "text-blue-100"}>
                       {rec.days_until_stockout > 999 ? "∞" : rec.days_until_stockout}

@@ -7,40 +7,12 @@ const corsHeaders = {
 };
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const DEFAULT_LEAD_TIME_DAYS = 7;
-
-// Furniture-aware idle detection keywords
-const WOOD_KEYWORDS = ['wood', 'bed', 'wardrobe', 'solid', 'teak', 'sheesham', 'mango', 'oak', 'walnut', 'dressing', 'almirah', 'cabinet', 'table', 'desk', 'cot'];
-const UPHOLSTERY_KEYWORDS = ['sofa', 'fabric', 'mattress', 'cushion', 'upholstery', 'leather', 'recliner', 'diwan'];
 
 function validateInput(body: unknown): { storeId: string } {
   if (typeof body !== 'object' || body === null) throw new Error('Invalid request body');
   const { storeId } = body as Record<string, unknown>;
   if (typeof storeId !== 'string' || !UUID_REGEX.test(storeId)) throw new Error('Invalid storeId: must be a valid UUID');
   return { storeId };
-}
-
-function getItemCategory(name: string): 'wood' | 'upholstery' | 'default' {
-  const lower = name.toLowerCase();
-  if (UPHOLSTERY_KEYWORDS.some(k => lower.includes(k))) return 'upholstery';
-  if (WOOD_KEYWORDS.some(k => lower.includes(k))) return 'wood';
-  return 'default';
-}
-
-function getIdleThresholdDays(category: 'wood' | 'upholstery' | 'default'): number {
-  switch (category) {
-    case 'wood': return 120;
-    case 'upholstery': return 45;
-    default: return 60;
-  }
-}
-
-function getIdleStatus(daysSinceLastSale: number, daysOfStock: number, category: 'wood' | 'upholstery' | 'default'): string {
-  const threshold = getIdleThresholdDays(category);
-  if (daysSinceLastSale > threshold * 2 && daysOfStock > threshold * 2) return 'CRITICAL_IDLE';
-  if (daysSinceLastSale > threshold && daysOfStock > threshold) return 'IDLE';
-  if (daysSinceLastSale > threshold * 0.5) return 'SLOW';
-  return 'OK';
 }
 
 serve(async (req) => {
@@ -51,7 +23,10 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const authClient = createClient(
@@ -63,7 +38,10 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: authError } = await authClient.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Invalid authentication' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const rawBody = await req.json();
@@ -71,126 +49,115 @@ serve(async (req) => {
 
     const { data: hasAccess } = await authClient.rpc('user_has_store_access', { _store_id: storeId });
     if (!hasAccess) {
-      return new Response(JSON.stringify({ error: 'Access denied to this store' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Access denied to this store' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
+    // Call factual get_reorder_intelligence RPC using service client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get items with category info
-    const { data: items } = await supabase
-      .from('items')
-      .select('id, name, quantity_available, cost_price, selling_price, category_id')
-      .eq('store_id', storeId);
-
-    // Get sales data for last 180 days (non-cancelled)
-    const cutoff180 = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const { data: salesData } = await supabase
-      .from('sales_order_items')
-      .select('item_id, quantity, created_at, sales_orders!inner(date, store_id, delivery_status)')
-      .eq('sales_orders.store_id', storeId)
-      .not('sales_orders.delivery_status', 'ilike', 'cancelled')
-      .gte('sales_orders.date', cutoff180);
-
-    // Build sales velocity per item
-    const salesByItem = new Map<string, { totalSold: number; lastSaleDate: string }>();
-    (salesData || []).forEach((sale: any) => {
-      const existing = salesByItem.get(sale.item_id) || { totalSold: 0, lastSaleDate: '' };
-      existing.totalSold += sale.quantity;
-      const saleDate = sale.sales_orders?.date || '';
-      if (saleDate > existing.lastSaleDate) existing.lastSaleDate = saleDate;
-      salesByItem.set(sale.item_id, existing);
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_reorder_intelligence', {
+      _store_id: storeId,
+      _window_days: 365,
     });
 
-    const now = Date.now();
-    const recommendations = (items || []).map((item: any) => {
-      const sales = salesByItem.get(item.id) || { totalSold: 0, lastSaleDate: '' };
-      const dailyVelocity = sales.totalSold / 180;
-      const daysOfStock = dailyVelocity > 0 ? item.quantity_available / dailyVelocity : 9999;
-      const daysSinceLastSale = sales.lastSaleDate
-        ? Math.floor((now - new Date(sales.lastSaleDate).getTime()) / (1000 * 60 * 60 * 24))
-        : 9999;
+    if (rpcError) {
+      console.error('get_reorder_intelligence RPC error:', rpcError);
+      throw rpcError;
+    }
 
-      const itemCategory = getItemCategory(item.name);
-      const leadTime = DEFAULT_LEAD_TIME_DAYS;
-
-      // Determine priority based on demand + lead time
-      let priority: string;
+    const recommendations = (rpcData || []).map((r: any) => {
+      let priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
       let action: string;
-      let recommendedQuantity = 0;
+      let idleStatus = 'OK';
 
-      if (item.quantity_available === 0 && dailyVelocity > 0) {
-        priority = 'CRITICAL';
-        action = 'restock_immediately';
-        recommendedQuantity = Math.ceil(dailyVelocity * 30);
-      } else if (daysOfStock < leadTime) {
-        priority = 'CRITICAL';
-        action = 'restock_immediately';
-        recommendedQuantity = Math.ceil(dailyVelocity * 30);
-      } else if (daysOfStock < leadTime * 2) {
-        priority = 'HIGH';
-        action = 'restock_soon';
-        recommendedQuantity = Math.ceil(dailyVelocity * 21);
-      } else if (daysOfStock < leadTime * 3) {
-        priority = 'MEDIUM';
-        action = 'plan_restock';
-        recommendedQuantity = Math.ceil(dailyVelocity * 14);
-      } else if (daysOfStock > leadTime * 5 && dailyVelocity > 0) {
-        priority = 'OVERSTOCK';
-        action = 'reduce_orders';
-        recommendedQuantity = 0;
-      } else {
-        priority = 'LOW';
-        action = 'monitor';
-        recommendedQuantity = 0;
+      switch (r.decision) {
+        case 'reorder_now':
+          priority = 'CRITICAL';
+          action = 'reorder_now';
+          break;
+        case 'reorder_soon':
+          priority = 'HIGH';
+          action = 'reorder_soon';
+          break;
+        case 'dead_stock':
+          priority = 'MEDIUM';
+          action = 'clear_dead_stock';
+          idleStatus = 'CRITICAL_IDLE';
+          break;
+        case 'never_sold':
+          priority = 'MEDIUM';
+          action = 'promote_or_clear';
+          idleStatus = 'IDLE';
+          break;
+        case 'sell_through':
+        default:
+          priority = 'LOW';
+          action = 'monitor';
+          break;
       }
 
-      // Use correct cost based on costing method (items don't have costing_method, use cost_price)
-      const unitCost = item.cost_price || 0;
-      const profitMargin = item.selling_price - unitCost;
-      const profitPercentage = item.selling_price > 0 ? (profitMargin / item.selling_price) * 100 : 0;
-
-      const idleStatus = getIdleStatus(daysSinceLastSale, daysOfStock, itemCategory);
+      const profitMargin = (r.selling_price || 0) - (r.cost_price || 0);
+      const profitPercentage = r.selling_price > 0 ? (profitMargin / r.selling_price) * 100 : 0;
 
       return {
-        item_id: item.id,
-        item_name: item.name,
-        current_stock: item.quantity_available,
-        daily_velocity: Math.round(dailyVelocity * 100) / 100,
-        days_until_stockout: Math.min(Math.round(daysOfStock), 9999),
-        days_since_last_sale: Math.min(daysSinceLastSale, 9999),
+        item_id: r.item_id,
+        item_name: r.item_name,
+        current_stock: r.current_stock,
+        daily_velocity: Math.round(((r.estimated_monthly_demand || 0) / 30.0) * 100) / 100,
+        days_until_stockout: r.cover_days !== null ? Math.min(Math.round(r.cover_days), 9999) : 9999,
+        days_since_last_sale: r.days_since_last_sale !== null ? Math.min(r.days_since_last_sale, 9999) : 9999,
         priority,
         action,
-        recommended_quantity: recommendedQuantity,
-        estimated_cost: Math.round(recommendedQuantity * unitCost * 100) / 100,
+        recommended_quantity: r.suggested_qty,
+        estimated_cost: r.suggested_order_cost,
         profit_margin: Math.round(profitMargin * 100) / 100,
         profit_percentage: Math.round(profitPercentage * 100) / 100,
         idle_status: idleStatus,
-        item_category: itemCategory,
-        reason: generateReason(priority, daysOfStock, dailyVelocity, idleStatus, daysSinceLastSale),
+        item_category: r.category_name || 'General',
+        reason: r.evidence_sentence,
+        // Enriched factual fields
+        demand_class: r.demand_class,
+        confidence: r.confidence,
+        demand_rate_basis: r.demand_rate_basis,
+        open_demand: r.open_demand,
+        net_stock: r.net_stock,
+        supplier_name: r.supplier_name,
+        supplier_lead_days: r.supplier_lead_days,
+        units_sold_30d: r.units_sold_30d,
+        units_sold_90d: r.units_sold_90d,
+        units_sold_365d: r.units_sold_365d,
+        orders_count_365d: r.orders_count_365d,
+        evidence_sentence: r.evidence_sentence,
       };
     });
 
-    // Sort: CRITICAL > HIGH > OVERSTOCK > MEDIUM > LOW, then by days_until_stockout
-    const priorityOrder: Record<string, number> = { 'CRITICAL': 0, 'HIGH': 1, 'OVERSTOCK': 2, 'MEDIUM': 3, 'LOW': 4 };
+    // Sort: CRITICAL > HIGH > MEDIUM > LOW, then by days_until_stockout
+    const priorityOrder: Record<string, number> = { 'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
     recommendations.sort((a: any, b: any) => {
-      const pa = priorityOrder[a.priority] ?? 5;
-      const pb = priorityOrder[b.priority] ?? 5;
+      const pa = priorityOrder[a.priority] ?? 4;
+      const pb = priorityOrder[b.priority] ?? 4;
       if (pa !== pb) return pa - pb;
       return a.days_until_stockout - b.days_until_stockout;
     });
 
+    const summary = {
+      total_items: recommendations.length,
+      critical_items: recommendations.filter((r: any) => r.priority === 'CRITICAL').length,
+      high_priority: recommendations.filter((r: any) => r.priority === 'HIGH').length,
+      overstock_items: recommendations.filter((r: any) => r.action === 'monitor').length,
+      idle_items: recommendations.filter((r: any) => r.idle_status === 'IDLE' || r.idle_status === 'CRITICAL_IDLE').length,
+      low_confidence_items: recommendations.filter((r: any) => r.confidence === 'low').length,
+    };
+
     return new Response(JSON.stringify({
       recommendations,
-      summary: {
-        total_items: items?.length || 0,
-        critical_items: recommendations.filter((r: any) => r.priority === 'CRITICAL').length,
-        high_priority: recommendations.filter((r: any) => r.priority === 'HIGH').length,
-        overstock_items: recommendations.filter((r: any) => r.priority === 'OVERSTOCK').length,
-        idle_items: recommendations.filter((r: any) => r.idle_status === 'IDLE' || r.idle_status === 'CRITICAL_IDLE').length,
-      },
+      summary,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -207,30 +174,3 @@ serve(async (req) => {
     });
   }
 });
-
-function generateReason(priority: string, daysOfStock: number, dailyVelocity: number, idleStatus: string, daysSinceLastSale: number): string {
-  if (idleStatus === 'CRITICAL_IDLE') {
-    return `No sales in ${daysSinceLastSale} days — consider clearance or relocation`;
-  }
-  if (idleStatus === 'IDLE') {
-    return `Idle inventory — no sales in ${daysSinceLastSale} days`;
-  }
-  if (priority === 'CRITICAL') {
-    return daysOfStock <= 0
-      ? 'Out of stock with active demand — restock immediately'
-      : `Only ${Math.round(daysOfStock)} days of stock remaining at current sales rate`;
-  }
-  if (priority === 'HIGH') {
-    return `Low stock — ${Math.round(daysOfStock)} days remaining, approaching lead time`;
-  }
-  if (priority === 'OVERSTOCK') {
-    return `Overstocked — ${Math.round(daysOfStock)} days of supply at current rate`;
-  }
-  if (priority === 'MEDIUM') {
-    return `Stock getting low — plan restock within ${Math.round(daysOfStock)} days`;
-  }
-  if (dailyVelocity === 0) {
-    return 'No recent sales activity — monitor demand';
-  }
-  return `Adequate stock for ${Math.round(daysOfStock)} days`;
-}
