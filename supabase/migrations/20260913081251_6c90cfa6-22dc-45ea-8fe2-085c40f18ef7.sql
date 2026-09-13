@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.get_reorder_intelligence(uuid, integer, integer) FROM anon;
