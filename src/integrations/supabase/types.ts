@@ -503,6 +503,42 @@ export type Database = {
         }
         Relationships: []
       }
+      challan_sequences: {
+        Row: {
+          financial_year_id: string
+          last_sequence: number
+          source_store_id: string
+          updated_at: string
+        }
+        Insert: {
+          financial_year_id: string
+          last_sequence?: number
+          source_store_id: string
+          updated_at?: string
+        }
+        Update: {
+          financial_year_id?: string
+          last_sequence?: number
+          source_store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challan_sequences_financial_year_id_fkey"
+            columns: ["financial_year_id"]
+            isOneToOne: false
+            referencedRelation: "financial_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challan_sequences_source_store_id_fkey"
+            columns: ["source_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_addresses: {
         Row: {
           address: string
@@ -1619,6 +1655,53 @@ export type Database = {
           },
         ]
       }
+      product_catalog: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sku: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sku: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sku?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_catalog_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -2203,6 +2286,342 @@ export type Database = {
           },
         ]
       }
+      stock_transfer_events: {
+        Row: {
+          actor_id: string
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          transfer_id: string
+        }
+        Insert: {
+          actor_id?: string
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          transfer_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          transfer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfer_events_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_transfer_lines: {
+        Row: {
+          condition_note: string | null
+          created_at: string
+          destination_item_id: string
+          destination_variant_id: string | null
+          id: string
+          item_name_snapshot: string
+          line_value: number | null
+          product_id: string | null
+          quantity_damaged: number
+          quantity_dispatched: number
+          quantity_received: number
+          quantity_short: number
+          source_item_id: string
+          source_variant_id: string | null
+          transfer_id: string
+          unit_snapshot: string
+          unit_transfer_price: number
+        }
+        Insert: {
+          condition_note?: string | null
+          created_at?: string
+          destination_item_id: string
+          destination_variant_id?: string | null
+          id?: string
+          item_name_snapshot: string
+          line_value?: number | null
+          product_id?: string | null
+          quantity_damaged?: number
+          quantity_dispatched: number
+          quantity_received?: number
+          quantity_short?: number
+          source_item_id: string
+          source_variant_id?: string | null
+          transfer_id: string
+          unit_snapshot?: string
+          unit_transfer_price: number
+        }
+        Update: {
+          condition_note?: string | null
+          created_at?: string
+          destination_item_id?: string
+          destination_variant_id?: string | null
+          id?: string
+          item_name_snapshot?: string
+          line_value?: number | null
+          product_id?: string | null
+          quantity_damaged?: number
+          quantity_dispatched?: number
+          quantity_received?: number
+          quantity_short?: number
+          source_item_id?: string
+          source_variant_id?: string | null
+          transfer_id?: string
+          unit_snapshot?: string
+          unit_transfer_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfer_lines_destination_item_id_fkey"
+            columns: ["destination_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_lines_destination_variant_id_fkey"
+            columns: ["destination_variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_lines_source_item_id_fkey"
+            columns: ["source_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_lines_source_variant_id_fkey"
+            columns: ["source_variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_lines_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_transfer_receipt_lines: {
+        Row: {
+          created_at: string
+          discrepancy_note: string | null
+          id: string
+          quantity_damaged: number
+          quantity_received: number
+          quantity_short: number
+          receipt_id: string
+          transfer_line_id: string
+        }
+        Insert: {
+          created_at?: string
+          discrepancy_note?: string | null
+          id?: string
+          quantity_damaged?: number
+          quantity_received?: number
+          quantity_short?: number
+          receipt_id: string
+          transfer_line_id: string
+        }
+        Update: {
+          created_at?: string
+          discrepancy_note?: string | null
+          id?: string
+          quantity_damaged?: number
+          quantity_received?: number
+          quantity_short?: number
+          receipt_id?: string
+          transfer_line_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfer_receipt_lines_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfer_receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_receipt_lines_transfer_line_id_fkey"
+            columns: ["transfer_line_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfer_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_transfer_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          receipt_number: string
+          received_at: string
+          received_by: string
+          transfer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          receipt_number: string
+          received_at?: string
+          received_by?: string
+          transfer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          receipt_number?: string
+          received_at?: string
+          received_by?: string
+          transfer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfer_receipts_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_transfers: {
+        Row: {
+          challan_number: string | null
+          challan_sequence: number | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string
+          destination_snapshot: Json | null
+          destination_store_id: string
+          dispatched_at: string | null
+          dispatched_by: string | null
+          draft_reference: string
+          expected_arrival_date: string | null
+          external_document_reference: string | null
+          financial_year_id: string | null
+          id: string
+          lr_number: string | null
+          notes: string | null
+          planned_dispatch_date: string
+          source_snapshot: Json | null
+          source_store_id: string
+          status: string
+          total_quantity: number
+          total_value: number
+          transfer_reason: string
+          transporter_name: string | null
+          updated_at: string
+          vehicle_number: string | null
+        }
+        Insert: {
+          challan_number?: string | null
+          challan_sequence?: number | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string
+          destination_snapshot?: Json | null
+          destination_store_id: string
+          dispatched_at?: string | null
+          dispatched_by?: string | null
+          draft_reference?: string
+          expected_arrival_date?: string | null
+          external_document_reference?: string | null
+          financial_year_id?: string | null
+          id?: string
+          lr_number?: string | null
+          notes?: string | null
+          planned_dispatch_date?: string
+          source_snapshot?: Json | null
+          source_store_id: string
+          status?: string
+          total_quantity?: number
+          total_value?: number
+          transfer_reason: string
+          transporter_name?: string | null
+          updated_at?: string
+          vehicle_number?: string | null
+        }
+        Update: {
+          challan_number?: string | null
+          challan_sequence?: number | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string
+          destination_snapshot?: Json | null
+          destination_store_id?: string
+          dispatched_at?: string | null
+          dispatched_by?: string | null
+          draft_reference?: string
+          expected_arrival_date?: string | null
+          external_document_reference?: string | null
+          financial_year_id?: string | null
+          id?: string
+          lr_number?: string | null
+          notes?: string | null
+          planned_dispatch_date?: string
+          source_snapshot?: Json | null
+          source_store_id?: string
+          status?: string
+          total_quantity?: number
+          total_value?: number
+          transfer_reason?: string
+          transporter_name?: string | null
+          updated_at?: string
+          vehicle_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfers_destination_store_id_fkey"
+            columns: ["destination_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_financial_year_id_fkey"
+            columns: ["financial_year_id"]
+            isOneToOne: false
+            referencedRelation: "financial_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_source_store_id_fkey"
+            columns: ["source_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_operational_scores: {
         Row: {
           compliance_score: number
@@ -2245,6 +2664,109 @@ export type Database = {
             foreignKeyName: "store_operational_scores_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_product_items: {
+        Row: {
+          approved_by: string
+          created_at: string
+          id: string
+          item_id: string
+          product_id: string
+          store_id: string
+          variant_id: string | null
+        }
+        Insert: {
+          approved_by?: string
+          created_at?: string
+          id?: string
+          item_id: string
+          product_id: string
+          store_id: string
+          variant_id?: string | null
+        }
+        Update: {
+          approved_by?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          product_id?: string
+          store_id?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_product_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_product_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_product_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_product_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "item_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_transfer_settings: {
+        Row: {
+          address: string | null
+          challan_prefix: string
+          contact_person: string | null
+          created_at: string
+          external_document_note: string | null
+          godown_code: string
+          phone: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          challan_prefix?: string
+          contact_person?: string | null
+          created_at?: string
+          external_document_note?: string | null
+          godown_code: string
+          phone?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          challan_prefix?: string
+          contact_person?: string | null
+          created_at?: string
+          external_document_note?: string | null
+          godown_code?: string
+          phone?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_transfer_settings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
             referencedRelation: "stores"
             referencedColumns: ["id"]
           },
@@ -2930,6 +3452,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cancel_stock_transfer: {
+        Args: { _reason: string; _transfer_id: string }
+        Returns: undefined
+      }
       close_and_rollover_financial_year: { Args: never; Returns: Json }
       convert_quote_to_order: {
         Args: { _order_id: string }
@@ -2985,6 +3511,22 @@ export type Database = {
             }
             Returns: string
           }
+      create_stock_transfer_draft: {
+        Args: {
+          _destination_store_id: string
+          _expected_arrival_date: string
+          _external_document_reference: string
+          _lines: Json
+          _lr_number: string
+          _notes: string
+          _planned_dispatch_date: string
+          _source_store_id: string
+          _transfer_reason: string
+          _transporter_name: string
+          _vehicle_number: string
+        }
+        Returns: string
+      }
       cron_check_briefings: { Args: never; Returns: undefined }
       customer_summary: {
         Args: {
@@ -3002,6 +3544,10 @@ export type Database = {
           total_orders: number
           total_revenue: number
         }[]
+      }
+      dispatch_stock_transfer: {
+        Args: { _transfer_id: string }
+        Returns: string
       }
       generate_ai_insights: { Args: never; Returns: number }
       get_active_financial_year: {
@@ -3415,6 +3961,10 @@ export type Database = {
           p_title: string
           p_worsen_ratio?: number
         }
+        Returns: string
+      }
+      receive_stock_transfer: {
+        Args: { _lines: Json; _notes: string; _transfer_id: string }
         Returns: string
       }
       scan_operational_risks: { Args: never; Returns: Json }
