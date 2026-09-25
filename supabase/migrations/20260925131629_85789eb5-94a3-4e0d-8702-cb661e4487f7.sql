@@ -1,0 +1,1 @@
+CREATE POLICY "Challan counters are not directly accessible" ON public.challan_sequences AS RESTRICTIVE FOR ALL TO authenticated USING (false) WITH CHECK (false);
