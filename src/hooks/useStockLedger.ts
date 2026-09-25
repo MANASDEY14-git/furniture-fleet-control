@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface StockLedgerEntry {
   date: string;
-  type: 'purchase' | 'sale' | 'adjustment';
+  type: 'purchase' | 'sale' | 'adjustment' | 'transfer_out' | 'transfer_in';
   item_name: string;
   item_id: string;
   quantity: number;
@@ -162,7 +162,28 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
         const { data: iaData } = await iaQuery;
         const intermediateAdjustmentsQty = iaData?.reduce((sum, a) => sum + a.quantity_change, 0) || 0;
 
-        openingBalance = baseOpeningQty + intermediatePurchasesQty - intermediateSalesQty + intermediateAdjustmentsQty;
+        const { data: priorTransferLines, error: priorTransferError } = await supabase
+          .from('stock_transfer_lines')
+          .select('source_item_id, destination_item_id, quantity_dispatched, stock_transfers!inner(dispatched_at, status)')
+          .or(`source_item_id.eq.${itemId},destination_item_id.eq.${itemId}`);
+        if (priorTransferError) throw priorTransferError;
+
+        const priorTransferOut = (priorTransferLines || []).reduce((sum, line) => {
+          const dispatchedAt = line.stock_transfers.dispatched_at;
+          return line.source_item_id === itemId && dispatchedAt && dispatchedAt < startDate.toISOString()
+            ? sum + Number(line.quantity_dispatched)
+            : sum;
+        }, 0);
+
+        const { data: priorReceipts, error: priorReceiptError } = await supabase
+          .from('stock_transfer_receipt_lines')
+          .select('quantity_received, stock_transfer_receipts!inner(received_at), stock_transfer_lines!inner(destination_item_id)')
+          .eq('stock_transfer_lines.destination_item_id', itemId)
+          .lt('stock_transfer_receipts.received_at', startDate.toISOString());
+        if (priorReceiptError) throw priorReceiptError;
+        const priorTransferIn = (priorReceipts || []).reduce((sum, receipt) => sum + Number(receipt.quantity_received), 0);
+
+        openingBalance = baseOpeningQty + intermediatePurchasesQty - intermediateSalesQty + intermediateAdjustmentsQty - priorTransferOut + priorTransferIn;
       }
 
       const stockEntries: StockLedgerEntry[] = [];
@@ -312,6 +333,60 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
         });
       });
 
+      // Transfer out is recorded when the source dispatches the batch.
+      let transferOutQuery = supabase
+        .from('stock_transfer_lines')
+        .select('source_item_id, item_name_snapshot, quantity_dispatched, unit_transfer_price, line_value, stock_transfers!inner(source_store_id, dispatched_at, challan_number, status)')
+        .not('stock_transfers.dispatched_at', 'is', null)
+        .gte('stock_transfers.dispatched_at', startDate.toISOString())
+        .lte('stock_transfers.dispatched_at', endDate.toISOString());
+      if (itemId && itemId !== 'all') transferOutQuery = transferOutQuery.eq('source_item_id', itemId);
+      if (storeId) transferOutQuery = transferOutQuery.eq('stock_transfers.source_store_id', storeId);
+      const { data: transferOutLines, error: transferOutError } = await transferOutQuery;
+      if (transferOutError) throw transferOutError;
+      transferOutLines?.forEach((line) => {
+        if (!line.stock_transfers.dispatched_at) return;
+        stockEntries.push({
+          date: line.stock_transfers.dispatched_at,
+          type: 'transfer_out',
+          item_name: line.item_name_snapshot,
+          item_id: line.source_item_id,
+          quantity: Number(line.quantity_dispatched),
+          unit_price: Number(line.unit_transfer_price),
+          total_amount: Number(line.line_value),
+          reference_number: line.stock_transfers.challan_number || undefined,
+          store_id: line.stock_transfers.source_store_id,
+          balance: 0,
+          adjustment_type: ['in_transit', 'partially_received'].includes(line.stock_transfers.status) ? 'in_transit' : 'transfer_out',
+        });
+      });
+
+      // Transfer in is recorded only for quantities accepted at the destination.
+      let transferInQuery = supabase
+        .from('stock_transfer_receipt_lines')
+        .select('quantity_received, stock_transfer_receipts!inner(received_at, receipt_number), stock_transfer_lines!inner(destination_item_id, item_name_snapshot, unit_transfer_price, transfer_id, stock_transfers!inner(destination_store_id, challan_number))')
+        .gte('stock_transfer_receipts.received_at', startDate.toISOString())
+        .lte('stock_transfer_receipts.received_at', endDate.toISOString());
+      if (itemId && itemId !== 'all') transferInQuery = transferInQuery.eq('stock_transfer_lines.destination_item_id', itemId);
+      if (storeId) transferInQuery = transferInQuery.eq('stock_transfer_lines.stock_transfers.destination_store_id', storeId);
+      const { data: transferInLines, error: transferInError } = await transferInQuery;
+      if (transferInError) throw transferInError;
+      transferInLines?.forEach((receipt) => {
+        const line = receipt.stock_transfer_lines;
+        stockEntries.push({
+          date: receipt.stock_transfer_receipts.received_at,
+          type: 'transfer_in',
+          item_name: line.item_name_snapshot,
+          item_id: line.destination_item_id,
+          quantity: Number(receipt.quantity_received),
+          unit_price: Number(line.unit_transfer_price),
+          total_amount: Number(receipt.quantity_received) * Number(line.unit_transfer_price),
+          reference_number: line.stock_transfers.challan_number || receipt.stock_transfer_receipts.receipt_number,
+          store_id: line.stock_transfers.destination_store_id,
+          balance: 0,
+        });
+      });
+
       // Sort by date (oldest first) for balance calculation
       const sortedEntries = stockEntries.sort((a, b) => 
         new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -320,9 +395,9 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
       // Calculate running balance
       let runningBalance = openingBalance;
       const entriesWithBalance = sortedEntries.map(entry => {
-        if (entry.type === 'purchase') {
+        if (entry.type === 'purchase' || entry.type === 'transfer_in') {
           runningBalance += entry.quantity;
-        } else if (entry.type === 'sale') {
+        } else if (entry.type === 'sale' || entry.type === 'transfer_out') {
           runningBalance -= entry.quantity;
         } else if (entry.type === 'adjustment') {
           // Adjustments can be positive or negative
@@ -333,14 +408,14 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
 
       // Calculate totals
       const totalPurchases = stockEntries
-        .filter(e => e.type === 'purchase')
+        .filter(e => e.type === 'purchase' || e.type === 'transfer_in' || (e.type === 'adjustment' && e.quantity > 0))
         .reduce((sum, e) => sum + e.quantity, 0);
       
       const totalSales = stockEntries
-        .filter(e => e.type === 'sale')
-        .reduce((sum, e) => sum + e.quantity, 0);
+        .filter(e => e.type === 'sale' || e.type === 'transfer_out' || (e.type === 'adjustment' && e.quantity < 0))
+        .reduce((sum, e) => sum + Math.abs(e.quantity), 0);
       
-      const closingBalance = openingBalance + totalPurchases - totalSales;
+      const closingBalance = entriesWithBalance.length > 0 ? runningBalance : openingBalance;
 
       // Reverse for display (newest first)
       return {

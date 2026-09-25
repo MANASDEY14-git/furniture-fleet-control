@@ -85,13 +85,17 @@ export default function StockLedger({
         return 'bg-blue-100 text-blue-800';
       case 'adjustment':
         return 'bg-orange-100 text-orange-800';
+      case 'transfer_in':
+        return 'bg-cyan-100 text-cyan-800';
+      case 'transfer_out':
+        return 'bg-amber-100 text-amber-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
   const isIncrease = (transaction: StockLedgerEntry) => {
-    return transaction.type === 'purchase' || 
+    return transaction.type === 'purchase' || transaction.type === 'transfer_in' ||
       (transaction.type === 'adjustment' && transaction.quantity > 0);
   };
 
@@ -105,7 +109,7 @@ export default function StockLedger({
             <p className="text-blue-200 text-xs">{format(new Date(transaction.date), 'dd MMM yyyy')}</p>
           </div>
           <Badge className={`${getTransactionTypeColor(transaction.type)} text-xs`}>
-            {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+            {transaction.type === 'transfer_out' && transaction.adjustment_type === 'in_transit' ? 'In transit' : transaction.type.replace('_', ' ').replace(/^./, (letter) => letter.toUpperCase())}
           </Badge>
         </div>
         
