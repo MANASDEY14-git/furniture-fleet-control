@@ -5,6 +5,7 @@ import { HubPage, TabOption } from '@/components/layout/HubPage';
 const Inventory = React.lazy(() => import('../Inventory'));
 const InventoryIntelligence = React.lazy(() => import('../InventoryIntelligence'));
 const StockLedger = React.lazy(() => import('../StockLedger'));
+const StockTransfers = React.lazy(() => import('../StockTransfers'));
 
 const tabs: TabOption[] = [
   {
@@ -22,6 +23,11 @@ const tabs: TabOption[] = [
     label: 'Stock Ledger',
     component: StockLedger,
   },
+  {
+    id: 'transfers',
+    label: 'Transfers',
+    component: StockTransfers,
+  },
 ];
 
 export default function InventoryHub() {
@@ -36,7 +42,7 @@ export default function InventoryHub() {
   return (
     <HubPage
       title="Inventory Hub"
-      description="Manage outlet stock levels, item details, intelligence, and ledger records"
+      description="Manage outlet stock, transfers, intelligence, and ledger records"
       tabs={tabs}
       defaultTab="stock"
       extraProps={{
