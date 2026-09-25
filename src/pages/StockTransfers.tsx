@@ -13,6 +13,7 @@ import { formatCurrency } from '@/utils/currencyUtils';
 import { TransferFormDialog } from '@/components/transfers/TransferFormDialog';
 import { ReceiveTransferDialog } from '@/components/transfers/ReceiveTransferDialog';
 import { TransferDocument } from '@/components/transfers/TransferDocument';
+import { TransferSettingsDialog } from '@/components/transfers/TransferSettingsDialog';
 
 type Queue = 'drafts' | 'dispatch' | 'transit' | 'receive' | 'discrepancies' | 'history';
 
@@ -47,7 +48,7 @@ export default function StockTransfers() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h2 className="text-xl font-semibold">Godown transfers</h2><p className="text-sm text-muted-foreground">Batch stock movement with dispatch and independent receipt control.</p></div>
-        {canManage && <TransferFormDialog />}
+        {canManage && <div className="flex gap-2"><TransferSettingsDialog /><TransferFormDialog /></div>}
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

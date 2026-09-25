@@ -76,6 +76,43 @@ export interface ReceiptInput {
   }>;
 }
 
+export interface TransferSettings {
+  store_id: string;
+  godown_code: string;
+  challan_prefix: string;
+  address: string | null;
+  phone: string | null;
+  contact_person: string | null;
+}
+
+export function useTransferSettings() {
+  return useQuery({
+    queryKey: ['transfer-settings'],
+    queryFn: async (): Promise<TransferSettings[]> => {
+      const { data, error } = await supabase.from('store_transfer_settings').select('*');
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+export function useSaveTransferSettings() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (settings: TransferSettings) => {
+      const { error } = await supabase.from('store_transfer_settings').upsert(settings, { onConflict: 'store_id' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transfer-settings'] });
+      toast({ title: 'Success', description: 'Godown challan settings saved' });
+    },
+    onError: (error: Error) => toast({ title: 'Settings not saved', description: error.message, variant: 'destructive' }),
+  });
+}
+
 export function useStockTransfers(storeId?: string) {
   return useQuery({
     queryKey: ['stock-transfers', storeId],
