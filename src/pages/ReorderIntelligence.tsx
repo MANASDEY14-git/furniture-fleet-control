@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import {
   Download,
@@ -19,7 +18,6 @@ import {
   Layers,
   ShieldCheck,
   TrendingDown,
-  Calendar,
   Building2,
   Package
 } from 'lucide-react';
@@ -194,12 +192,11 @@ function DemandClassBadge({ demandClass }: { demandClass: string }) {
 
 export default function ReorderIntelligence({ hideHeader = false }: { hideHeader?: boolean }) {
   const { activeStoreId } = useStoreContext();
-  const [windowDays, setWindowDays] = useState('365');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [showLowConfidence, setShowLowConfidence] = useState(false);
 
-  const { data: rows = [], isLoading } = useReorderIntelligence(Number(windowDays));
+  const { data: rows = [], isLoading } = useReorderIntelligence(365);
 
   const toggleRow = (itemId: string) => {
     setExpandedRows((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
@@ -322,16 +319,6 @@ export default function ReorderIntelligence({ hideHeader = false }: { hideHeader
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Select value={windowDays} onValueChange={setWindowDays}>
-            <SelectTrigger className="w-36 h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="90">Last 90 days</SelectItem>
-              <SelectItem value="180">Last 180 days</SelectItem>
-              <SelectItem value="365">Last 365 days</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
