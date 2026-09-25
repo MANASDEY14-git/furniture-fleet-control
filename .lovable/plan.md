@@ -1,214 +1,229 @@
-# Legally compliant inter-store stock transfers
+# Batched inter-store stock transfers with serialized challans
 
 ## Objective
 
-Add a controlled transfer process that moves real stock from one store to another and creates the correct inventory, GST, and accounting records. The confirmed operating model is:
+Add a controlled process that moves real stock from one godown/store to another without adding a GST module yet.
 
-- Stores have **different GSTINs**.
-- Transfers use the **actual purchase cost** of the units moved.
-- Control is **two-step**: the source store dispatches; the destination store confirms receipt and records discrepancies.
+Confirmed operating rules:
 
-Because different GST registrations are “distinct persons” under Indian GST, each dispatch is treated as a taxable supply even when the stores belong to the same PAN and no cash changes hands. The system will therefore produce a tax invoice, tax entries, goods-in-transit records, and inter-branch balances—not a simple quantity adjustment.
+- One transfer can contain a **batch of multiple items**.
+- The **source godown manager enters the transfer price manually** for every line.
+- The source manager dispatches; the destination manager independently confirms receipt.
+- Every dispatched transfer receives a **unique, permanent challan serial number**.
+- GST calculation, GST returns, e-invoicing and e-way bill integration are outside this release.
+
+Because the stores have different GSTINs, excluding GST from the software does not remove external legal obligations. This first release will function as an inventory movement and challan-control module only. It will not label the challan as a tax invoice or automatically post tax accounting. Before live use, the business accountant must confirm which statutory documents will be created outside this software and referenced on each transfer.
 
 ## What exists and what must change
 
-The current app has store-scoped item rows, purchase/sale stock triggers, manual stock adjustments, a stock ledger, access by store, and financial-year snapshots. It does **not** currently have a transfer record, goods-in-transit ledger, transfer document, or reliable product identity linking the same item across stores.
+The current app has store-scoped item rows, purchase/sale stock triggers, manual stock adjustments, a stock ledger, access by store, and financial-year snapshots. It does not have a transfer record, goods-in-transit ledger, serialized challan, or reliable product identity linking the same item across stores.
 
-Transfers will be a separate auditable module. They will not be inserted as purchases, sales orders, payments, or ordinary stock adjustments, because that would distort customer sales, supplier purchases, cash, KPIs, and reorder demand.
+Transfers will be separate records. They will not be inserted as purchases, sales orders, payments, or ordinary stock adjustments, because that would distort customer sales, supplier purchases, cash, KPIs, and reorder demand.
 
-## 1. Establish legal and product masters
+## 1. Product and godown foundations
 
-### Store tax profile
+### Godown profile
 
-Extend each store with controlled legal details:
+Extend each store with the details needed on a challan:
 
-- Legal/trade name, GSTIN, PAN linkage, registered address, state and state code
-- GST registration status and effective dates
-- Invoice series and next transfer-invoice number
-- E-invoicing applicability
-- Default inter-branch receivable/payable accounts
+- Godown/store name and address
+- Contact person and phone
+- Challan prefix and numbering configuration
+- Optional external statutory-document reference fields
 
-GSTIN format will be validated. Once a transfer is dispatched, the legal identity used on it is frozen as a snapshot so later store edits cannot rewrite history.
+The challan stores a frozen copy of these details at dispatch so later edits cannot rewrite old documents.
 
 ### Shared product identity
 
-Introduce a shared product master and link each store’s existing item row to it:
+Introduce a shared product master and link each store’s item row to it:
 
-- Product/SKU, description, category, HSN/SAC, GST rate and unit of measure
+- Product/SKU, description, category and unit of measure
 - Store-item mapping for the same product at source and destination
 - Variant mapping where variants are used
 
-Existing items will be matched conservatively and placed in a review queue when the match is ambiguous. Names alone will never silently decide that two store items are the same product.
+Existing items will be matched conservatively and placed in a review queue when ambiguous. Names alone will never silently decide that two store items are the same product.
 
-### Actual-cost traceability
-
-Introduce inventory cost lots tied to purchase lines or opening stock:
-
-- Purchase reference, source store, received date, available quantity and actual unit cost
-- Transfer allocation by lot; identifiable furniture can use its exact lot
-- FIFO is the default allocation only when multiple indistinguishable lots exist, while preserving every source cost layer
-- Current stock without usable purchase history receives a one-time opening-cost lot, explicitly marked as migrated and requiring approval
-
-This is necessary because the current item-level `cost_price` cannot prove which purchase cost belongs to the physical units transferred.
-
-## 2. Transfer workflow
+## 2. Batched transfer workflow
 
 ```text
-Draft → Dispatched / In transit → Received
-                         └──────→ Received with discrepancy → Resolved
-Draft → Cancelled
+Draft batch → Dispatched / In transit → Received
+                              └──────→ Received with discrepancy → Resolved
+Draft batch → Cancelled
 ```
 
-### Draft
+### Draft batch
 
-The source user selects destination, products/variants, quantities, actual cost lots, dispatch date, reason, transporter, vehicle/LR details, and expected arrival. The system checks:
+The source godown manager creates one transfer containing one or many item lines. Each line contains:
 
-- The user can operate the source store
-- Source and destination differ and both tax profiles are complete
-- The destination has an approved mapping for every product
-- Available stock and lot quantity are sufficient
-- HSN and GST rates are present
-- The accounting/tax period is open
+- Product or variant
+- Quantity
+- Manually entered unit transfer price
+- Calculated line value
+- Optional source reference, condition and notes
 
-Drafts reserve nothing and create no accounting entry.
+The header contains source, destination, transfer reason, planned dispatch date, expected arrival, transporter, vehicle/LR details and notes.
 
-### Dispatch — source-store action
+The system checks:
+
+- The manager can operate the source godown
+- Source and destination are different
+- Every item has an approved destination mapping
+- Source stock is sufficient
+- Every quantity and manual price is positive
+- The accounting period is open
+
+Drafts do not change stock. Managers may edit them until dispatch.
+
+### Dispatch — source manager
 
 A single database transaction will:
 
-1. Lock the source stock and selected cost lots.
-2. Revalidate quantities to prevent concurrent over-transfer.
-3. Allocate exact cost layers and decrement source on-hand stock.
-4. Create goods-in-transit quantities at the same actual cost.
-5. Freeze invoice, product, address, tax, lot, and valuation snapshots.
-6. Generate a unique stock-transfer tax invoice number.
-7. Calculate IGST for interstate transfers or CGST + SGST for intrastate transfers from the registered state codes.
-8. Record e-way bill requirements and prevent dispatch completion when a legally required reference is missing, subject to configured state rules.
-9. Post balanced transfer journals and an immutable dispatch event.
+1. Lock all selected source item rows.
+2. Revalidate every line to prevent concurrent over-transfer.
+3. Allocate a unique challan serial number.
+4. Freeze the item descriptions, quantities, manual prices, addresses and transport details.
+5. Decrease source stock for the full dispatched batch.
+6. Create matching goods-in-transit quantities and values.
+7. Create an immutable dispatch event and printable challan.
 
-After dispatch, quantities, valuation and tax fields cannot be edited. Corrections use cancellation within the permitted stage or a controlled debit/credit-note and return-transfer workflow.
+After dispatch, quantities and prices cannot be edited. Corrections use cancellation before receipt or a controlled return/shortage process after dispatch.
 
-### Receipt — destination-store action
+### Receipt — destination manager
 
-The destination user sees only transfers addressed to an accessible store and records quantities as received, damaged, or short. A single transaction will:
+The destination manager records received, damaged and short quantities line by line. One transaction will:
 
-- Increase destination inventory only by accepted quantity
-- Carry the actual source lot cost into destination stock
-- Clear the matching goods-in-transit quantity
-- Create the destination GST input and inter-branch payable entries
-- Produce a goods receipt note and immutable receipt event
-- Route shortages/damage to a discrepancy case rather than silently changing the invoice
+- Add only accepted quantities to destination stock
+- Use the dispatched manual transfer price as the destination inventory value
+- Clear the matching goods-in-transit quantity and value
+- Create a goods receipt record
+- Open a discrepancy case for shortages or damage
+- Preserve who received each line and when
 
-The same person cannot act as both dispatcher and receiver. Receipt is idempotent so retries cannot duplicate stock or journals.
+The dispatcher cannot receive the same transfer. Receipt is idempotent, so retries cannot duplicate stock.
 
-## 3. GST and transport documents
+### Partial and multiple receipts
 
-For the confirmed different-GSTIN model, every dispatch produces:
+A batch may arrive in parts. Each receipt records its own date, receiver and accepted/damaged/short quantities. The transfer remains partially received until every dispatched unit is either accepted or moved into an approved discrepancy outcome.
 
-- **Tax invoice** for the deemed supply between distinct persons
-- **E-way bill record** when applicable, with number, date, validity, vehicle/transporter and status
-- **Goods receipt note** at destination
-- Debit/credit note references for approved post-dispatch corrections
+## 3. Unique challan numbering
 
-The initial release will record and validate government-issued IRN/e-way bill details; it will not claim to generate them through GST portals without an approved GSP/API integration.
+Every challan serial number will be generated by the database at dispatch, never typed or calculated in the browser.
 
-### Valuation rule
-
-The commercial policy will use actual purchase cost. Before activation, the accountant must confirm that each destination GSTIN is eligible for full ITC, allowing the declared invoice value to be accepted under the Rule 28 proviso. If full ITC is unavailable, the system must require an accountant-approved Rule 28 valuation method (open-market value, like-kind value, 110% of cost, or other permitted basis) rather than automatically using cost.
-
-## 4. Double-entry accounting
-
-Add a proper transfer subledger with immutable journal headers and balanced journal lines. At dispatch, using taxable value ₹100 and GST ₹18 as an example:
-
-**Source GST registration**
+Recommended format:
 
 ```text
-Dr Inter-branch receivable       118
-  Cr Inter-branch transfer revenue   100
-  Cr Output GST payable               18
-
-Dr Inter-branch transfer cost    100
-  Cr Inventory                       100
+{SOURCE-CODE}/ST/{FINANCIAL-YEAR}/{SEQUENCE}
+Example: GHY/ST/2026-27/000123
 ```
 
-**Destination GST registration, on accepted receipt**
+Controls:
+
+- Sequence is unique per source godown and financial year
+- Number allocation is concurrency-safe and cannot produce duplicates
+- A dispatched challan number is never reused, including after cancellation
+- Cancelled challans remain visible with their original number and cancellation reason
+- Drafts have a temporary reference but no legal challan number
+- Reprints display “Duplicate Copy” and are logged
+- The printed challan includes source, destination, serial/date, all item lines, quantities, manual prices, batch total, transporter details, creator, dispatcher and receiver acknowledgements
+
+## 4. Accounting treatment in this GST-free scope
+
+This release records inventory value and goods in transit, but does not create GST ledgers or tax postings.
+
+At dispatch:
 
 ```text
-Dr Inventory                     100
-Dr Input GST receivable           18
-  Cr Inter-branch payable            118
+Dr Goods in transit — destination    Transfer value
+  Cr Inventory — source                 Transfer value
 ```
 
-For the combined books of the same legal entity, reconciliation will eliminate the matching inter-branch receivable/payable and transfer revenue/cost. Inventory remains at actual historical cost, so no unrealized internal profit is carried in closing stock.
+At receipt:
 
-No payment or bank movement is generated. Inter-branch balances are settled through reconciliation/elimination, not through the customer or supplier ledgers.
+```text
+Dr Inventory — destination           Accepted value
+  Cr Goods in transit — destination     Accepted value
+```
 
-Freight, insurance, transit loss and ITC reversal will use separately configured accounts. Whether freight is capitalized into inventory or expensed will be an accountant-approved company policy applied consistently.
+Shortage or damage remains in a suspense/discrepancy balance until a manager/accountant approves its final treatment, such as transit loss, recoverable from transporter, or return to source.
+
+The manually entered transfer price is frozen per line at dispatch and is the value carried into destination stock. The system will show the source item’s current recorded cost beside the editable transfer price and warn about differences, but will not silently override the manager’s price.
+
+No customer revenue, supplier purchase, bank payment, receivable or payable is generated in this first release. A future GST/accounting module can add statutory invoice and branch-account postings using the frozen transfer facts without rewriting stock history.
 
 ## 5. Data and security design
 
 Create dedicated records for:
 
-- Store tax profiles and statutory numbering
 - Shared products and store-product mappings
-- Inventory cost lots and lot allocations
-- Transfer headers, lines and receipts
+- Transfer batch headers and item lines
+- Challan sequence counters and frozen challan snapshots
 - Goods-in-transit balances
+- Partial receipt headers and receipt lines
 - Transfer discrepancies and resolutions
-- Tax/e-way bill document snapshots
-- Journal entries and journal lines
+- Inventory valuation movements
 - Immutable transfer events and attachments
 
-All tables will have explicit grants and RLS. Direct status-changing writes will be blocked; database RPCs will perform draft, dispatch, receipt, discrepancy resolution and cancellation atomically. Each action validates the signed-in user, current role, store access and transition. Source users can draft/dispatch for their stores; destination users can receive for theirs; accountants/admins can review tax, valuation and reconciliation without bypassing the audit trail.
+All tables will have explicit grants and RLS. Direct status-changing writes will be blocked; database operations will perform draft, dispatch, receipt, discrepancy resolution and cancellation atomically. Each action validates the signed-in user, role, godown access and allowed status transition.
+
+Role rules:
+
+- Source godown manager: create/edit drafts and dispatch
+- Destination godown manager: receive and report differences
+- Admin: view all transfers and cancel according to policy
+- Accountant: review valuation, goods in transit and discrepancy reports
+- Employees without transfer permission: read-only or no access, as configured
 
 ## 6. User experience
 
-Add **Transfers** to the Inventory Hub with four practical views:
+Add **Transfers** to the Inventory Hub with:
 
-- **To dispatch** — drafts awaiting source action
-- **In transit** — dispatched goods with age and expected arrival
+- **Draft batches** — being prepared by source managers
+- **To dispatch** — ready for stock issue and challan generation
+- **In transit** — dispatched batches with age and expected arrival
 - **To receive** — destination confirmation queue
-- **History & reconciliation** — completed, discrepant and cancelled transfers
+- **Discrepancies** — shortages and damage awaiting resolution
+- **History** — received and cancelled batches
 
-The transfer form will support scanning/searching items, lot selection, available-stock checks, expected tax preview and invoice totals. The receipt screen will compare sent versus received quantities line by line and require notes/evidence for differences. Printable invoice, e-way bill reference sheet and GRN will be available from the transfer detail view.
+The transfer form supports multiple item rows, search, current source stock, destination mapping, manual unit price and batch totals. The receipt screen compares dispatched and received quantities line by line.
 
-Stock Ledger and Inventory views will show paired **Transfer out**, **In transit**, and **Transfer in** movements without affecting sales or purchase KPIs. Reorder logic will treat source stock as unavailable at dispatch and destination stock as available only after receipt.
+Stock Ledger and Inventory views show paired **Transfer out**, **In transit**, and **Transfer in** movements. Transfers do not affect sales or purchase KPIs. Reorder logic treats source stock as unavailable after dispatch and destination stock as available only after receipt.
 
 ## 7. Period close and audit controls
 
-- Dispatch date determines the GST tax period; receipt may occur in a later period.
-- Closed periods cannot accept backdated dispatches or receipts.
-- Goods in transit is reported separately by source, destination, age and cost, including year-end cut-off.
-- Monthly reconciliation compares transfer invoices, output GST, destination ITC, e-way bills, receipts, discrepancies and inter-branch balances.
-- Records and document snapshots remain searchable for the statutory retention period; cancellation never deletes history.
-- Existing financial-year snapshots will be extended to include open goods in transit and transfer-related balances.
+- Closed financial years cannot accept backdated dispatches or receipts.
+- Goods in transit is reported by source, destination, challan, age, quantity and value.
+- Challan, receipt, discrepancy and cancellation history is immutable.
+- Month-end and year-end reports reconcile transfer-out, transit and transfer-in values.
+- Existing financial-year snapshots will include open goods in transit.
+- All important actions store user, timestamp and reason.
 
 ## 8. Delivery phases
 
-1. **Accounting-policy sign-off** — accountant confirms legal entity/PAN relationships, full-ITC eligibility, valuation fallback, GST rates/HSN ownership, invoice series, e-invoice applicability, state e-way thresholds, title-transfer point, freight treatment, loss/ITC-reversal rules and period-close policy.
-2. **Masters and cost foundation** — store tax profiles, shared product mapping, lot-level actual costs, migration review and opening-cost reconciliation.
-3. **Core transfer engine** — secure draft/dispatch/receipt RPCs, atomic stock movement, GIT and discrepancy handling.
-4. **GST documents and journals** — invoices, tax calculations, journal posting, branch balances and elimination report.
-5. **Inventory Hub experience** — queues, transfer form, receipt screen, printable documents and ledger integration.
-6. **Verification and rollout** — accountant-approved test cases, pilot with two stores, opening-stock reconciliation, permission testing, then enable remaining stores.
+1. **Policy sign-off** — confirm challan format, sequence scope, who may set prices, acceptable price variance, discrepancy approvals, title-transfer point and how statutory GST documents will be handled outside the app.
+2. **Product mapping** — shared product identity and destination mapping for existing items.
+3. **Transfer foundation** — batch, lines, challan sequence, permissions and goods-in-transit records.
+4. **Core flow** — secure draft, dispatch, partial receipt, completion, cancellation and discrepancy handling.
+5. **Inventory Hub experience** — queues, forms, printable challan, receipt and transfer details.
+6. **Ledger and reporting** — stock ledger, GIT, valuation, discrepancy and reconciliation reports.
+7. **Pilot rollout** — reconcile test transfers between two godowns before enabling all stores.
 
 ## Acceptance tests
 
-- Dispatch of 2 units reduces only the selected source lots and creates exactly 2 units in transit; destination stock remains unchanged.
-- Receipt of 2 units clears transit and adds the same actual-cost layers to the destination exactly once.
-- A shortage/damage receipt never inflates stock and cannot disappear without an approved resolution and tax treatment.
-- Interstate and intrastate store pairs calculate the correct IGST versus CGST/SGST structure.
-- Users without source access cannot dispatch; users without destination access cannot receive; dispatcher cannot receive their own transfer.
-- Concurrent dispatches cannot take stock below zero.
-- Transfer records never affect customer sales, supplier purchases, cash, sales KPIs or demand history.
-- Journals balance by GST registration and inter-branch accounts eliminate to zero when both sides are complete.
-- March dispatch/April receipt remains in the correct GST period and appears as goods in transit at year-end.
-- Cancel, retry and duplicate requests cannot duplicate quantities, invoices or journal entries.
+- A multi-item batch dispatch receives one unique challan serial and reduces every source item exactly once.
+- Two managers dispatching simultaneously cannot receive duplicate serials or take stock below zero.
+- Destination stock remains unchanged while a batch is in transit.
+- Partial receipts correctly leave the remaining quantity in transit.
+- Destination receipt adds accepted stock at the exact manual price frozen on the challan.
+- Short or damaged quantities never inflate destination stock and remain visible until resolved.
+- Dispatcher cannot receive their own transfer; unauthorized users cannot act for either godown.
+- Cancel, retry and duplicate requests cannot duplicate stock movements or challans.
+- Transfers never affect customer sales, supplier purchases, cash, sales KPIs or demand history.
+- March dispatch/April receipt appears as goods in transit at year-end.
 
-## Explicitly outside the first release
+## Explicitly outside this release
 
-Automatic GST portal/e-invoice/e-way-bill submission, transporter integrations, inter-company transfers between different PANs, and material/BOM transfers. These can be added after the inter-GSTIN branch workflow is reconciled successfully.
+GST calculation and ledgers, tax invoices, GST returns, e-invoicing/IRN, e-way bill generation, portal integrations, inter-company transfers between different PANs, and material/BOM transfers.
 
-## Compliance note
+## Compliance boundary
 
-This design follows the distinct-person supply principle, Rule 28 valuation framework, e-way bill controls and normal inventory accounting. Final configuration must be approved by the company’s Chartered Accountant/GST adviser because ITC eligibility, state notifications, e-invoicing thresholds and loss treatment depend on the registrations and facts of each transfer.
+A serialized challan and inventory transfer record do not replace any tax invoice, e-way bill or other document legally required for movement between different GSTINs. Until the GST module is added, those obligations must be completed outside the software and their reference numbers can be attached to the transfer.
