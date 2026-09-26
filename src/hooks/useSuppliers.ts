@@ -23,15 +23,19 @@ export interface CreateSupplierData {
   gstin?: string;
 }
 
-export const useSuppliers = () => {
+export const useSuppliers = (storeId?: string) => {
   return useQuery({
-    queryKey: ['suppliers'],
+    // Include storeId in the key so each store context gets its own cache slot.
+    // The DB RLS policy is the authoritative gate — it filters rows by the
+    // session user's store access. The storeId here prevents cross-store
+    // cache bleed when the active store changes.
+    queryKey: ['suppliers', storeId ?? 'all'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
         .order('name', { ascending: true });
-      
+
       if (error) throw error;
       return data as Supplier[];
     },

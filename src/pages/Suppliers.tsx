@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { SupplierHeader } from '@/components/suppliers/SupplierHeader';
 import { SupplierList } from '@/components/suppliers/SupplierList';
 import { SupplierFilters, type FilterState } from '@/components/suppliers/SupplierFilters';
@@ -23,7 +24,10 @@ export default function Suppliers({
 }: {
   hideHeader?: boolean;
 }) {
-  const { data: suppliers = [], isLoading } = useSuppliers();
+  const { activeStoreId } = useStoreContext();
+  const { data: suppliers = [], isLoading } = useSuppliers(
+    activeStoreId !== 'all' ? activeStoreId : undefined
+  );
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const [filters, setFilters] = useState<FilterState>({ search: '', status: 'all', store: 'all', sort: 'name' });
   const { data: balances = [] } = useSupplierBalances(filters.store !== 'all' ? filters.store : undefined);

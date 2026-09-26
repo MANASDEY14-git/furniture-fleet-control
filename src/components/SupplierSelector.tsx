@@ -8,15 +8,18 @@ interface SupplierSelectorProps {
   onValueChange: (value: string) => void;
   placeholder?: string;
   includeAll?: boolean;
+  /** Pass the active store ID to scope suppliers and isolate the cache per store. */
+  storeId?: string;
 }
 
 export default function SupplierSelector({ 
   value, 
   onValueChange, 
   placeholder = "Select supplier",
-  includeAll = false 
+  includeAll = false,
+  storeId,
 }: SupplierSelectorProps) {
-  const { data: suppliers = [], isLoading } = useSuppliers();
+  const { data: suppliers = [], isLoading } = useSuppliers(storeId);
 
   if (isLoading) {
     return <Skeleton className="h-10 w-full" />;

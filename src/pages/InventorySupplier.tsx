@@ -8,6 +8,7 @@ import SupplierSelector from '@/components/SupplierSelector';
 import ExportButton from '@/components/ExportButton';
 import { useItems } from '@/hooks/useItems';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useStoreContext } from '@/contexts/StoreContext';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -15,8 +16,11 @@ export default function InventorySupplier() {
   const [selectedSupplier, setSelectedSupplier] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
+  const { activeStoreId } = useStoreContext();
   const { data: items = [], isLoading: itemsLoading } = useItems();
-  const { data: suppliers = [] } = useSuppliers();
+  const { data: suppliers = [] } = useSuppliers(
+    activeStoreId !== 'all' ? activeStoreId : undefined
+  );
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
