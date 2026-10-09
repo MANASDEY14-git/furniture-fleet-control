@@ -27,26 +27,34 @@ export function ReceiveTransferDialog({ transfer }: Props) {
     setEntries((current) => ({ ...current, [id]: { ...current[id], [key]: key === 'note' ? value : Number(value) } }));
   };
 
-  const isValid = transfer.stock_transfer_lines.every((line) => {
+  const accountedFor = (id: string) => {
+    const e = entries[id];
+    return e ? e.received + e.damaged + e.short : 0;
+  };
+
+  const linesValid = transfer.stock_transfer_lines.every((line) => {
     const entry = entries[line.id];
     if (!entry) return false;
     const outstanding = Number(line.quantity_dispatched) - Number(line.quantity_received) - Number(line.quantity_damaged) - Number(line.quantity_short);
-    const accounted = entry.received + entry.damaged + entry.short;
-    return accounted > 0 && accounted <= outstanding && [entry.received, entry.damaged, entry.short].every((value) => value >= 0 && Number.isInteger(value));
+    const accounted = accountedFor(line.id);
+    return accounted <= outstanding && [entry.received, entry.damaged, entry.short].every((value) => value >= 0 && Number.isInteger(value));
   });
+  const isValid = linesValid && transfer.stock_transfer_lines.some((line) => accountedFor(line.id) > 0);
 
   const submit = async () => {
     if (!isValid) return;
     await receive.mutateAsync({
       transferId: transfer.id,
       notes,
-      lines: transfer.stock_transfer_lines.map((line) => ({
-        transfer_line_id: line.id,
-        quantity_received: entries[line.id]?.received ?? 0,
-        quantity_damaged: entries[line.id]?.damaged ?? 0,
-        quantity_short: entries[line.id]?.short ?? 0,
-        discrepancy_note: entries[line.id]?.note || undefined,
-      })),
+      lines: transfer.stock_transfer_lines
+        .filter((line) => accountedFor(line.id) > 0)
+        .map((line) => ({
+          transfer_line_id: line.id,
+          quantity_received: entries[line.id]?.received ?? 0,
+          quantity_damaged: entries[line.id]?.damaged ?? 0,
+          quantity_short: entries[line.id]?.short ?? 0,
+          discrepancy_note: entries[line.id]?.note || undefined,
+        })),
     });
     setOpen(false);
   };

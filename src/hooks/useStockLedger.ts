@@ -170,7 +170,7 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
 
         const priorTransferOut = (priorTransferLines || []).reduce((sum, line) => {
           const dispatchedAt = line.stock_transfers.dispatched_at;
-          return line.source_item_id === itemId && dispatchedAt && dispatchedAt < startDate.toISOString()
+          return line.source_item_id === itemId && line.stock_transfers.status !== 'cancelled' && dispatchedAt && dispatchedAt < startDate.toISOString()
             ? sum + Number(line.quantity_dispatched)
             : sum;
         }, 0);
@@ -338,6 +338,7 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
         .from('stock_transfer_lines')
         .select('source_item_id, item_name_snapshot, quantity_dispatched, unit_transfer_price, line_value, stock_transfers!inner(source_store_id, dispatched_at, challan_number, status)')
         .not('stock_transfers.dispatched_at', 'is', null)
+        .neq('stock_transfers.status', 'cancelled')
         .gte('stock_transfers.dispatched_at', startDate.toISOString())
         .lte('stock_transfers.dispatched_at', endDate.toISOString());
       if (itemId && itemId !== 'all') transferOutQuery = transferOutQuery.eq('source_item_id', itemId);
