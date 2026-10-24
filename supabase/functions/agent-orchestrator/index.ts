@@ -109,7 +109,7 @@ Maintain professional tone and formatting (use ₹ symbol for currency).`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
+          model: "google/gemini-2.5-flash",
           messages: [
             {
               role: "system",
@@ -122,6 +122,12 @@ Maintain professional tone and formatting (use ₹ symbol for currency).`;
           ]
         })
       });
+
+      if (!aiRes.ok) {
+        const errText = await aiRes.text();
+        console.error("AI gateway error in orchestrator:", aiRes.status, errText);
+        throw new Error(`AI Gateway error (${aiRes.status}): ${errText}`);
+      }
 
       const aiData = await aiRes.json();
       const summaryText = aiData.choices?.[0]?.message?.content || "Daily specialist sync completed.";

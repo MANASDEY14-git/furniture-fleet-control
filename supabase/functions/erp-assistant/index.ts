@@ -1,4 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { streamText, tool } from "npm:ai@4.1.45";
+import { createOpenAI } from "npm:@ai-sdk/openai@1.1.9";
+import { z } from "npm:zod@3.23.8";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,118 +9,34 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are an AI assistant for a furniture/manufacturing ERP application. You help users navigate the app, understand their business data, and answer questions about sales, inventory, payments, suppliers, and materials.
+const SYSTEM_PROMPT = `You are an accurate, truth-bound AI assistant for an ERP furniture manufacturing and retail system.
 
-## App Navigation Knowledge
+## STRICT HONESTY & FACT-CHECKING RULES:
+1. Every number or financial metric you quote MUST come directly from a tool you fetched in this session. NEVER estimate, guess, extrapolate, or invent figures.
+2. ALWAYS state the store name and the exact period/scope in your reply (e.g., "BIJOY FURNISHERS, all open orders as of today", or "BIJOY FURNISHERS, sales for October 2026").
+3. If a question asks for information you have not fetched, USE THE MATCHING TOOL to fetch the facts first.
+4. If a fact cannot be fetched (e.g. permission denied or no data found), say so plainly and directly instead of guessing.
+5. Quotes and cancelled orders NEVER count towards sales or dues. The database tools automatically exclude them.
+6. Format all currency in Indian Rupees with commas (e.g. ₹1,50,000).
 
-### How to Create a Sales Order
-1. Click "Sales" in the left sidebar
-2. Click the "New Order" button (top-right)
-3. Fill in customer details (name, phone, address)
-4. Add items — search and select products, set quantity and price
-5. Set delivery date if needed
-6. Enter advance payment amount (optional)
-7. Click "Create Order" to save
+## TOOL USAGE GUIDE:
+- For questions about outstanding dues, receivables, who owes money, customer balances, or aging buckets (0-30d, 31-60d, 61-90d, >90d) -> use \`get_receivables\`.
+- For questions about sales revenue, order counts, delivered vs pending orders, top products, top customers, or comparing this month vs last month or a specific date range -> use \`get_sales_summary\`.
+- For questions about bank balance, ledger cash, bank accounts -> use \`get_cash_position\`.
+- For questions about supplier dues, how much we owe vendors/suppliers, or supplier advances -> use \`get_payables\`.
+- For questions about stock levels, low stock, out of stock, stock valuation, dead stock (>180d idle), or urgent reorder recommendations -> use \`get_stock_status\`.
+- For questions about delivery schedules, late/overdue deliveries, upcoming dispatches -> use \`get_deliveries\`.
+- For questions about follow-up tasks, collection calls, overdue actions -> use \`get_followups\`.
+- If an executive department briefing or deeper specialized narrative is helpful, you can consult \`consult_sales_agent\`, \`consult_finance_agent\`, \`consult_inventory_agent\`, or \`consult_purchases_agent\`.
 
-### How to Create a Quote
-1. Go to "Sales" in the sidebar
-2. Click "New Quote" button
-3. Fill in the same details as an order
-4. Quotes start as "Draft" — you can mark them as Sent, Accepted, or Rejected
-5. Once accepted, convert to an order with one click
-
-### How to Add Inventory / Items
-1. Click "Inventory" in the left sidebar
-2. Click "Add Item" button
-3. Enter item name, cost price, selling price
-4. Select category and supplier (optional)
-5. Set initial stock quantity
-6. Click "Save"
-
-### How to Record a Purchase
-1. Go to "Purchases" in the sidebar
-2. Click "New Purchase"
-3. Select supplier
-4. Add items with quantities and costs
-5. Enter invoice number and date
-6. Click "Save" — stock will be updated automatically
-
-### How to Record Payments
-1. Go to "Payments" in the sidebar
-2. Click "Record Payment"
-3. Select the order or supplier
-4. Enter amount, payment method, and date
-5. Click "Save"
-
-### How to Check Stock / Inventory Levels
-1. Go to "Inventory" in the sidebar
-2. View all items with current stock levels
-3. Use the search bar to find specific items
-4. Low stock items are highlighted with alerts
-
-### How to View Reports
-1. Click "Reports" in the sidebar
-2. View sales trends, top-selling items, and financial summaries
-
-### How to Manage Suppliers
-1. Go to "Suppliers" in the sidebar
-2. Add new suppliers or view existing ones
-3. Click a supplier to see their purchase history and ledger
-
-### How to Manage Materials (BOM)
-1. Go to "Materials" in the sidebar for raw materials
-2. Go to "BOM Management" to create Bills of Material
-3. Link materials to finished products
-
-## Specialist Agent Inputs
-When "Department Specialist" briefs are provided below, use them as authoritative context. They are real outputs from the Sales, Inventory, Purchases, and Finance agents.
-
-## Reorder & Restocking Rules
-- When discussing restocking, reorders, or dead stock, quote ONLY the factual data provided by the reorder engine (actual units sold across 30d/90d/365d, orders count, last sale date, days since last sale, current stock vs open reserved demand, and supplier lead days).
-- Never invent smooth daily velocity rates or fake weeks of cover. Demand in furniture retail is intermittent (lumpy).
-- For items marked with "low confidence" (one-off sales or category fallback), explicitly state that they have insufficient history and advise manual review rather than automated purchase.
-- Cite the engine's evidence sentences for auditability.
-
-## Response Guidelines
-- Be concise and helpful
-- Use bullet points and numbered steps for instructions
-- When providing data, format numbers with commas (e.g., ₹1,23,456)
-- Use Indian Rupee (₹) as the currency
-- If you don't have enough data to answer, say so clearly
-- Always reference the specific section of the app when giving navigation help
-- When showing financial summaries, include totals and breakdowns where relevant
-- If a specialist agent failed, say so and rely on the local business data`;
-
-const SPECIALISTS = [
-  { name: "agent-sales", keywords: /sales|revenue|income|turnover|order|due|outstanding|balance|payment|paid|unpaid|receivable|customer/i },
-  { name: "agent-inventory", keywords: /stock|inventory|item|product|low stock|out of stock|quantity|reorder|restock|dead stock/i },
-  { name: "agent-purchases", keywords: /supplier|purchase|vendor|payable|buy|procurement|restock/i },
-  { name: "agent-finance", keywords: /finance|cash|bank|money|expense|profit|margin|gst|tax|ledger|account/i },
-];
-
-const AGENT_LABELS: Record<string, string> = {
-  "agent-sales": "Sales Agent",
-  "agent-inventory": "Inventory Agent",
-  "agent-purchases": "Purchases Agent",
-  "agent-finance": "Finance Agent",
-};
-
-function pickSpecialists(message: string): string[] {
-  const lower = message.toLowerCase();
-  const matched = SPECIALISTS
-    .filter((s) => s.keywords.test(lower))
-    .map((s) => s.name);
-  // If nothing matches, default to sales + finance for general business questions.
-  return matched.length > 0 ? matched : ["agent-sales", "agent-finance"];
-}
-
-class AIGatewayError extends Error {
-  status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
+## App Navigation Reference:
+- New Order: Sales -> New Order button -> select customer & items -> Create Order
+- New Quote: Sales -> New Quote -> save as Draft, Sent, Accepted -> convert to Order
+- Add Item: Inventory -> Add Item -> enter name, cost, selling price, stock
+- Record Purchase: Purchases -> New Purchase -> select supplier & items
+- Record Payment: Payments -> Record Payment -> link order/supplier
+- Collections: Collections page (receivables aging & follow-up log)
+- Dispatch Board: Dispatch page (calendar & delivery tracking)`;
 
 function gatewayErrorMessage(status: number, body: string): string {
   if (status === 429) return "The AI assistant is receiving too many requests right now. Please wait a moment and try again.";
@@ -131,114 +50,6 @@ function gatewayErrorMessage(status: number, body: string): string {
     if (parsed?.message) return `AI service error: ${parsed.message}`;
   } catch { /* ignore */ }
   return "The AI assistant is temporarily unavailable. Please try again in a moment.";
-}
-
-async function callLovableResponses(promptText: string): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) {
-    throw new AIGatewayError(401, gatewayErrorMessage(401, ""));
-  }
-
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": LOVABLE_API_KEY,
-      "X-Lovable-AIG-SDK": "fetch",
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-5.6-sol",
-      instructions: SYSTEM_PROMPT,
-      input: promptText,
-      stream: true,
-      reasoning: { effort: "medium", summary: "auto" },
-      include: ["reasoning.encrypted_content"],
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("AI gateway error:", res.status, text);
-    throw new AIGatewayError(res.status, gatewayErrorMessage(res.status, text));
-  }
-
-
-  if (!res.body) {
-    throw new Error("AI gateway returned empty body");
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let output = "";
-  let reasoningSummary = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data: ")) continue;
-      const data = trimmed.slice(6);
-      if (data === "[DONE]") continue;
-      try {
-        const event = JSON.parse(data);
-        if (event.type === "response.output_text.delta") {
-          output += event.delta || "";
-        } else if (event.type === "response.reasoning_summary_text.delta") {
-          reasoningSummary += event.delta || "";
-        }
-      } catch {
-        // Ignore malformed SSE lines
-      }
-    }
-  }
-
-  // Flush any remaining buffer
-  if (buffer.trim().startsWith("data: ")) {
-    const data = buffer.trim().slice(6);
-    if (data !== "[DONE]") {
-      try {
-        const event = JSON.parse(data);
-        if (event.type === "response.output_text.delta") {
-          output += event.delta || "";
-        } else if (event.type === "response.reasoning_summary_text.delta") {
-          reasoningSummary += event.delta || "";
-        }
-      } catch {
-        // ignore
-      }
-    }
-  }
-
-  return output.trim() || reasoningSummary.trim() || "I couldn't generate a response. Please try again.";
-}
-
-async function callSpecialist(name: string, storeId: string, supabaseUrl: string, serviceKey: string): Promise<string> {
-  const url = `${supabaseUrl}/functions/v1/${name}`;
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({ store_id: storeId }),
-    });
-    if (!res.ok) {
-      throw new Error(`Specialist ${name} HTTP error: ${res.status}`);
-    }
-    const data = await res.json();
-    return data.output || "Analysis unavailable.";
-  } catch (err) {
-    console.error(`Error calling ${name}:`, err);
-    return `**${AGENT_LABELS[name] || name}** was unable to provide a briefing.`;
-  }
 }
 
 Deno.serve(async (req) => {
@@ -255,23 +66,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Authenticate user with their token
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized: Invalid session" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const userId = claimsData.claims.sub;
 
-    const { message, conversation_id, store_id } = await req.json();
+    const { message, conversation_id, store_id } = await req.json().catch(() => ({}));
 
     if (!message || !store_id) {
       return new Response(JSON.stringify({ error: "message and store_id are required" }), {
@@ -280,33 +102,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify store access
-    const { data: storeAccess } = await supabase
-      .from("user_store_access")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("store_id", store_id)
-      .maybeSingle();
+    // Verify user store access
+    const { data: hasAccess, error: accessErr } = await userClient.rpc("user_has_store_access", {
+      _store_id: store_id,
+    });
 
-    const { data: userRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    const isAdmin = userRole?.role === "admin";
-
-    if (!storeAccess && !isAdmin) {
-      return new Response(JSON.stringify({ error: "No access to this store" }), {
+    if (accessErr || !hasAccess) {
+      return new Response(JSON.stringify({ error: "Forbidden: No access to this store" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Service client for DB operations and specialist coordination
+    const serviceClient = createClient(supabaseUrl, serviceKey);
+
+    // Get store details
+    const { data: storeRow } = await serviceClient
+      .from("stores")
+      .select("id, name")
+      .eq("id", store_id)
+      .single();
+    const storeName = storeRow?.name || "Store";
+
     // Get or create conversation
     let convId = conversation_id;
     if (!convId) {
-      const { data: conv, error: convErr } = await supabase
+      const { data: conv, error: convErr } = await serviceClient
         .from("ai_conversations")
         .insert({ user_id: userId, store_id, title: message.substring(0, 80) })
         .select("id")
@@ -317,275 +139,291 @@ Deno.serve(async (req) => {
     }
 
     // Save user message
-    await supabase.from("ai_messages").insert({
+    await serviceClient.from("ai_messages").insert({
       conversation_id: convId,
       role: "user",
       content: message,
     });
 
-    // Load conversation history (last 20 messages, excluding the one we just inserted)
-    const { data: history } = await supabase
+    // Load recent history (last 10 messages)
+    const { data: history } = await serviceClient
       .from("ai_messages")
       .select("role, content")
       .eq("conversation_id", convId)
       .order("created_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => ({ data: data ? data.reverse() : data }));
+      .limit(10);
 
-    // Gather local business context
-    const contextData = await queryBusinessData(supabase, message, store_id);
+    const formattedHistory = (history || [])
+      .reverse()
+      .slice(0, -1) // exclude current message since we supply it as prompt
+      .map((m: any) => ({
+        role: m.role === "user" ? ("user" as const) : ("assistant" as const),
+        content: m.content,
+      }));
 
-    // Decide which specialists to consult
-    const agentsToCall = pickSpecialists(message);
+    // Record tool invocations and results for "Based on" inspection
+    const executedToolResults: Array<{ tool: string; args: any; result: any }> = [];
+    const agentsConsulted: string[] = [];
 
-    // Call selected specialists in parallel
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // Helper to call department specialists
+    const callSpecialistAgent = async (agentName: string, questionText: string) => {
+      agentsConsulted.push(agentName);
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/${agentName}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ store_id, question: questionText }),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Specialist ${agentName} HTTP error: ${res.status} - ${errText}`);
+        }
+        const data = await res.json();
+        return data.output || "Analysis unavailable.";
+      } catch (err: any) {
+        console.error(`Error invoking ${agentName}:`, err);
+        return `Specialist ${agentName} was unable to report: ${err.message}`;
+      }
+    };
 
-    const specialistOutputs: Record<string, string> = {};
-    const specialistResults = await Promise.all(
-      agentsToCall.map(async (name) => {
-        const output = await callSpecialist(name, store_id, supabaseUrl, serviceKey);
-        return { name, output };
-      })
-    );
-    for (const { name, output } of specialistResults) {
-      specialistOutputs[name] = output;
-    }
+    // Initialize OpenAI client for Lovable AI Gateway
+    const openai = createOpenAI({
+      baseURL: "https://ai.gateway.lovable.dev/v1",
+      apiKey: LOVABLE_API_KEY,
+    });
 
-    // Build the user prompt for the final synthesis
-    const historyText = (history || [])
-      .map((msg: any) => `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`)
-      .join("\n");
+    // Define AI SDK tools that wrap the verified SECURITY DEFINER RPCs
+    const tools = {
+      get_receivables: tool({
+        description:
+          "Fetches verified customer receivables and dues for the store: total amount due, customer count, open unpaid order count, aging buckets (0-30d, 31-60d, 61-90d, >90d), and per-customer dues. Excludes quotes and cancelled orders.",
+        parameters: z.object({}),
+        execute: async () => {
+          const { data, error } = await serviceClient.rpc("ai_get_receivables", { _store_id: store_id });
+          if (error) {
+            console.error("ai_get_receivables failed:", error);
+            throw new Error(`Database error fetching receivables: ${error.message}`);
+          }
+          executedToolResults.push({ tool: "get_receivables", args: {}, result: data });
+          return data;
+        },
+      }),
 
-    const promptParts: string[] = [];
-    if (historyText) {
-      promptParts.push(`## Conversation History\n${historyText}`);
-    }
-    if (contextData) {
-      promptParts.push(`## Local Business Data\n${contextData}`);
-    }
-    if (Object.keys(specialistOutputs).length > 0) {
-      promptParts.push(
-        `## Department Specialist Briefs\n` +
-        Object.entries(specialistOutputs)
-          .map(([name, output]) => `### ${AGENT_LABELS[name] || name}\n${output}`)
-          .join("\n\n")
-      );
-    }
-    promptParts.push(`## User Question\n${message}`);
+      get_sales_summary: tool({
+        description:
+          "Fetches verified sales summary: total revenue, order count, delivered vs pending deliveries, excluded cancelled orders, top products sold, top customers, and month-to-month comparison (this month vs last month). Optionally accepts from_date and to_date (YYYY-MM-DD).",
+        parameters: z.object({
+          from_date: z.string().optional().describe("Start date in YYYY-MM-DD format (defaults to start of current month)"),
+          to_date: z.string().optional().describe("End date in YYYY-MM-DD format (defaults to end of current month)"),
+        }),
+        execute: async ({ from_date, to_date }) => {
+          const { data, error } = await serviceClient.rpc("ai_get_sales_summary", {
+            _store_id: store_id,
+            _from_date: from_date || null,
+            _to_date: to_date || null,
+          });
+          if (error) {
+            console.error("ai_get_sales_summary failed:", error);
+            throw new Error(`Database error fetching sales: ${error.message}`);
+          }
+          executedToolResults.push({ tool: "get_sales_summary", args: { from_date, to_date }, result: data });
+          return data;
+        },
+      }),
 
-    const promptText = promptParts.join("\n\n");
+      get_cash_position: tool({
+        description:
+          "Fetches verified bank and cash ledger balances for all active store accounts. Returns total balance and breakdown by account.",
+        parameters: z.object({}),
+        execute: async () => {
+          const { data, error } = await serviceClient.rpc("ai_get_cash_position", { _store_id: store_id });
+          if (error) {
+            console.error("ai_get_cash_position failed:", error);
+            throw new Error(`Database error fetching cash position: ${error.message}`);
+          }
+          executedToolResults.push({ tool: "get_cash_position", args: {}, result: data });
+          return data;
+        },
+      }),
 
-    let assistantContent: string;
+      get_payables: tool({
+        description:
+          "Fetches verified supplier payables and advances: total amount owed to suppliers, total advance payments made, net balance, and breakdown per supplier with purchases vs payments.",
+        parameters: z.object({}),
+        execute: async () => {
+          const { data, error } = await serviceClient.rpc("ai_get_payables", { _store_id: store_id });
+          if (error) {
+            console.error("ai_get_payables failed:", error);
+            throw new Error(`Database error fetching payables: ${error.message}`);
+          }
+          executedToolResults.push({ tool: "get_payables", args: {}, result: data });
+          return data;
+        },
+      }),
+
+      get_stock_status: tool({
+        description:
+          "Fetches catalog items stock status, out of stock count, low stock items (<5 pcs), total inventory valuation, and factual reorder intelligence (urgent reorders, reorder soon, dead stock >180d, never sold).",
+        parameters: z.object({}),
+        execute: async () => {
+          const { data, error } = await serviceClient.rpc("ai_get_stock_status", { _store_id: store_id });
+          if (error) {
+            console.error("ai_get_stock_status failed:", error);
+            throw new Error(`Database error fetching stock status: ${error.message}`);
+          }
+          executedToolResults.push({ tool: "get_stock_status", args: {}, result: data });
+          return data;
+        },
+      }),
+
+      get_deliveries: tool({
+        description:
+          "Fetches dispatch board and delivery status: total undelivered orders, overdue late deliveries, deliveries scheduled for today, this week, and unscheduled orders.",
+        parameters: z.object({}),
+        execute: async () => {
+          const { data, error } = await serviceClient.rpc("ai_get_deliveries", { _store_id: store_id });
+          if (error) {
+            console.error("ai_get_deliveries failed:", error);
+            throw new Error(`Database error fetching deliveries: ${error.message}`);
+          }
+          executedToolResults.push({ tool: "get_deliveries", args: {}, result: data });
+          return data;
+        },
+      }),
+
+      get_followups: tool({
+        description:
+          "Fetches customer followup worklist: collections due, slipping deliveries, paid undelivered orders, cold quotes, overdue actions, priority scores, and notes.",
+        parameters: z.object({}),
+        execute: async () => {
+          const { data, error } = await serviceClient.rpc("ai_get_followups", { _store_id: store_id });
+          if (error) {
+            console.error("ai_get_followups failed:", error);
+            throw new Error(`Database error fetching followups: ${error.message}`);
+          }
+          executedToolResults.push({ tool: "get_followups", args: {}, result: data });
+          return data;
+        },
+      }),
+
+      consult_sales_agent: tool({
+        description:
+          "Consults the Sales Specialist Agent for an expert sales analysis or to answer a specialized sales query.",
+        parameters: z.object({
+          question: z.string().describe("The user's question or specific focus for the sales agent"),
+        }),
+        execute: async ({ question }) => {
+          const output = await callSpecialistAgent("agent-sales", question);
+          executedToolResults.push({ tool: "consult_sales_agent", args: { question }, result: output });
+          return { agent: "Sales Agent", briefing: output };
+        },
+      }),
+
+      consult_finance_agent: tool({
+        description:
+          "Consults the Finance Specialist Agent for cash flow, collections efficiency, and supplier liabilities analysis.",
+        parameters: z.object({
+          question: z.string().describe("The user's question or specific focus for the finance agent"),
+        }),
+        execute: async ({ question }) => {
+          const output = await callSpecialistAgent("agent-finance", question);
+          executedToolResults.push({ tool: "consult_finance_agent", args: { question }, result: output });
+          return { agent: "Finance Agent", briefing: output };
+        },
+      }),
+
+      consult_inventory_agent: tool({
+        description:
+          "Consults the Inventory Specialist Agent for stockout risk, velocity analysis, and dead capital audit.",
+        parameters: z.object({
+          question: z.string().describe("The user's question or specific focus for the inventory agent"),
+        }),
+        execute: async ({ question }) => {
+          const output = await callSpecialistAgent("agent-inventory", question);
+          executedToolResults.push({ tool: "consult_inventory_agent", args: { question }, result: output });
+          return { agent: "Inventory Agent", briefing: output };
+        },
+      }),
+
+      consult_purchases_agent: tool({
+        description:
+          "Consults the Purchases Specialist Agent for procurement requirements, vendor lead times, and purchase recommendations.",
+        parameters: z.object({
+          question: z.string().describe("The user's question or specific focus for the purchases agent"),
+        }),
+        execute: async ({ question }) => {
+          const output = await callSpecialistAgent("agent-purchases", question);
+          executedToolResults.push({ tool: "consult_purchases_agent", args: { question }, result: output });
+          return { agent: "Purchases Agent", briefing: output };
+        },
+      }),
+    };
+
+    // Run AI SDK streamText with tools and multi-step execution
+    let fullResponseText = "";
     try {
-      assistantContent = await callLovableResponses(promptText);
-    } catch (err: any) {
-      console.error("LLM synthesis failed:", err);
-      const status = err instanceof AIGatewayError ? err.status : 503;
-      const userMessage = err instanceof AIGatewayError
-        ? err.message
-        : "The AI assistant is temporarily unavailable. Please try again in a moment.";
+      const result = streamText({
+        model: openai("google/gemini-2.5-flash"),
+        system: `${SYSTEM_PROMPT}\n\nCurrent Store: ${storeName} (Store ID: ${store_id})\nToday's Date: ${new Date().toISOString().split("T")[0]}`,
+        messages: [
+          ...formattedHistory,
+          { role: "user" as const, content: message },
+        ],
+        tools,
+        maxSteps: 10,
+      });
 
-      // Do NOT persist a raw data dump as an assistant answer — surface the failure.
+      for await (const chunk of result.textStream) {
+        fullResponseText += chunk;
+      }
+    } catch (err: any) {
+      console.error("streamText execution error:", err);
+      const status = typeof err?.status === "number" ? err.status : 500;
+      const userMessage = gatewayErrorMessage(status, String(err?.message || ""));
       return new Response(
         JSON.stringify({ error: userMessage, conversation_id: convId }),
-        {
-          status: status === 401 || status === 400 ? 500 : status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: status >= 400 && status < 600 ? status : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    if (!fullResponseText.trim()) {
+      fullResponseText = "I checked the requested records for " + storeName + ", but could not formulate a complete answer. Please rephrase your question.";
+    }
 
-    // Save assistant message
-    await supabase.from("ai_messages").insert({
+    // Save assistant message with tool results in metadata
+    await serviceClient.from("ai_messages").insert({
       conversation_id: convId,
       role: "assistant",
-      content: assistantContent,
+      content: fullResponseText,
       metadata: {
-        data_queried: !!contextData,
-        agents_consulted: agentsToCall,
+        store_id,
+        store_name: storeName,
+        as_of: new Date().toISOString(),
+        tool_results: executedToolResults,
+        agents_consulted: Array.from(new Set(agentsConsulted)),
       },
     });
 
     return new Response(
       JSON.stringify({
-        response: assistantContent,
+        response: fullResponseText,
         conversation_id: convId,
-        agents_consulted: agentsToCall,
+        agents_consulted: Array.from(new Set(agentsConsulted)),
+        metadata: {
+          store_name: storeName,
+          tool_results: executedToolResults,
+        },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (e) {
-    console.error("erp-assistant error:", e);
+  } catch (e: any) {
+    console.error("erp-assistant fatal error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: e instanceof Error ? e.message : "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
-
-async function queryBusinessData(supabase: any, message: string, storeId: string): Promise<string | null> {
-  const lower = message.toLowerCase();
-  const parts: string[] = [];
-
-  // Detect date ranges
-  const now = new Date();
-  const monthNames = ["january","february","march","april","may","june","july","august","september","october","november","december"];
-  let targetMonth = now.getMonth();
-  let targetYear = now.getFullYear();
-
-  for (let i = 0; i < monthNames.length; i++) {
-    if (lower.includes(monthNames[i]) || lower.includes(monthNames[i].substring(0, 3))) {
-      targetMonth = i;
-      if (i > now.getMonth()) targetYear = now.getFullYear() - 1;
-      break;
-    }
-  }
-
-  const monthStart = new Date(targetYear, targetMonth, 1).toISOString().split("T")[0];
-  const monthEnd = new Date(targetYear, targetMonth + 1, 0).toISOString().split("T")[0];
-
-  // Sales data
-  if (lower.match(/sale|order|revenue|income|turnover/)) {
-    const { data: sales } = await supabase
-      .from("sales_orders")
-      .select("id, order_number, total_amount, delivery_status, date, balance_due, customer_name, document_type")
-      .eq("store_id", storeId)
-      .gte("date", monthStart)
-      .lte("date", monthEnd)
-      .not("delivery_status", "ilike", "cancelled");
-
-    if (sales && sales.length > 0) {
-      const totalRevenue = sales.filter((s: any) => s.document_type !== 'quote').reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0);
-      const totalDue = sales.filter((s: any) => s.document_type !== 'quote').reduce((sum: number, s: any) => sum + (s.balance_due || 0), 0);
-      const orderCount = sales.filter((s: any) => s.document_type !== 'quote').length;
-      const delivered = sales.filter((s: any) => s.delivery_status === "delivered").length;
-      const pending = sales.filter((s: any) => s.delivery_status === "Pending").length;
-
-      parts.push(`📊 Sales Data (${monthNames[targetMonth]} ${targetYear}):
-- Total Orders: ${orderCount}
-- Total Revenue: ₹${totalRevenue.toLocaleString("en-IN")}
-- Outstanding Dues: ₹${totalDue.toLocaleString("en-IN")}
-- Delivered: ${delivered} | Pending: ${pending}`);
-    }
-  }
-
-  // Due / payment data
-  if (lower.match(/due|outstanding|balance|payment|paid|unpaid|receivable/)) {
-    const { data: dues } = await supabase
-      .from("sales_orders")
-      .select("order_number, customer_name, total_amount, balance_due, date, delivery_status")
-      .eq("store_id", storeId)
-      .gt("balance_due", 0)
-      .not("delivery_status", "ilike", "cancelled")
-      .order("balance_due", { ascending: false })
-      .limit(15);
-
-    if (dues && dues.length > 0) {
-      const totalDue = dues.reduce((sum: number, d: any) => sum + (d.balance_due || 0), 0);
-      const topDues = dues.slice(0, 5).map((d: any) =>
-        `  - ${d.order_number}: ${d.customer_name || "N/A"} — ₹${(d.balance_due || 0).toLocaleString("en-IN")}`
-      ).join("\n");
-
-      parts.push(`💰 Outstanding Dues:
-- Total Outstanding: ₹${totalDue.toLocaleString("en-IN")}
-- Number of orders with dues: ${dues.length}
-- Top outstanding orders:
-${topDues}`);
-    }
-  }
-
-  // Inventory / stock / reorder data
-  if (lower.match(/stock|inventory|item|product|low stock|out of stock|reorder|restock|dead stock/)) {
-    const { data: allItems } = await supabase
-      .from("items")
-      .select("id, quantity_available")
-      .eq("store_id", storeId);
-
-    // Call factual reorder intelligence RPC
-    const { data: reorderRows } = await supabase.rpc("get_reorder_intelligence", {
-      _store_id: storeId,
-      _window_days: 365,
-    });
-
-    if (allItems || reorderRows) {
-      const totalItems = allItems?.length || 0;
-      const outOfStock = allItems?.filter((i: any) => i.quantity_available <= 0).length || 0;
-      const lowStockCount = allItems?.filter((i: any) => i.quantity_available > 0 && i.quantity_available < 5).length || 0;
-
-      const rRows = reorderRows || [];
-      const urgentReorders = rRows.filter((r: any) => r.decision === "reorder_now" && r.confidence !== "low");
-      const reorderSoon = rRows.filter((r: any) => r.decision === "reorder_soon");
-      const deadStock = rRows.filter((r: any) => r.decision === "dead_stock");
-      const neverSold = rRows.filter((r: any) => r.decision === "never_sold");
-      const lowConf = rRows.filter((r: any) => r.confidence === "low");
-
-      const deadValue = deadStock.reduce((s: number, r: any) => s + (Number(r.stock_value) || 0), 0);
-      const neverSoldValue = neverSold.reduce((s: number, r: any) => s + (Number(r.stock_value) || 0), 0);
-
-      let stockInfo = `📦 Inventory & Factual Reorder Intelligence:
-- Total Catalog Items: ${totalItems} (Out of Stock: ${outOfStock}, Low Stock <5: ${lowStockCount})
-- Urgent Reorders (High/Med Confidence): ${urgentReorders.length} items
-- Reorder Soon: ${reorderSoon.length} items
-- Dead Stock (>180d no sales): ${deadStock.length} items with ₹${Math.round(deadValue).toLocaleString("en-IN")} locked
-- Never Sold Stock: ${neverSold.length} items with ₹${Math.round(neverSoldValue).toLocaleString("en-IN")} locked
-- Low Confidence Items (requires manual review): ${lowConf.length} items`;
-
-      if (urgentReorders.length > 0) {
-        const topUrgent = urgentReorders.slice(0, 5).map((r: any) =>
-          `  - ${r.item_name}: ${r.current_stock} in stock ${r.open_demand > 0 ? `(${r.open_demand} reserved)` : ''} — need ${r.suggested_qty} pcs. Evidence: "${r.evidence_sentence}"`
-        ).join("\n");
-        stockInfo += `\n- Top Urgent Reorder Recommendations:\n${topUrgent}`;
-      }
-
-      if (deadStock.length > 0) {
-        const topDead = deadStock.slice(0, 3).map((r: any) =>
-          `  - ${r.item_name}: ${r.current_stock} in stock (₹${Math.round(r.stock_value).toLocaleString("en-IN")} locked, last sold ${r.days_since_last_sale || '180+'}d ago)`
-        ).join("\n");
-        stockInfo += `\n- Dead Stock Examples:\n${topDead}`;
-      }
-
-      parts.push(stockInfo);
-    }
-  }
-
-  // Supplier / purchase data
-  if (lower.match(/supplier|purchase|vendor|payable/)) {
-    const { data: purchases } = await supabase
-      .from("purchases")
-      .select("id, total_cost, date, supplier_id")
-      .eq("store_id", storeId)
-      .gte("date", monthStart)
-      .lte("date", monthEnd);
-
-    if (purchases && purchases.length > 0) {
-      const totalPurchases = purchases.reduce((sum: number, p: any) => sum + (p.total_cost || 0), 0);
-      parts.push(`🏭 Purchase Data (${monthNames[targetMonth]} ${targetYear}):
-- Total Purchases: ${purchases.length}
-- Total Amount: ₹${totalPurchases.toLocaleString("en-IN")}`);
-    }
-  }
-
-  // Materials data
-  if (lower.match(/material|raw material|bom/)) {
-    const { data: materials } = await supabase
-      .from("materials")
-      .select("name, quantity_available, unit, cost_price")
-      .eq("store_id", storeId)
-      .lt("quantity_available", 5)
-      .order("quantity_available", { ascending: true })
-      .limit(10);
-
-    if (materials && materials.length > 0) {
-      const matList = materials.map((m: any) =>
-        `  - ${m.name}: ${m.quantity_available} ${m.unit || "units"}`
-      ).join("\n");
-
-      parts.push(`🧱 Low Stock Materials:\n${matList}`);
-    }
-  }
-
-  return parts.length > 0 ? parts.join("\n\n") : null;
-}
