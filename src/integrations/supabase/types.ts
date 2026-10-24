@@ -3443,7 +3443,7 @@ export type Database = {
       ai_get_payables: { Args: { _store_id: string }; Returns: Json }
       ai_get_receivables: { Args: { _store_id: string }; Returns: Json }
       ai_get_sales_summary: {
-        Args: { _from_date?: string; _store_id: string; _to_date?: string }
+        Args: { _from: string; _store_id: string; _to: string }
         Returns: Json
       }
       ai_get_stock_status: { Args: { _store_id: string }; Returns: Json }
