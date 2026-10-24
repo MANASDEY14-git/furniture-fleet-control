@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
@@ -3437,6 +3437,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      ai_get_cash_position: { Args: { _store_id: string }; Returns: Json }
+      ai_get_deliveries: { Args: { _store_id: string }; Returns: Json }
+      ai_get_followups: { Args: { _store_id: string }; Returns: Json }
+      ai_get_payables: { Args: { _store_id: string }; Returns: Json }
+      ai_get_receivables: { Args: { _store_id: string }; Returns: Json }
+      ai_get_sales_summary: {
+        Args: { _from_date?: string; _store_id: string; _to_date?: string }
+        Returns: Json
+      }
+      ai_get_stock_status: { Args: { _store_id: string }; Returns: Json }
       calculate_daily_kpis_and_scores: {
         Args: { p_date: string }
         Returns: Json
