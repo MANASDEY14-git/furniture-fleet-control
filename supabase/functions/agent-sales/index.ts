@@ -1,6 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { authorizeAgentRequest, corsHeaders, denied } from "../_shared/agentAuth.ts";
 
+// IST calendar helpers: all sales periods follow the store's local calendar.
+const istDate = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,48 +26,58 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Call shared business facts RPCs
-    const [salesRes, duesRes] = await Promise.all([
-      supabase.rpc("ai_get_sales_summary", { _store_id: store_id }),
+    // Shared business facts. Quotes and cancelled orders are excluded by the RPCs.
+    const today = istDate(); // YYYY-MM-DD
+    const [y, m] = today.split("-").map(Number);
+    const thisMonthFrom = `${y}-${String(m).padStart(2, "0")}-01`;
+    const prevMonth = new Date(Date.UTC(y, m - 2, 1));
+    const lastMonthFrom = prevMonth.toISOString().slice(0, 10);
+    const lastMonthTo = new Date(Date.UTC(y, m - 1, 0)).toISOString().slice(0, 10);
+    const thisYearFrom = `${y}-01-01`;
+
+    const [curMonthRes, prevMonthRes, yearRes, duesRes] = await Promise.all([
+      supabase.rpc("ai_get_sales_summary", { _store_id: store_id, _from: thisMonthFrom, _to: today }),
+      supabase.rpc("ai_get_sales_summary", { _store_id: store_id, _from: lastMonthFrom, _to: lastMonthTo }),
+      supabase.rpc("ai_get_sales_summary", { _store_id: store_id, _from: thisYearFrom, _to: today }),
       supabase.rpc("ai_get_receivables", { _store_id: store_id }),
     ]);
 
-    if (salesRes.error) {
-      console.error("ai_get_sales_summary error:", salesRes.error);
-      throw new Error(`Failed to load sales facts: ${salesRes.error.message}`);
-    }
-    if (duesRes.error) {
-      console.error("ai_get_receivables error:", duesRes.error);
-      throw new Error(`Failed to load receivables facts: ${duesRes.error.message}`);
+    for (const [name, res] of [["this month", curMonthRes], ["last month", prevMonthRes], ["year", yearRes], ["receivables", duesRes]] as const) {
+      if (res.error) {
+        console.error(`sales facts (${name}) error:`, res.error);
+        throw new Error(`Failed to load sales facts: ${res.error.message}`);
+      }
     }
 
-    const salesFacts = salesRes.data;
-    const duesFacts = duesRes.data;
+    const dues = duesRes.data;
+    const monthLine = (p: any, label: string) => {
+      if (!p) return "";
+      return `${label} (${p.from} to ${p.to}):
+- Revenue: ₹${Number(p.revenue || 0).toLocaleString("en-IN")} across ${Number(p.orders || 0)} orders
+- Collected: ₹${Number(p.collected || 0).toLocaleString("en-IN")}, Still due on these orders: ₹${Number(p.still_due || 0).toLocaleString("en-IN")}
+- Delivered: ${Number(p.delivered_orders || 0)}, Awaiting delivery: ${Number(p.undelivered_orders || 0)}, Cancelled orders excluded: ${Number(p.cancelled_orders_excluded || 0)}`;
+    };
 
-    const factsSummary = `Store: ${salesFacts.store_name}
-As of: ${salesFacts.as_of}
-This Month Sales (${salesFacts.comparisons?.this_month?.from} to ${salesFacts.comparisons?.this_month?.to}):
-- Total Revenue: ₹${Number(salesFacts.comparisons?.this_month?.revenue || 0).toLocaleString("en-IN")} across ${salesFacts.comparisons?.this_month?.orders_count || 0} active orders
-- Last Month Revenue: ₹${Number(salesFacts.comparisons?.this_month ? salesFacts.comparisons.last_month?.revenue : 0).toLocaleString("en-IN")} across ${salesFacts.comparisons?.last_month?.orders_count || 0} active orders
-Selected Period (${salesFacts.period?.from_date} to ${salesFacts.period?.to_date}):
-- Total Revenue: ₹${Number(salesFacts.total_revenue || 0).toLocaleString("en-IN")} (${salesFacts.total_orders} orders)
-- Delivered Orders: ${salesFacts.delivered_orders}, Pending Deliveries: ${salesFacts.pending_orders}
-- Excluded Cancelled Orders: ${salesFacts.cancelled_orders_excluded}
-Outstanding Customer Dues:
-- Total Due: ₹${Number(duesFacts.total_due || 0).toLocaleString("en-IN")} across ${duesFacts.total_customers_with_dues} customers (${duesFacts.total_open_orders} open orders)
-- Dues 0-30 days: ₹${Number(duesFacts.aging_buckets?.bucket_0_30 || 0).toLocaleString("en-IN")}
-- Dues 31-60 days: ₹${Number(duesFacts.aging_buckets?.bucket_31_60 || 0).toLocaleString("en-IN")}
-- Dues 61-90 days: ₹${Number(duesFacts.aging_buckets?.bucket_61_90 || 0).toLocaleString("en-IN")}
-- Dues >90 days: ₹${Number(duesFacts.aging_buckets?.bucket_90_plus || 0).toLocaleString("en-IN")}
-Top Debtors:
-${(duesFacts.customers || []).slice(0, 5).map((c: any) => `  - ${c.customer_name}: ₹${Number(c.outstanding).toLocaleString("en-IN")} (${c.open_orders} orders, oldest ${c.oldest_age_days}d)`).join("\n") || "  None"}`;
+    const factsSummary = `Store: ${dues.store_name}
+As of: ${new Date().toISOString()} (all figures verified)
+${monthLine(curMonthRes.data, "This month")}
+${monthLine(prevMonthRes.data, "Last month")}
+This year (${thisYearFrom} to ${today}):
+- Revenue: ₹${Number(yearRes.data.revenue || 0).toLocaleString("en-IN")} across ${Number(yearRes.data.orders || 0)} orders
+Top sellers this month:
+${(curMonthRes.data.top_items || []).slice(0, 5).map((i: any) => `  - ${i.item_name}: ${Number(i.units || 0)} units, ₹${Number(i.value || 0).toLocaleString("en-IN")}`).join("\n") || "  None yet"}
+Outstanding customer dues (orders only; quotes and cancelled orders excluded):
+- Total Due: ₹${Number(dues.total_due || 0).toLocaleString("en-IN")} across ${dues.total_customers_with_dues} customers (${dues.total_open_orders} open orders)
+- Aging: 0-30d ₹${Number(dues.aging_buckets?.bucket_0_30 || 0).toLocaleString("en-IN")}, 31-60d ₹${Number(dues.aging_buckets?.bucket_31_60 || 0).toLocaleString("en-IN")}, 61-90d ₹${Number(dues.aging_buckets?.bucket_61_90 || 0).toLocaleString("en-IN")}, >90d ₹${Number(dues.aging_buckets?.bucket_90_plus || 0).toLocaleString("en-IN")}
+Top debtors:
+${(dues.customers || []).slice(0, 5).map((c: any) => `  - ${c.customer_name}: ₹${Number(c.outstanding).toLocaleString("en-IN")} (${c.open_orders} orders, oldest ${c.oldest_age_days}d)`).join("\n") || "  None"}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const systemPrompt = question
-      ? `You are the Sales Agent for a furniture ERP. Answer the user's specific question using ONLY the provided verified business facts. Strictly state the store name and time period. Every figure quoted must match the facts exactly. Never guess or estimate. Use Rupee symbol (₹).`
-      : `You are the Sales Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing analyzing this month's sales status and customer receivables. Focus on conversion, pipeline, and total dues. Quote verified facts only. Use Rupee symbol (₹).`;
+      ? `You are the Sales Agent for a furniture ERP. Answer the user's specific question using ONLY the provided verified business facts. If the question needs a period you cannot compute from the facts, say exactly that instead of guessing. Always state the store name and period. Every figure must match the facts exactly. Never guess or estimate. Use the Rupee symbol (₹).`
+      : `You are the Sales Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing on this month's sales versus last month and customer receivables (total dues and aging). Quote verified facts only. Use the Rupee symbol (₹).`;
 
     const userPrompt = question
       ? `User Question: "${question}"\n\nVerified Facts:\n${factsSummary}`
@@ -80,9 +93,9 @@ ${(duesFacts.customers || []).slice(0, 5).map((c: any) => `  - ${c.customer_name
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ]
-      })
+          { role: "user", content: userPrompt },
+        ],
+      }),
     });
 
     if (!aiRes.ok) {
@@ -97,7 +110,10 @@ ${(duesFacts.customers || []).slice(0, 5).map((c: any) => `  - ${c.customer_name
       throw new Error("AI service returned an empty response");
     }
 
-    return new Response(JSON.stringify({ output: outputText, facts: { sales: salesFacts, receivables: duesFacts } }), {
+    return new Response(JSON.stringify({
+      output: outputText,
+      facts: { this_month: curMonthRes.data, last_month: prevMonthRes.data, year_to_date: yearRes.data, receivables: dues },
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {

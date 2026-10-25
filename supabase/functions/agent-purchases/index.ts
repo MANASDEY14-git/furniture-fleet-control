@@ -23,24 +23,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Call shared business facts RPCs
+    // Shared business facts RPCs (field names match the database functions).
     const [payablesRes, stockRes] = await Promise.all([
       supabase.rpc("ai_get_payables", { _store_id: store_id }),
       supabase.rpc("ai_get_stock_status", { _store_id: store_id }),
     ]);
 
-    if (payablesRes.error) {
-      console.error("ai_get_payables error:", payablesRes.error);
-      throw new Error(`Failed to load supplier payables: ${payablesRes.error.message}`);
-    }
-    if (stockRes.error) {
-      console.error("ai_get_stock_status error:", stockRes.error);
-      throw new Error(`Failed to load replenishment data: ${stockRes.error.message}`);
+    for (const [name, res] of [["payables", payablesRes], ["stock", stockRes]] as const) {
+      if (res.error) {
+        console.error(`purchases facts (${name}) error:`, res.error);
+        throw new Error(`Failed to load ${name} facts: ${res.error.message}`);
+      }
     }
 
-    const payablesFacts = payablesRes.data;
-    const stockFacts = stockRes.data;
-    const urgentItems = stockFacts.urgent_reorders || [];
+    const payables = payablesRes.data;
+    const stock = stockRes.data;
+    const urgentItems = (stock.urgent_reorders || []) as any[];
+    const suppliersOwed = ((payables.suppliers || []) as any[]).filter((s: any) => Number(s.balance) > 0);
 
     const suggestedProcurementValue = urgentItems.reduce(
       (sum: number, r: any) => sum + (Number(r.suggested_order_cost) || 0),
@@ -59,25 +58,24 @@ Deno.serve(async (req) => {
       .map(([sName, val]) => `${sName}: ₹${Math.round(val).toLocaleString("en-IN")}`)
       .join(", ");
 
-    const factsSummary = `Store: ${payablesFacts.store_name}
-As of: ${payablesFacts.as_of}
-Supplier Liabilities & Payables:
-- Total Amount Owed to Suppliers: ₹${Number(payablesFacts.total_payable_to_suppliers || 0).toLocaleString("en-IN")} across ${payablesFacts.suppliers_with_dues_count} suppliers
-- Total Supplier Advances: ₹${Number(payablesFacts.total_advances_paid_to_suppliers || 0).toLocaleString("en-IN")} across ${payablesFacts.suppliers_with_advance_count} suppliers
-- Net Payables Balance: ₹${Number(payablesFacts.net_balance || 0).toLocaleString("en-IN")}
-Top Suppliers Owed Money:
-${(payablesFacts.suppliers_we_owe || []).slice(0, 5).map((s: any) => `  - ${s.supplier_name}: ₹${Number(s.amount_owed).toLocaleString("en-IN")} (purchases ₹${Number(s.total_purchases).toLocaleString("en-IN")}, paid ₹${Number(s.total_payments).toLocaleString("en-IN")})`).join("\n") || "  None"}
-Factual Replenishment Requirements:
+    const factsSummary = `Store: ${stock.store_name}
+As of: ${new Date().toISOString()} (all figures verified)
+Supplier Payables (supplier ledger: purchases minus payments):
+- Total Owed to Suppliers: ₹${Number(payables.total_owed_to_suppliers || 0).toLocaleString("en-IN")} across ${suppliersOwed.length} supplier(s)
+${suppliersOwed.slice(0, 5).map((s: any) => `  - ${s.supplier}: ₹${Number(s.balance).toLocaleString("en-IN")} (last entry ${s.last_entry || "n/a"})`).join("\n") || "  Nothing owed"}
+Factual Replenishment Requirements (reorder engine, last 365 days of real sales):
 - Urgent Items Requiring Reorder: ${urgentItems.length} items
 - Estimated Procurement Order Value: ₹${Math.round(suggestedProcurementValue).toLocaleString("en-IN")}
-- Top Suppliers Requiring Purchase Orders: ${supplierBreakdown || "No immediate supplier orders required"}`;
+- Top Suppliers Requiring Purchase Orders: ${supplierBreakdown || "No immediate supplier orders required"}
+Top urgent items:
+${urgentItems.slice(0, 5).map((r: any) => `  - ${r.item_name}: ${r.current_stock} in stock${Number(r.open_demand) > 0 ? `, ${r.open_demand} reserved` : ""}, suggested ${r.suggested_qty} pcs (~₹${Math.round(Number(r.suggested_order_cost) || 0).toLocaleString("en-IN")}, supplier: ${r.supplier_name || "Unassigned"})`).join("\n") || "  None"}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const systemPrompt = question
-      ? `You are the Purchases Agent for a furniture ERP. Answer the user's specific purchasing/supplier question using ONLY the provided verified facts. Strictly state the store name. Quote only factual amounts and allocations. Do not invent sales velocities. Use Rupee symbol (₹).`
-      : `You are the Purchases Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing analyzing supplier payables, lead times, and imminent replenishment requirements. Quote ONLY the factual numbers provided below. Use Rupee symbol (₹).`;
+      ? `You are the Purchases Agent for a furniture ERP. Answer the user's specific purchasing/supplier question using ONLY the provided verified facts. Always state the store name. Quote only factual amounts and allocations. Do not invent sales velocities. Use the Rupee symbol (₹).`
+      : `You are the Purchases Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing analyzing supplier payables and imminent replenishment requirements. Quote ONLY the factual numbers provided below. Use the Rupee symbol (₹).`;
 
     const userPrompt = question
       ? `User Question: "${question}"\n\nVerified Facts:\n${factsSummary}`
@@ -93,9 +91,9 @@ Factual Replenishment Requirements:
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ]
-      })
+          { role: "user", content: userPrompt },
+        ],
+      }),
     });
 
     if (!aiRes.ok) {
@@ -112,7 +110,7 @@ Factual Replenishment Requirements:
 
     return new Response(JSON.stringify({
       output: outputText,
-      facts: { payables: payablesFacts, replenishment: stockFacts }
+      facts: { payables, replenishment: stock },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
