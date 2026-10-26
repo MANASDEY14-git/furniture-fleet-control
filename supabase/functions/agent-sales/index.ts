@@ -52,10 +52,10 @@ Deno.serve(async (req) => {
     const dues = duesRes.data;
     const monthLine = (p: any, label: string) => {
       if (!p) return "";
-      return `${label} (${p.from} to ${p.to}):
-- Revenue: ₹${Number(p.revenue || 0).toLocaleString("en-IN")} across ${Number(p.orders || 0)} orders
-- Collected: ₹${Number(p.collected || 0).toLocaleString("en-IN")}, Still due on these orders: ₹${Number(p.still_due || 0).toLocaleString("en-IN")}
-- Delivered: ${Number(p.delivered_orders || 0)}, Awaiting delivery: ${Number(p.undelivered_orders || 0)}, Cancelled orders excluded: ${Number(p.cancelled_orders_excluded || 0)}`;
+      return `${label} (${p.period?.from_date || "?"} to ${p.period?.to_date || "?"}):
+- Revenue: ₹${Number(p.total_revenue || 0).toLocaleString("en-IN")} across ${Number(p.total_orders || 0)} orders
+- Collected: ₹${Number(p.total_collected || 0).toLocaleString("en-IN")}, Still due on these orders: ₹${Number(p.total_balance_due || 0).toLocaleString("en-IN")}
+- Delivered: ${Number(p.delivered_orders || 0)}, Awaiting delivery: ${Number(p.pending_orders || 0) + Number(p.shipped_orders || 0)}, Cancelled orders excluded: ${Number(p.cancelled_orders_excluded || 0)}`;
     };
 
     const factsSummary = `Store: ${dues.store_name}
@@ -63,9 +63,9 @@ As of: ${new Date().toISOString()} (all figures verified)
 ${monthLine(curMonthRes.data, "This month")}
 ${monthLine(prevMonthRes.data, "Last month")}
 This year (${thisYearFrom} to ${today}):
-- Revenue: ₹${Number(yearRes.data.revenue || 0).toLocaleString("en-IN")} across ${Number(yearRes.data.orders || 0)} orders
+- Revenue: ₹${Number(yearRes.data.total_revenue || 0).toLocaleString("en-IN")} across ${Number(yearRes.data.total_orders || 0)} orders
 Top sellers this month:
-${(curMonthRes.data.top_items || []).slice(0, 5).map((i: any) => `  - ${i.item_name}: ${Number(i.units || 0)} units, ₹${Number(i.value || 0).toLocaleString("en-IN")}`).join("\n") || "  None yet"}
+${(curMonthRes.data.top_products || []).slice(0, 5).map((i: any) => `  - ${i.item_name}: ${Number(i.quantity_sold || 0)} units, ₹${Number(i.revenue || 0).toLocaleString("en-IN")}`).join("\n") || "  None yet"}
 Outstanding customer dues (orders only; quotes and cancelled orders excluded):
 - Total Due: ₹${Number(dues.total_due || 0).toLocaleString("en-IN")} across ${dues.total_customers_with_dues} customers (${dues.total_open_orders} open orders)
 - Aging: 0-30d ₹${Number(dues.aging_buckets?.bucket_0_30 || 0).toLocaleString("en-IN")}, 31-60d ₹${Number(dues.aging_buckets?.bucket_31_60 || 0).toLocaleString("en-IN")}, 61-90d ₹${Number(dues.aging_buckets?.bucket_61_90 || 0).toLocaleString("en-IN")}, >90d ₹${Number(dues.aging_buckets?.bucket_90_plus || 0).toLocaleString("en-IN")}
