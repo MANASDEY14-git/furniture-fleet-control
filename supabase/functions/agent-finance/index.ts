@@ -45,15 +45,16 @@ Deno.serve(async (req) => {
     const factsSummary = `Store: ${dues.store_name}
 As of: ${new Date().toISOString()} (all figures verified)
 Cash & Bank Position (active accounts in the Bank Book):
-- Total Balance: ₹${Number(cash.total_balance || 0).toLocaleString("en-IN")} across ${accounts.length} account(s)
-${accounts.map((a: any) => `  - ${a.account} (${a.type}): ₹${Number(a.balance).toLocaleString("en-IN")}`).join("\n") || "  No bank or cash accounts registered"}
+- Total Balance: ₹${Number(cash.total_cash_and_bank || 0).toLocaleString("en-IN")} across ${accounts.length} account(s)
+${accounts.map((a: any) => `  - ${a.account_name} (${a.account_type}): ₹${Number(a.current_balance).toLocaleString("en-IN")}`).join("\n") || "  No bank or cash accounts registered"}
 Customer Receivables (orders only, excluding cancelled orders and quotes):
 - Total Due from Customers: ₹${Number(dues.total_due || 0).toLocaleString("en-IN")} across ${dues.total_customers_with_dues} customers (${dues.total_open_orders} open orders)
 - Aging: 0-30d ₹${Number(dues.aging_buckets?.bucket_0_30 || 0).toLocaleString("en-IN")}, 31-60d ₹${Number(dues.aging_buckets?.bucket_31_60 || 0).toLocaleString("en-IN")}, 61-90d ₹${Number(dues.aging_buckets?.bucket_61_90 || 0).toLocaleString("en-IN")}, >90d ₹${Number(dues.aging_buckets?.bucket_90_plus || 0).toLocaleString("en-IN")}
 - Top debtors: ${(dues.customers || []).slice(0, 5).map((c: any) => `${c.customer_name} ₹${Number(c.outstanding).toLocaleString("en-IN")}`).join(", ") || "None"}
 Supplier Payables (supplier ledger: purchases minus payments):
-- Total Owed to Suppliers: ₹${Number(payables.total_owed_to_suppliers || 0).toLocaleString("en-IN")}
-${((payables.suppliers || []) as any[]).filter((s: any) => Number(s.balance) > 0).slice(0, 5).map((s: any) => `  - ${s.supplier}: ₹${Number(s.balance).toLocaleString("en-IN")}`).join("\n") || "  None"}`;
+- Total Owed to Suppliers: ₹${Number(payables.total_payable_to_suppliers || 0).toLocaleString("en-IN")}
+${((payables.suppliers_we_owe || []) as any[]).slice(0, 5).map((s: any) => `  - ${s.supplier_name}: ₹${Number(s.amount_owed).toLocaleString("en-IN")}`).join("\n") || "  None"}
+- Advances paid to suppliers: ₹${Number(payables.total_advances_paid_to_suppliers || 0).toLocaleString("en-IN")}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");

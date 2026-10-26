@@ -43,7 +43,14 @@ export async function getPayables(sb: Client, storeId: string) {
   const { data, error } = await sb.rpc("ai_get_payables", { _store_id: storeId });
   if (error) throw new Error(`payables: ${error.message}`);
   const d = data as any;
-  return { scope: "Supplier ledger balances (purchases minus payments)", total_owed_to_suppliers: d.total_owed_to_suppliers, suppliers: (d.suppliers || []).slice(0, 15) };
+  return {
+    scope: "Supplier ledger balances (purchases minus payments)",
+    total_owed_to_suppliers: d.total_payable_to_suppliers,
+    total_advances_paid_to_suppliers: d.total_advances_paid_to_suppliers,
+    net_balance: d.net_balance,
+    suppliers_with_dues_count: d.suppliers_with_dues_count,
+    suppliers: (d.suppliers_we_owe || []).slice(0, 15),
+  };
 }
 
 export async function getStockStatus(sb: Client, storeId: string) {
