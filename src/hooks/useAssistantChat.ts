@@ -3,12 +3,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+export interface AssistantEvidence {
+  tool: string;
+  label?: string;
+  args?: unknown;
+  result?: unknown;
+  error?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
   agents_consulted?: string[];
+  evidence?: AssistantEvidence[];
 }
 
 export const useAssistantChat = (storeId?: string) => {
@@ -36,12 +45,19 @@ export const useAssistantChat = (storeId?: string) => {
         setConversationId(conv.id);
         const { data: msgs } = await supabase
           .from('ai_messages')
-          .select('id, role, content, created_at')
+          .select('id, role, content, created_at, metadata')
           .eq('conversation_id', conv.id)
           .order('created_at', { ascending: true });
 
         if (msgs) {
-          setMessages(msgs as ChatMessage[]);
+          setMessages(msgs.map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            created_at: m.created_at,
+            agents_consulted: m.metadata?.sources,
+            evidence: m.metadata?.evidence,
+          })) as ChatMessage[]);
         }
       }
     };
@@ -95,6 +111,7 @@ export const useAssistantChat = (storeId?: string) => {
         content: data.response,
         created_at: new Date().toISOString(),
         agents_consulted: data.agents_consulted || [],
+        evidence: data.evidence || [],
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (err: any) {
