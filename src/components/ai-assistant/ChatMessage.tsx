@@ -1,9 +1,78 @@
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Bot, User } from 'lucide-react';
-import type { ChatMessage as ChatMessageType } from '@/hooks/useAssistantChat';
+import { Bot, User, ChevronDown, Database } from 'lucide-react';
+import type { ChatMessage as ChatMessageType, AssistantEvidence } from '@/hooks/useAssistantChat';
 
 interface ChatMessageProps {
   message: ChatMessageType;
+}
+
+const formatValue = (v: unknown): string => {
+  if (v === null || v === undefined) return '—';
+  if (typeof v === 'number') return v.toLocaleString('en-IN');
+  if (typeof v === 'boolean') return v ? 'yes' : 'no';
+  if (typeof v === 'object') {
+    if (Array.isArray(v)) return `${v.length} listed`;
+    return Object.entries(v as Record<string, unknown>)
+      .filter(([k]) => !/^(scope|store_id|as_of)$/.test(k))
+      .slice(0, 4)
+      .map(([k, val]) => `${k}: ${formatValue(val)}`)
+      .join(', ');
+  }
+  return String(v);
+};
+
+const summarizeResult = (result?: unknown): string[] => {
+  if (!result || typeof result !== 'object') return [];
+  return Object.entries(result as Record<string, unknown>)
+    .filter(([k]) => !/^(scope|store_id|store_name|as_of|customers|suppliers|top_customers|age_buckets|aging_buckets|by_bucket|reorder|dead_stock)$/.test(k))
+    .slice(0, 8)
+    .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${formatValue(v)}`);
+};
+
+const summarizeArgs = (args?: unknown): string => {
+  if (!args || typeof args !== 'object') return '';
+  const entries = Object.entries(args as Record<string, unknown>);
+  if (!entries.length) return '';
+  return entries.map(([k, v]) => `${k.replace(/_date$/, '').replace(/_/g, ' ')} ${String(v)}`).join(' · ');
+};
+
+function EvidencePanel({ evidence }: { evidence: AssistantEvidence[] }) {
+  const [open, setOpen] = useState(false);
+  if (!evidence.length) return null;
+
+  return (
+    <div className="mt-2 pt-1.5 border-t border-border/20 text-[9px] text-muted-foreground font-sans">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+      >
+        <Database className="w-2.5 h-2.5" />
+        <span>Based on {evidence.length} checked figure{evidence.length === 1 ? '' : 's'}</span>
+        <ChevronDown className={`w-2.5 h-2.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <ul className="mt-1.5 space-y-1">
+          {evidence.map((e, i) => {
+            const facts = summarizeResult(e.result);
+            return (
+              <li key={`${e.tool}-${i}`} className="bg-background/60 rounded-md px-2 py-1.5 border border-border/40">
+                <div className="font-semibold text-foreground/80">{e.label || e.tool}</div>
+                {summarizeArgs(e.args) && (
+                  <div className="text-muted-foreground/80">for {summarizeArgs(e.args)}</div>
+                )}
+                {e.error ? (
+                  <div className="text-destructive">Could not read: {e.error}</div>
+                ) : facts.length > 0 ? (
+                  <div>{facts.join(' · ')}</div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
@@ -32,14 +101,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
             <ReactMarkdown>{message.content}</ReactMarkdown>
             {message.agents_consulted && message.agents_consulted.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2 pt-1.5 border-t border-border/20 text-[9px] text-muted-foreground font-sans">
-                <span className="font-semibold select-none">Consulted:</span>
-                {message.agents_consulted.map((agent) => (
-                  <span key={agent} className="bg-background px-1.5 py-0.5 rounded border border-border/55 capitalize text-[8px] font-bold text-foreground/80">
-                    {agent.replace('agent-', '')}
+                <span className="font-semibold select-none">Sources:</span>
+                {message.agents_consulted.map((source, i) => (
+                  <span key={`${source}-${i}`} className="bg-background px-1.5 py-0.5 rounded border border-border/55 text-[8px] font-bold text-foreground/80">
+                    {source}
                   </span>
                 ))}
               </div>
             )}
+            {!isUser && message.evidence && <EvidencePanel evidence={message.evidence} />}
           </div>
         )}
       </div>

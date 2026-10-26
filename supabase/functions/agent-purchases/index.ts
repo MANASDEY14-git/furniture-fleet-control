@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const payables = payablesRes.data;
     const stock = stockRes.data;
     const urgentItems = (stock.urgent_reorders || []) as any[];
-    const suppliersOwed = ((payables.suppliers || []) as any[]).filter((s: any) => Number(s.balance) > 0);
+    const suppliersOwed = ((payables.suppliers_we_owe || []) as any[]).filter((s: any) => Number(s.amount_owed) > 0);
 
     const suggestedProcurementValue = urgentItems.reduce(
       (sum: number, r: any) => sum + (Number(r.suggested_order_cost) || 0),
@@ -61,8 +61,9 @@ Deno.serve(async (req) => {
     const factsSummary = `Store: ${stock.store_name}
 As of: ${new Date().toISOString()} (all figures verified)
 Supplier Payables (supplier ledger: purchases minus payments):
-- Total Owed to Suppliers: ₹${Number(payables.total_owed_to_suppliers || 0).toLocaleString("en-IN")} across ${suppliersOwed.length} supplier(s)
-${suppliersOwed.slice(0, 5).map((s: any) => `  - ${s.supplier}: ₹${Number(s.balance).toLocaleString("en-IN")} (last entry ${s.last_entry || "n/a"})`).join("\n") || "  Nothing owed"}
+- Total Owed to Suppliers: ₹${Number(payables.total_payable_to_suppliers || 0).toLocaleString("en-IN")} across ${suppliersOwed.length} supplier(s)
+${suppliersOwed.slice(0, 5).map((s: any) => `  - ${s.supplier_name}: ₹${Number(s.amount_owed).toLocaleString("en-IN")}`).join("\n") || "  Nothing owed"}
+- Advances paid to suppliers: ₹${Number(payables.total_advances_paid_to_suppliers || 0).toLocaleString("en-IN")}
 Factual Replenishment Requirements (reorder engine, last 365 days of real sales):
 - Urgent Items Requiring Reorder: ${urgentItems.length} items
 - Estimated Procurement Order Value: ₹${Math.round(suggestedProcurementValue).toLocaleString("en-IN")}
