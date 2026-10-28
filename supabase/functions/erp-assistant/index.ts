@@ -67,48 +67,64 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: errorMessage(401) }, 500);
 
+    const token = authHeader.replace("Bearer ", "");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // Internal calls (cron / orchestrator / test harness) use the service-role bearer,
+    // same pattern as the department agents.
+    const isInternal = token === serviceRoleKey;
+    const service = createClient(supabaseUrl, serviceRoleKey);
     // User-scoped client: every fact is read with the user's own permissions.
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    let userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) return json({ error: "Unauthorized" }, 401);
-    const userId = claimsData.claims.sub;
+    let userId: string | null = null;
+    if (!isInternal) {
+      const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) return json({ error: "Unauthorized" }, 401);
+      userId = claimsData.claims.sub;
+    } else {
+      userClient = service;
+    }
 
     const body = await req.json().catch(() => ({}));
     const message = typeof body.message === "string" ? body.message.trim().slice(0, 4000) : "";
     const store_id = typeof body.store_id === "string" ? body.store_id : "";
     if (!message || !store_id) return json({ error: "message and store_id are required" }, 400);
 
-    const { data: hasAccess } = await userClient.rpc("user_has_store_access", { _store_id: store_id });
-    if (!hasAccess) return json({ error: "No access to this store" }, 403);
-
-    const service = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    if (!isInternal) {
+      const { data: hasAccess } = await userClient.rpc("user_has_store_access", { _store_id: store_id });
+      if (!hasAccess) return json({ error: "No access to this store" }, 403);
+    }
     const { data: storeRow } = await service.from("stores").select("name").eq("id", store_id).single();
     const storeName = storeRow?.name || "this store";
 
     let convId: string | null = typeof body.conversation_id === "string" ? body.conversation_id : null;
+    if (convId && isInternal) convId = null;
     if (convId) {
       const { data: own } = await service.from("ai_conversations").select("id").eq("id", convId).eq("user_id", userId).maybeSingle();
       if (!own) convId = null;
     }
-    if (!convId) {
+    if (!convId && !isInternal) {
       const { data: conv, error } = await service.from("ai_conversations")
         .insert({ user_id: userId, store_id, title: message.substring(0, 80) }).select("id").single();
       if (error) throw error;
       convId = conv.id;
     }
 
-    const { data: history } = await service.from("ai_messages").select("role, content")
-      .eq("conversation_id", convId).order("created_at", { ascending: false }).limit(20);
-    const priorMessages = (history || []).reverse().map((m: any) => ({
-      role: m.role === "user" ? "user" as const : "assistant" as const,
-      content: String(m.content || ""),
-    }));
+    let priorMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
+    if (convId) {
+      const { data: history } = await service.from("ai_messages").select("role, content")
+        .eq("conversation_id", convId).order("created_at", { ascending: false }).limit(20);
+      priorMessages = (history || []).reverse().map((m: any) => ({
+        role: m.role === "user" ? "user" as const : "assistant" as const,
+        content: String(m.content || ""),
+      }));
+    }
 
-    const { error: saveUserErr } = await service.from("ai_messages").insert({ conversation_id: convId, role: "user", content: message });
-    if (saveUserErr) console.error("save user message failed:", saveUserErr);
+    if (convId) {
+      const { error: saveUserErr } = await service.from("ai_messages").insert({ conversation_id: convId, role: "user", content: message });
+      if (saveUserErr) console.error("save user message failed:", saveUserErr);
+    }
 
     const evidence: Array<{ tool: string; label: string; args?: unknown; result?: unknown; error?: string }> = [];
     const run = <A,>(name: string, fn: (a: A) => Promise<unknown>) => async (args: A) => {
@@ -174,11 +190,13 @@ Deno.serve(async (req) => {
     if (!text) return json({ error: "The assistant could not produce an answer. Please try again.", conversation_id: convId }, 502);
 
     const sources = Array.from(new Set(evidence.map((e) => e.label)));
-    const { error: saveErr } = await service.from("ai_messages").insert({
-      conversation_id: convId, role: "assistant", content: text,
-      metadata: { store_name: storeName, as_of: new Date().toISOString(), sources, evidence },
-    });
-    if (saveErr) console.error("save assistant message failed:", saveErr);
+    if (convId) {
+      const { error: saveErr } = await service.from("ai_messages").insert({
+        conversation_id: convId, role: "assistant", content: text,
+        metadata: { store_name: storeName, as_of: new Date().toISOString(), sources, evidence },
+      });
+      if (saveErr) console.error("save assistant message failed:", saveErr);
+    }
 
     return json({ response: text, conversation_id: convId, agents_consulted: sources, evidence });
   } catch (e: any) {
