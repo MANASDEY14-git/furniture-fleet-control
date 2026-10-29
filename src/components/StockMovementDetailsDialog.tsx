@@ -56,7 +56,14 @@ export default function StockMovementDetailsDialog({
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-blue-200 text-sm">Item</span>
-                <span className="text-white font-medium">{movement.item_name}</span>
+                <div className="text-right">
+                  <span className="text-white font-medium block">{movement.item_name}</span>
+                  {movement.variant_name && (
+                    <Badge variant="outline" className="text-xs text-cyan-300 border-cyan-500/40 bg-cyan-950/40 mt-0.5">
+                      Variant: {movement.variant_name}
+                    </Badge>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-blue-200 text-sm">Type</span>

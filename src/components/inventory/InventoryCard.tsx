@@ -93,7 +93,7 @@ export default function InventoryCard({
   const { data: variants = [] } = useItemVariants(item.id);
   const hasVariants = variants.length > 0;
   const totalStock = hasVariants 
-    ? item.quantity_available + variants.reduce((sum, v) => sum + v.quantity_available, 0)
+    ? variants.reduce((sum, v) => sum + v.quantity_available, 0)
     : item.quantity_available;
 
   const isLowStock = item.quantity_available < 5;
@@ -157,8 +157,15 @@ export default function InventoryCard({
               <div className="flex items-center gap-2">
                 <p className="text-sm text-muted-foreground truncate" title={categoryName}>{categoryName}</p>
                 {hasVariants && (
-                  <Badge variant="secondary" className="text-xs">
-                    {variants.length} variant{variants.length !== 1 ? 's' : ''}
+                  <Badge 
+                    variant="secondary" 
+                    className="text-xs truncate max-w-[220px]"
+                    title={variants.map(v => `${v.variant_name}: ${v.quantity_available} in stock`).join('\n')}
+                  >
+                    {variants.length <= 2 
+                      ? `${variants.length} Var (${variants.map(v => `${v.variant_name}: ${v.quantity_available}`).join(', ')})`
+                      : `${variants.length} Variants (${variants.slice(0, 2).map(v => v.variant_name).join(', ')} +${variants.length - 2})`
+                    }
                   </Badge>
                 )}
               </div>
@@ -189,7 +196,7 @@ export default function InventoryCard({
               "text-sm font-semibold",
               isLowStock ? "text-destructive" : "text-foreground"
             )}>
-              {hasVariants ? `${totalStock} (${item.quantity_available} + ${variants.reduce((sum, v) => sum + v.quantity_available, 0)})` : totalStock}
+              {hasVariants ? `${totalStock} (${variants.length} variants)` : totalStock}
             </p>
           </div>
 
@@ -242,6 +249,7 @@ export default function InventoryCard({
               }
               itemName={item.name}
               variants={variants}
+              parentItem={item}
             />
           )}
 

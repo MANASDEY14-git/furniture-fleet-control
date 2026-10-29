@@ -14,6 +14,8 @@ export interface StockAdjustment {
   adjusted_by?: string;
   created_at: string;
   updated_at: string;
+  items?: { name: string };
+  item_variants?: { variant_name: string; sku?: string };
 }
 
 export interface CreateStockAdjustmentData {
@@ -32,7 +34,7 @@ export const useStockAdjustments = (storeId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('stock_adjustments')
-        .select('*')
+        .select('*, items(name), item_variants(variant_name, sku)')
         .order('created_at', { ascending: false });
 
       if (storeId) {
@@ -42,7 +44,7 @@ export const useStockAdjustments = (storeId?: string) => {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as StockAdjustment[];
+      return data as unknown as StockAdjustment[];
     },
   });
 };
@@ -68,10 +70,12 @@ export const useCreateStockAdjustment = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-adjustments'] });
       queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['item-variants'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-ledger'] });
       queryClient.invalidateQueries({ queryKey: ['stock-ledger-items'] });
       toast({
         title: "Success",
-        description: "Stock adjustment created successfully",
+        description: "Stock audit adjustment recorded successfully",
       });
     },
     onError: (error: Error) => {

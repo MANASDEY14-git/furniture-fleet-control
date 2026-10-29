@@ -80,11 +80,12 @@ function ItemRowWithVariants({
   onToggleExpand: (id: string) => void;
   onDeleteItem: (id: string) => void;
   onSelectLedgerItem?: (itemId: string) => void;
+  allItems?: Item[];
 }) {
   const { data: variants = [] } = useItemVariants(item.id);
   const hasVariants = variants.length > 0;
   const totalStock = hasVariants 
-    ? item.quantity_available + variants.reduce((sum, v) => sum + v.quantity_available, 0)
+    ? variants.reduce((sum, v) => sum + v.quantity_available, 0)
     : item.quantity_available;
 
   return (
@@ -128,8 +129,19 @@ function ItemRowWithVariants({
                 )}
               </div>
               {hasVariants && (
-                <Badge variant="secondary" className="text-xs mt-1 w-fit">
-                  {variants.length} variant{variants.length !== 1 ? 's' : ''}
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs mt-1 w-fit cursor-pointer bg-blue-900/40 text-blue-300 border border-blue-500/30 hover:bg-blue-850/60 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleExpand(item.id);
+                  }}
+                  title={variants.map(v => `${v.variant_name}: ${v.quantity_available} in stock`).join('\n')}
+                >
+                  {variants.length <= 2 
+                    ? `${variants.length} Variants (${variants.map(v => `${v.variant_name}: ${v.quantity_available}`).join(' | ')})`
+                    : `${variants.length} Variants (${variants.slice(0, 2).map(v => v.variant_name).join(', ')} +${variants.length - 2} more)`
+                  }
                 </Badge>
               )}
             </div>
@@ -138,14 +150,12 @@ function ItemRowWithVariants({
         <TableCell className="text-blue-200">{store?.name || 'Unknown'}</TableCell>
         <TableCell className="text-blue-200">{category?.name || 'Unknown'}</TableCell>
         <TableCell className={`${isLowStock ? 'text-orange-300 font-semibold' : 'text-blue-200'}`}>
-          {hasVariants ? (
-            <div className="flex flex-col">
-              <span>{totalStock}</span>
-              <span className="text-xs text-blue-400">({item.quantity_available} + {variants.reduce((sum, v) => sum + v.quantity_available, 0)})</span>
-            </div>
-          ) : (
-            totalStock
-          )}
+          <div className="flex flex-col">
+            <span className="font-semibold">{totalStock}</span>
+            {hasVariants && (
+              <span className="text-xs text-blue-400">({variants.length} variant{variants.length !== 1 ? 's' : ''})</span>
+            )}
+          </div>
         </TableCell>
         <TableCell className="text-blue-200">{formatCurrency(item.cost_price)}</TableCell>
         <TableCell className="text-blue-200">{formatCurrency(item.selling_price)}</TableCell>
@@ -201,7 +211,7 @@ function ItemRowWithVariants({
         </TableCell>
       </TableRow>
       {isExpanded && hasVariants && (
-        <VariantStockTable variants={variants} />
+        <VariantStockTable variants={variants} parentItem={item} allItems={allItems} />
       )}
     </>
   );
@@ -379,7 +389,8 @@ export default function InventoryTable({
               
               return (
                 <ItemRowWithVariants
-                  key={item.id}
+                    allItems={items}
+                    key={item.id}
                   item={item}
                   store={store}
                   category={category}

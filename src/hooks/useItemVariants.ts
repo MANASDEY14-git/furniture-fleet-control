@@ -58,7 +58,10 @@ export const useCreateItemVariant = () => {
     mutationFn: async (data: CreateItemVariantData) => {
       const { data: variant, error } = await supabase
         .from('item_variants' as any)
-        .insert([data] as any)
+        .insert([{
+          ...data,
+          is_active: true,
+        }] as any)
         .select()
         .single();
 

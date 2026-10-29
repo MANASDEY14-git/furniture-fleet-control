@@ -6,6 +6,8 @@ export interface StockLedgerEntry {
   type: 'purchase' | 'sale' | 'adjustment' | 'transfer_out' | 'transfer_in';
   item_name: string;
   item_id: string;
+  variant_id?: string;
+  variant_name?: string;
   quantity: number;
   unit_price: number;
   total_amount: number;
@@ -196,6 +198,8 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
           date,
           item_name,
           item_id,
+          variant_id,
+          item_variants (variant_name),
           quantity,
           total_cost,
           invoice_number,
@@ -215,13 +219,15 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
       if (purchaseError) throw purchaseError;
 
       // Add purchases to stock entries
-      purchases?.forEach(purchase => {
+      purchases?.forEach((purchase: any) => {
         const unitPrice = purchase.quantity > 0 ? purchase.total_cost / purchase.quantity : 0;
         stockEntries.push({
           date: purchase.date,
           type: 'purchase',
           item_name: purchase.item_name,
           item_id: purchase.item_id,
+          variant_id: purchase.variant_id || undefined,
+          variant_name: purchase.item_variants?.variant_name || undefined,
           quantity: purchase.quantity,
           unit_price: unitPrice,
           total_amount: purchase.total_cost,
@@ -238,6 +244,8 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
           id,
           item_name,
           item_id,
+          variant_id,
+          item_variants (variant_name),
           quantity,
           unit_price,
           total_price,
@@ -253,7 +261,7 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
       if (salesError) throw salesError;
 
       // Filter and add sales to stock entries
-      salesOrderItems?.forEach(saleItem => {
+      salesOrderItems?.forEach((saleItem: any) => {
         const saleDate = saleItem.sales_orders.date;
         const saleStoreId = saleItem.sales_orders.store_id;
         
@@ -278,6 +286,8 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
           type: 'sale',
           item_name: saleItem.item_name,
           item_id: saleItem.item_id,
+          variant_id: saleItem.variant_id || undefined,
+          variant_name: saleItem.item_variants?.variant_name || undefined,
           quantity: saleItem.quantity,
           unit_price: saleItem.unit_price,
           total_amount: saleItem.total_price,
@@ -294,6 +304,8 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
           id,
           created_at,
           item_id,
+          variant_id,
+          item_variants (variant_name),
           store_id,
           quantity_change,
           adjustment_type,
@@ -316,12 +328,14 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
       if (adjustmentsError) throw adjustmentsError;
 
       // Add adjustments to stock entries
-      adjustments?.forEach(adjustment => {
+      adjustments?.forEach((adjustment: any) => {
         stockEntries.push({
           date: adjustment.created_at,
           type: 'adjustment',
           item_name: adjustment.items.name,
           item_id: adjustment.item_id,
+          variant_id: adjustment.variant_id || undefined,
+          variant_name: adjustment.item_variants?.variant_name || undefined,
           quantity: adjustment.quantity_change,
           unit_price: 0,
           total_amount: 0,

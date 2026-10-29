@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Package } from 'lucide-react';
+import { Package, ClipboardEdit } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import StockAdjustmentDialog from '@/components/StockAdjustmentDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePaginatedItems } from '@/hooks/usePaginatedItems';
 import { useInfiniteItems } from '@/hooks/useInfiniteItems';
@@ -210,17 +212,31 @@ export default function Inventory({
                   onClearSelection={handleClearSelection}
                   hideTitle={hideHeader}
                 />
-                <ItemForm 
-                  trigger={
-                    <button className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md text-sm font-medium inline-flex items-center gap-2">
-                      <Package className="w-4 h-4" />
-                      Add Item
-                    </button>
-                  }
-                  onSuccess={() => {
-                    refetch();
-                  }}
-                />
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <StockAdjustmentDialog
+                    items={items}
+                    triggerButton={
+                      <Button 
+                        variant="outline" 
+                        className="border-blue-500/30 text-blue-300 hover:bg-blue-900/20 h-10 px-3 text-sm font-medium inline-flex items-center gap-2"
+                      >
+                        <ClipboardEdit className="w-4 h-4 text-cyan-400" />
+                        Stock Audit
+                      </Button>
+                    }
+                  />
+                  <ItemForm 
+                    trigger={
+                      <button className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md text-sm font-medium inline-flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        Add Item
+                      </button>
+                    }
+                    onSuccess={() => {
+                      refetch();
+                    }}
+                  />
+                </div>
               </div>
               
               {/* Desktop Table */}

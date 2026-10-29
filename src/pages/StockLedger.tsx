@@ -105,7 +105,14 @@ export default function StockLedger({
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <p className="text-white font-medium truncate max-w-[180px]">{transaction.item_name}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-white font-medium truncate max-w-[180px]">{transaction.item_name}</p>
+              {transaction.variant_name && (
+                <Badge variant="outline" className="text-[10px] text-cyan-300 border-cyan-500/40 bg-cyan-950/40 px-1 py-0">
+                  {transaction.variant_name}
+                </Badge>
+              )}
+            </div>
             <p className="text-blue-200 text-xs">{format(new Date(transaction.date), 'dd MMM yyyy')}</p>
           </div>
           <Badge className={`${getTransactionTypeColor(transaction.type)} text-xs`}>
@@ -351,8 +358,15 @@ export default function StockLedger({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-white text-sm">
-                        <div className="truncate max-w-[150px]" title={transaction.item_name}>
-                          {transaction.item_name}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="truncate max-w-[150px]" title={transaction.item_name}>
+                            {transaction.item_name}
+                          </span>
+                          {transaction.variant_name && (
+                            <Badge variant="outline" className="text-[10px] text-cyan-300 border-cyan-500/40 bg-cyan-950/40 px-1 py-0">
+                              {transaction.variant_name}
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className={cn(
