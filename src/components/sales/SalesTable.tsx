@@ -268,10 +268,10 @@ function MobileOrderCard({
                       size="sm"
                       className="flex-1"
                       onClick={() => setRecordingPayment(order)}
-                      disabled={readOnly}
+                      disabled={readOnly || (order.balance_due !== undefined && order.balance_due <= 0)}
                     >
                       <Receipt className="w-4 h-4 mr-2" />
-                      Payment
+                      {order.balance_due !== undefined && order.balance_due <= 0 ? 'Paid' : 'Payment'}
                     </Button>
                   </>
                 )}
@@ -539,7 +539,8 @@ export default function SalesTable({
                           size="sm"
                           className="text-muted-foreground hover:text-emerald-600"
                           onClick={() => setRecordingPayment(order)}
-                          disabled={readOnly}
+                          disabled={readOnly || (order.balance_due !== undefined && order.balance_due <= 0)}
+                          title={order.balance_due !== undefined && order.balance_due <= 0 ? 'Order is fully paid' : 'Record Payment'}
                         >
                           <Receipt className="w-4 h-4" />
                         </Button>

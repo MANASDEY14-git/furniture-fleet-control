@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +36,26 @@ export const useRecordPayment = () => {
       cheque_number?: string;
       cheque_date?: string;
     }) => {
+      if (!paymentData.amount || paymentData.amount <= 0) {
+        throw new Error('Payment amount must be greater than zero');
+      }
+
+      // Pre-check the order remaining balance to prevent overcollection
+      const { data: orderData, error: orderError } = await supabase
+        .from('sales_orders')
+        .select('order_number, total_amount, advance_paid')
+        .eq('id', paymentData.sale_id)
+        .single();
+
+      if (!orderError && orderData) {
+        const remainingDue = Math.max(0, (Number(orderData.total_amount) || 0) - (Number(orderData.advance_paid) || 0));
+        if (paymentData.amount > remainingDue + 0.01) {
+          throw new Error(
+            `Amount ₹${paymentData.amount.toLocaleString('en-IN')} exceeds the remaining due balance of ₹${remainingDue.toLocaleString('en-IN')} for order ${orderData.order_number}`
+          );
+        }
+      }
+
       // Get sales order description if not provided and use it in payment description
       let finalDescription = paymentData.description || `Payment for sale`;
       
