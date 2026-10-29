@@ -66,7 +66,8 @@ function ItemRowWithVariants({
   onItemSelection,
   onToggleExpand,
   onDeleteItem,
-  onSelectLedgerItem
+  onSelectLedgerItem,
+  allItems
 }: {
   item: Item;
   store?: Store;
