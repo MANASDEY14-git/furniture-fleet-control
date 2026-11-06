@@ -795,6 +795,269 @@ export type Database = {
           },
         ]
       }
+      fin_accounts: {
+        Row: {
+          color: string | null
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          opening_balance: number
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          name: string
+          opening_balance?: number
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          opening_balance?: number
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fin_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fin_categories: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          is_system: boolean
+          name: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_system?: boolean
+          name: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fin_daily_summaries: {
+        Row: {
+          created_at: string
+          id: string
+          largest_expense_amount: number
+          largest_expense_category: string | null
+          net_movement: number
+          summary_date: string
+          total_expense: number
+          total_income: number
+          transaction_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          largest_expense_amount?: number
+          largest_expense_category?: string | null
+          net_movement?: number
+          summary_date: string
+          total_expense?: number
+          total_income?: number
+          transaction_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          largest_expense_amount?: number
+          largest_expense_category?: string | null
+          net_movement?: number
+          summary_date?: string
+          total_expense?: number
+          total_income?: number
+          transaction_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fin_profiles: {
+        Row: {
+          created_at: string
+          currency: string
+          email: string | null
+          full_name: string | null
+          id: string
+          onboarding_completed: boolean
+          summary_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          onboarding_completed?: boolean
+          summary_time?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          onboarding_completed?: boolean
+          summary_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fin_transaction_entries: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          entry_type: string
+          id: string
+          transaction_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          entry_type: string
+          id?: string
+          transaction_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          entry_type?: string
+          id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_transaction_entries_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "fin_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_transaction_entries_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "fin_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_transactions: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          date: string
+          id: string
+          note: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "fin_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_years: {
         Row: {
           closed_at: string | null
@@ -3471,6 +3734,17 @@ export type Database = {
         Args: { _order_id: string }
         Returns: undefined
       }
+      create_fin_transaction_atomic: {
+        Args: {
+          p_amount: number
+          p_category_id: string
+          p_date: string
+          p_entries: Json
+          p_note: string
+          p_type: string
+        }
+        Returns: string
+      }
       create_sales_order_secure:
         | {
             Args: {
@@ -3554,6 +3828,10 @@ export type Database = {
           total_orders: number
           total_revenue: number
         }[]
+      }
+      delete_fin_transaction_atomic: {
+        Args: { p_transaction_id: string }
+        Returns: boolean
       }
       dispatch_stock_transfer: {
         Args: { _transfer_id: string }
@@ -3669,6 +3947,10 @@ export type Database = {
         }[]
       }
       get_edge_internal_secret: { Args: never; Returns: string }
+      get_fin_account_balance: {
+        Args: { p_account_id: string }
+        Returns: number
+      }
       get_followup_worklist: {
         Args: { _store_id: string }
         Returns: {
