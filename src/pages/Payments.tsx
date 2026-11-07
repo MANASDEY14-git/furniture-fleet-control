@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Plus, Search, CreditCard, Trash2, Receipt, DollarSign, TrendingUp, TrendingDown, Eye, Calendar, Building2 } from 'lucide-react';
+import { Plus, Search, CreditCard, Trash2, Receipt, DollarSign, TrendingUp, TrendingDown, Eye, Calendar, Building2, Phone, MessageSquare } from 'lucide-react';
 import { usePayments, useDeletePayment } from '@/hooks/usePayments';
 import { useComputedSalePaymentStatus } from '@/hooks/useComputedSalePaymentStatus';
 import { useRecordPayment } from '@/hooks/useSalePaymentStatus';
@@ -499,49 +499,101 @@ export default function Payments({
           {isMobile ? (
             // Mobile Card Layout
             <div className="space-y-4">
-              {filteredOutstandingBalances.map((sale) => (
-                <Card key={sale.sale_id} className="bg-slate-800/50 border-blue-500/30">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-medium text-cyan-300 text-sm">#{sale.order_number}</p>
-                        <p className="text-blue-200 text-sm">{sale.customer_name || 'Walk-in Customer'}</p>
+              {filteredOutstandingBalances.map((sale) => {
+                const cleanPhone = (sale.customer_phone || '').replace(/\D/g, '');
+                const waNumber = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+                const waMessage = encodeURIComponent(
+                  `Hello ${sale.customer_name || 'Customer'}, reminder for payment of ${formatCurrency(
+                    sale.balance_due
+                  )} towards order #${sale.order_number}. Kindly arrange the payment. Thank you!`
+                );
+                const pctPaid = sale.total_price > 0 ? Math.min(100, Math.round((sale.total_paid / sale.total_price) * 100)) : 0;
+
+                return (
+                  <Card key={sale.sale_id} className="bg-slate-800/50 border-blue-500/30">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-cyan-300 text-sm">#{sale.order_number}</p>
+                          <p className="text-blue-100 text-sm font-medium truncate">{sale.customer_name || 'Walk-in Customer'}</p>
+                          {sale.customer_phone ? (
+                            <a href={`tel:${sale.customer_phone}`} className="text-xs text-blue-300 hover:underline inline-flex items-center gap-1 mt-0.5">
+                              <Phone className="w-3 h-3" /> {sale.customer_phone}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-blue-400/60">No phone</span>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-orange-400 font-bold text-base">{formatCurrency(sale.balance_due)}</p>
+                          <p className="text-[10px] text-blue-300">Balance Due</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-orange-400 font-semibold">{formatCurrency(sale.balance_due)}</p>
-                        <p className="text-xs text-blue-300">Balance Due</p>
+
+                      {/* Financial 3-column breakdown */}
+                      <div className="grid grid-cols-3 gap-2 p-2 bg-slate-900/60 rounded-lg text-center text-xs">
+                        <div>
+                          <p className="text-[10px] text-blue-300">Total</p>
+                          <p className="font-semibold text-cyan-300 truncate">{formatCurrency(sale.total_price)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-blue-300">Paid</p>
+                          <p className="font-semibold text-green-400 truncate">{formatCurrency(sale.total_paid)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-blue-300">Progress</p>
+                          <p className="font-semibold text-blue-200">{pctPaid}%</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-blue-200 text-sm">Store:</span>
-                        <span className="text-blue-100 text-sm">{getStoreName(sale.store_id)}</span>
+
+                      <div className="flex justify-between text-xs text-blue-200">
+                        <span>Store:</span>
+                        <span className="text-blue-100">{getStoreName(sale.store_id)}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-blue-200 text-sm">Total:</span>
-                        <span className="text-cyan-300 text-sm">{formatCurrency(sale.total_price)}</span>
+
+                      {/* Action Buttons: Call, WhatsApp, Record Payment */}
+                      <div className="pt-2 border-t border-blue-500/20 space-y-2">
+                        {sale.customer_phone && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button size="sm" variant="outline" asChild className="h-8 text-xs border-blue-500/30 text-blue-200 hover:bg-blue-500/10">
+                              <a href={`tel:${sale.customer_phone}`} className="flex items-center justify-center gap-1">
+                                <Phone className="w-3.5 h-3.5 text-cyan-400" /> Call
+                              </a>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              asChild
+                              className="h-8 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                            >
+                              <a
+                                href={`https://wa.me/${waNumber}?text=${waMessage}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-1"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" /> WhatsApp
+                              </a>
+                            </Button>
+                          </div>
+                        )}
+
+                        <Button
+                          size="sm"
+                          className="w-full cyber-button text-xs font-semibold h-9"
+                          onClick={() => {
+                            setRecordingPayment(sale);
+                            setPaymentAmount(sale.balance_due.toString());
+                          }}
+                          disabled={readOnly}
+                        >
+                          Record Collection Payment
+                        </Button>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-blue-200 text-sm">Paid:</span>
-                        <span className="text-green-400 text-sm">{formatCurrency(sale.total_paid)}</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-blue-500/20 flex justify-end">
-                      <Button
-                        size="sm"
-                        className="cyber-button text-xs"
-                        onClick={() => {
-                          setRecordingPayment(sale);
-                          setPaymentAmount(sale.balance_due.toString());
-                        }}
-                        disabled={readOnly}
-                      >
-                        Record Payment
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             // Desktop Table Layout
