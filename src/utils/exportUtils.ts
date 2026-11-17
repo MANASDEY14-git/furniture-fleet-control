@@ -2,7 +2,8 @@
 /** Quote CSV cells and neutralize spreadsheet formula prefixes in untrusted text. */
 export const escapeCsvCell = (value: unknown): string => {
   const text = String(value ?? '');
-  const safeText = /^[\u0000-\u0020\uFEFF]*[=+\-@]/.test(text) ? `'${text}` : text;
+  const isNumericOrBoolean = typeof value === 'number' || typeof value === 'boolean';
+  const safeText = !isNumericOrBoolean && /^[\u0000-\u0020\uFEFF]*[=+\-@]/.test(text) ? `'${text}` : text;
   return `"${safeText.replace(/"/g, '""')}"`;
 };
 
