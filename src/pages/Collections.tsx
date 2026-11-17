@@ -11,6 +11,7 @@ import { useStoreContext } from '@/contexts/StoreContext';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { escapeCsvCell } from '@/utils/exportUtils';
 
 type BucketKey = 'all' | 'bucket_0_30' | 'bucket_31_60' | 'bucket_61_90' | 'bucket_90_plus';
 
@@ -32,7 +33,7 @@ const toCsv = (rows: ReceivableRow[]) => {
     r.outstanding, r.bucket_0_30, r.bucket_31_60, r.bucket_61_90, r.bucket_90_plus,
     r.oldest_unpaid_date ?? '', r.oldest_age_days,
   ]);
-  return [header, ...body].map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return [header, ...body].map((l) => l.map(escapeCsvCell).join(',')).join('\n');
 };
 
 export default function Collections({

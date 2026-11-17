@@ -24,6 +24,7 @@ import {
 import { formatCurrency } from '@/utils/currencyUtils';
 import { useReorderIntelligence, type ReorderRow } from '@/hooks/useReorderIntelligence';
 import { useStoreContext } from '@/contexts/StoreContext';
+import { escapeCsvCell } from '@/utils/exportUtils';
 
 const BUCKETS = {
   reorder_now: {
@@ -136,7 +137,7 @@ const toCsv = (rows: ReorderRow[]) => {
   ]);
 
   return [header, ...body]
-    .map((line) => line.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+    .map((line) => line.map(escapeCsvCell).join(','))
     .join('\n');
 };
 
