@@ -1,4 +1,11 @@
 
+/** Quote CSV cells and neutralize spreadsheet formula prefixes in untrusted text. */
+export const escapeCsvCell = (value: unknown): string => {
+  const text = String(value ?? '');
+  const safeText = /^[\u0000-\u0020\uFEFF]*[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safeText.replace(/"/g, '""')}"`;
+};
+
 export const exportToCSV = (data: any[], filename: string) => {
   if (!data || data.length === 0) {
     console.warn('No data to export');
@@ -7,16 +14,9 @@ export const exportToCSV = (data: any[], filename: string) => {
 
   const headers = Object.keys(data[0]);
   const csvContent = [
-    headers.join(','),
+    headers.map(escapeCsvCell).join(','),
     ...data.map(row => 
-      headers.map(header => {
-        const value = row[header];
-        // Handle values that might contain commas or quotes
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      }).join(',')
+      headers.map(header => escapeCsvCell(row[header])).join(',')
     )
   ].join('\n');
 
