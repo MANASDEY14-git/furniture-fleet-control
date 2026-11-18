@@ -60,7 +60,8 @@ export default function Sales({
       const { data, error } = await supabase
         .from('sales_order_items')
         .select('order_id, supplier_id')
-        .eq('supplier_id', selectedSupplier);
+        .eq('supplier_id', selectedSupplier)
+        .or('is_removed.is.null,is_removed.eq.false');
       
       if (error) throw error;
       return data || [];

@@ -564,7 +564,7 @@ export default function SalesTable({
         onOpenChange={(open) => !open && setCancellingOrder(null)}
         onConfirm={handleCancelConfirm}
         orderNumber={cancellingOrder?.order_number || ''}
-        itemCount={cancellingOrder?.sales_order_items?.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0) || 0}
+        itemCount={cancellingOrder?.sales_order_items?.filter((item: any) => !item.is_removed)?.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0) || 0}
         collectedAmount={Number(cancellingOrder?.total_paid || 0)}
       />
     </Card>

@@ -15,7 +15,7 @@ export const useSalesOrders = () => {
           id,
           delivery_status,
           delivered_at,
-          sales_order_items(id, item_id, item_name, quantity, unit_price, total_price)
+          sales_order_items(id, item_id, item_name, quantity, unit_price, total_price, is_removed)
         `)
         .order('created_at', { ascending: false });
       

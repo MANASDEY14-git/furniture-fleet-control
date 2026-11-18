@@ -38,6 +38,7 @@ export function ProductDetailDrawer({ item, onClose }: ProductDetailDrawerProps)
           .from('sales_order_items')
           .select('id, quantity, unit_price, total_price, sales_orders(order_number, date)')
           .eq('item_id', item.id)
+          .or('is_removed.is.null,is_removed.eq.false')
           .order('created_at', { ascending: false })
           .limit(20);
 

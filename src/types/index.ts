@@ -77,6 +77,7 @@ export interface SalesOrder {
     quantity: number;
     unit_price: number;
     total_price: number;
+    is_removed?: boolean;
   }[];
 }
 
@@ -89,6 +90,13 @@ export interface SalesOrderItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  is_removed?: boolean;
+  removed_at?: string | null;
+  removed_by?: string | null;
+  removal_reason?: string | null;
+  remover_name?: string | null;
+  variant_name?: string | null;
+  variant_sku?: string | null;
 }
 
 export interface CreateSalesOrderData {
