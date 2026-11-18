@@ -61,10 +61,10 @@ export const useRealDashboardMetrics = (storeId?: string) => {
       if (saleIds.length > 0) {
         const { data: itemsResult, error: itemsResultError } = await supabase
           .from('sales_order_items')
-          .select('item_name, quantity, order_id');
+          .select('item_name, quantity, order_id, is_removed');
           
         if (!itemsResultError && itemsResult) {
-          salesOrderItemsData = itemsResult.filter(item => saleIds.includes(item.order_id));
+          salesOrderItemsData = itemsResult.filter(item => saleIds.includes(item.order_id) && !item.is_removed);
         }
       }
 

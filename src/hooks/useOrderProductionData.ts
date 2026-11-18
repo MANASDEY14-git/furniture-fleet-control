@@ -42,7 +42,8 @@ export const useOrderMaterialUsage = (orderId: string | null) => {
       const { data: items, error: itemsError } = await supabase
         .from('sales_order_items')
         .select('id, item_name, quantity')
-        .eq('order_id', orderId);
+        .eq('order_id', orderId)
+        .or('is_removed.is.null,is_removed.eq.false');
 
       if (itemsError) throw itemsError;
       if (!items || items.length === 0) return [];
@@ -77,7 +78,8 @@ export const useOrderBOMSnapshots = (orderId: string | null) => {
       const { data: items, error: itemsError } = await supabase
         .from('sales_order_items')
         .select('id')
-        .eq('order_id', orderId);
+        .eq('order_id', orderId)
+        .or('is_removed.is.null,is_removed.eq.false');
 
       if (itemsError) throw itemsError;
       if (!items || items.length === 0) return [];

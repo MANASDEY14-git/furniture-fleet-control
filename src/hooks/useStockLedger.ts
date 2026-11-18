@@ -143,7 +143,8 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
               store_id
             )
           `)
-          .eq('item_id', itemId);
+          .eq('item_id', itemId)
+          .or('is_removed.is.null,is_removed.eq.false');
         const { data: isData } = await isQuery;
         const intermediateSalesQty = isData?.filter(s => {
           const saleDate = s.sales_orders.date;
@@ -255,7 +256,8 @@ export const useStockLedger = ({ itemId, storeId, dateFilter, customDateRange }:
             store_id,
             order_number
           )
-        `);
+        `)
+        .or('is_removed.is.null,is_removed.eq.false');
 
       const { data: salesOrderItems, error: salesError } = await salesOrderItemsQuery;
       if (salesError) throw salesError;

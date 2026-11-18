@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-interface SalesOrderItem {
+export interface SalesOrderItem {
   id: string;
   order_id: string;
   item_id: string | null;
@@ -13,9 +13,16 @@ interface SalesOrderItem {
   variant_id: string | null;
   stock_deducted: boolean | null;
   created_at: string;
+  is_removed?: boolean;
+  removed_at?: string | null;
+  removed_by?: string | null;
+  removal_reason?: string | null;
+  remover_name?: string | null;
+  variant_name?: string | null;
+  variant_sku?: string | null;
 }
 
-interface SecureSalesOrder {
+export interface SecureSalesOrder {
   id: string;
   order_number: string;
   store_id: string | null;

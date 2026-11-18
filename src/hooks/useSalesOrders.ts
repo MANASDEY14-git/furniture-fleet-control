@@ -195,3 +195,74 @@ export const useCancelSalesOrder = () => {
   });
 };
 
+export interface ModifySalesOrderLineParams {
+  orderId: string;
+  action: 'add' | 'remove';
+  orderLineId?: string | null;
+  itemId?: string | null;
+  itemName?: string | null;
+  variantId?: string | null;
+  supplierId?: string | null;
+  quantity?: number | null;
+  unitPrice?: number | null;
+  reason?: string | null;
+}
+
+export const useModifySalesOrderLine = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (params: ModifySalesOrderLineParams) => {
+      const { data, error } = await supabase.rpc('modify_sales_order_line', {
+        p_order_id: params.orderId,
+        p_action: params.action,
+        p_order_line_id: params.orderLineId || null,
+        p_item_id: params.itemId || null,
+        p_item_name: params.itemName || null,
+        p_variant_id: params.variantId || null,
+        p_supplier_id: params.supplierId || null,
+        p_quantity: params.quantity ?? null,
+        p_unit_price: params.unitPrice ?? null,
+        p_reason: params.reason || null,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      [
+        ['sales-order', variables.orderId],
+        ['sales-orders'],
+        ['secure-sales-orders'],
+        ['items'],
+        ['item-variants'],
+        ['inventory'],
+        ['materials'],
+        ['material-stock-movements'],
+        ['order-material-usage', variables.orderId],
+        ['order-bom-snapshots', variables.orderId],
+        ['customer-ledger'],
+        ['dashboard-metrics'],
+        ['enhanced-dashboard-metrics'],
+        ['real-dashboard-metrics'],
+      ].forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+
+      toast({
+        title: variables.action === 'add' ? 'Item Added' : 'Item Removed',
+        description: variables.action === 'add' 
+          ? 'Item has been added to the order and totals updated.'
+          : 'Item has been removed and inventory reconciled.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Operation Failed',
+        description: error.message || 'Failed to modify order line.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+

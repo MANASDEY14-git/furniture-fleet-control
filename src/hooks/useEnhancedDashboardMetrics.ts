@@ -117,6 +117,7 @@ export const useEnhancedDashboardMetrics = (
             total_price,
             item_name,
             item_id,
+            is_removed,
             items (
               cost_price,
               selling_price,
@@ -137,6 +138,7 @@ export const useEnhancedDashboardMetrics = (
       const totalSales = countableOrders?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
       const totalCost = countableOrders?.reduce((orderSum, order) => {
         const orderCost = order.sales_order_items?.reduce((itemSum, item) => {
+          if ((item as any).is_removed) return itemSum;
           const costPerItem = Number(item.items?.cost_price || 0);
           return itemSum + (costPerItem * (item.quantity || 0));
         }, 0) || 0;
@@ -161,6 +163,7 @@ export const useEnhancedDashboardMetrics = (
             total_price,
             item_name,
             item_id,
+            is_removed,
             items (
               cost_price,
               selling_price,
@@ -180,6 +183,7 @@ export const useEnhancedDashboardMetrics = (
       const allTotalSales = allCountableOrders?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
       const allTotalCost = allCountableOrders?.reduce((orderSum, order) => {
         const orderCost = order.sales_order_items?.reduce((itemSum, item) => {
+          if ((item as any).is_removed) return itemSum;
           const costPerItem = Number(item.items?.cost_price || 0);
           return itemSum + (costPerItem * (item.quantity || 0));
         }, 0) || 0;
@@ -288,6 +292,7 @@ export const useEnhancedDashboardMetrics = (
       // Calculate top selling items from sales_order_items
       const itemSales = allCountableOrders?.reduce((acc, order) => {
         order.sales_order_items?.forEach(item => {
+          if ((item as any).is_removed) return;
           const key = item.item_name || 'Unknown Item';
           if (!acc[key]) {
             acc[key] = { name: key, quantity: 0, revenue: 0 };
@@ -319,6 +324,7 @@ export const useEnhancedDashboardMetrics = (
         const dayRevenue = dayOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
         const dayCosts = dayOrders.reduce((orderSum, order) => {
           const orderCost = order.sales_order_items?.reduce((itemSum, item) => {
+            if ((item as any).is_removed) return itemSum;
             const costPerItem = Number(item.items?.cost_price || 0);
             return itemSum + (costPerItem * (item.quantity || 0));
           }, 0) || 0;
