@@ -46,7 +46,7 @@ export default function MaterialPurchases({
 
   // Calculate summary metrics
   const totalPurchases = filteredPurchases.length;
-  const totalAmount = filteredPurchases.reduce((sum, p) => sum + p.total_cost, 0);
+  const totalAmount = filteredPurchases.reduce((sum, p) => sum + p.total_cost + Number(p.round_off || 0), 0);
 
   // This month's purchases
   const currentMonth = new Date().getMonth();
@@ -55,7 +55,7 @@ export default function MaterialPurchases({
     const purchaseDate = new Date(p.date);
     return purchaseDate.getMonth() === currentMonth && purchaseDate.getFullYear() === currentYear;
   });
-  const thisMonthTotal = thisMonthPurchases.reduce((sum, p) => sum + p.total_cost, 0);
+  const thisMonthTotal = thisMonthPurchases.reduce((sum, p) => sum + p.total_cost + Number(p.round_off || 0), 0);
 
   // Mobile purchase card component
   const MobilePurchaseCard = ({
@@ -70,7 +70,7 @@ export default function MaterialPurchases({
             <p className="text-sm text-blue-300">{purchase.materials.unit || 'units'}</p>
           </div>
           <span className="text-green-400 font-bold text-lg">
-            ₹{purchase.total_cost.toFixed(2)}
+            ₹{(purchase.total_cost + Number(purchase.round_off || 0)).toFixed(2)}
           </span>
         </div>
         
@@ -93,8 +93,11 @@ export default function MaterialPurchases({
             </div>}
         </div>
         
-        <div className="flex justify-between items-center pt-2 border-t border-blue-500/20">
-          <span className="text-xs text-blue-300">Unit: ₹{purchase.unit_cost.toFixed(2)}</span>
+        <div className="flex justify-between items-center pt-2 border-t border-blue-500/20 text-xs text-blue-300">
+          <span>Unit: ₹{purchase.unit_cost.toFixed(2)}</span>
+          {Number(purchase.round_off) ? (
+            <span>Round Off: ₹{Number(purchase.round_off).toFixed(2)}</span>
+          ) : null}
         </div>
       </CardContent>
     </Card>;
@@ -229,6 +232,7 @@ export default function MaterialPurchases({
                     <TableHead className="text-blue-200">Quantity</TableHead>
                     <TableHead className="text-blue-200">Unit Cost</TableHead>
                     <TableHead className="text-blue-200">Total Cost</TableHead>
+                    <TableHead className="text-blue-200">Round Off</TableHead>
                     <TableHead className="text-blue-200">Invoice #</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -251,6 +255,9 @@ export default function MaterialPurchases({
                       </TableCell>
                       <TableCell className="text-green-400 font-semibold">
                         ₹{purchase.total_cost.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-blue-200">
+                        {Number(purchase.round_off) ? `₹${Number(purchase.round_off).toFixed(2)}` : '-'}
                       </TableCell>
                       <TableCell className="text-blue-200">
                         {purchase.invoice_number || '-'}

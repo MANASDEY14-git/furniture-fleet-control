@@ -137,9 +137,9 @@ export function SupplierDetailPanel({
     return filterByDateRange(filtered as any[]);
   }, [materialPurchases, supplierId, dateRange]);
 
-  const totalMaterialPurchases = supplierMaterialPurchases.reduce((sum, mp) => sum + mp.total_cost, 0);
+  const totalMaterialPurchases = supplierMaterialPurchases.reduce((sum, mp) => sum + mp.total_cost + Number(mp.round_off || 0), 0);
 
-  const totalPurchases = supplierPurchases.reduce((sum, p) => sum + p.total_cost, 0);
+  const totalPurchases = supplierPurchases.reduce((sum, p) => sum + p.total_cost + Number(p.round_off || 0), 0);
   const totalPayments = supplierPayments.reduce((sum, p) => sum + p.amount, 0);
   
   // Use overall balance from ledger (not filtered)
@@ -551,13 +551,14 @@ export function SupplierDetailPanel({
                           <p className="font-medium text-sm">{mp.materials?.name || 'Unknown Material'}</p>
                           <p className="text-xs text-muted-foreground">
                             {mp.quantity} {mp.materials?.unit || 'units'} @ ₹{mp.unit_cost.toLocaleString('en-IN')}
+                            {Number(mp.round_off) ? ` • Round off: ₹${Number(mp.round_off).toFixed(2)}` : ''}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {mp.invoice_number || 'No Invoice'} • {mp.date}
                           </p>
                         </div>
                         <span className="font-semibold text-primary">
-                          ₹{mp.total_cost.toLocaleString('en-IN')}
+                          ₹{(mp.total_cost + Number(mp.round_off || 0)).toLocaleString('en-IN')}
                         </span>
                       </div>
                     ))}

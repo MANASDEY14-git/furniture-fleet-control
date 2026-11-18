@@ -26,6 +26,7 @@ export default function MaterialPurchaseForm({
     quantity: 0,
     unit_cost: 0,
     total_cost: 0,
+    round_off: '',
     invoice_number: '',
     date: new Date().toISOString().split('T')[0],
     payment_method: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque',
@@ -74,6 +75,7 @@ export default function MaterialPurchaseForm({
         quantity: formData.quantity,
         unit_cost: formData.unit_cost,
         total_cost: formData.total_cost,
+        round_off: parseFloat(formData.round_off) || 0,
         invoice_number: formData.invoice_number || undefined,
         date: formData.date,
         materialName: selectedMaterial?.name
@@ -92,6 +94,7 @@ export default function MaterialPurchaseForm({
       quantity: 0,
       unit_cost: 0,
       total_cost: 0,
+      round_off: '',
       invoice_number: '',
       date: new Date().toISOString().split('T')[0],
       payment_method: 'cash',
@@ -198,10 +201,23 @@ export default function MaterialPurchaseForm({
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="roundOff" className="text-blue-200">Round Off</Label>
+              <Input
+                id="roundOff"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.round_off}
+                onChange={e => setFormData({ ...formData, round_off: e.target.value })}
+                className="neon-border bg-slate-800/50 text-blue-100 placeholder-blue-400"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-blue-200">Total Cost</Label>
               <div className="p-3 neon-border bg-gradient-to-r from-green-400/10 to-cyan-400/10 rounded-md">
                 <span className="text-cyan-300 text-lg font-semibold">
-                  ₹{formData.total_cost.toFixed(2)}
+                  ₹{(formData.total_cost + (parseFloat(formData.round_off) || 0)).toFixed(2)}
                 </span>
               </div>
             </div>

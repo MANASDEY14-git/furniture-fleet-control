@@ -11,6 +11,7 @@ export interface MaterialPurchase {
   quantity: number;
   unit_cost: number;
   total_cost: number;
+  round_off?: number;
   invoice_number?: string;
   date: string;
   created_at: string;
@@ -32,6 +33,7 @@ export interface CreateMaterialPurchaseData {
   quantity: number;
   unit_cost: number;
   total_cost: number;
+  round_off?: number;
   invoice_number?: string;
   date: string;
 }
@@ -41,6 +43,7 @@ export interface CreateMultipleMaterialPurchasesData {
   invoiceDate: string;
   supplierId?: string;
   storeId?: string;
+  round_off?: number;
   items: {
     material_id: string;
     materialName?: string;
@@ -105,6 +108,7 @@ export const useCreateMaterialPurchase = () => {
           quantity: data.quantity,
           unit_cost: data.unit_cost,
           total_cost: data.total_cost,
+          round_off: data.round_off || 0,
           invoice_number: data.invoice_number,
           date: data.date,
         }])
@@ -141,13 +145,14 @@ export const useCreateMultipleMaterialPurchases = () => {
 
   return useMutation({
     mutationFn: async (data: CreateMultipleMaterialPurchasesData) => {
-      const purchases = data.items.map(item => ({
+      const purchases = data.items.map((item, index) => ({
         material_id: item.material_id,
         supplier_id: data.supplierId || null,
         store_id: data.storeId || null,
         quantity: item.quantity,
         unit_cost: item.unit_cost,
         total_cost: item.total_cost,
+        round_off: index === 0 ? (data.round_off || 0) : 0,
         invoice_number: data.invoiceNumber,
         date: data.invoiceDate,
       }));

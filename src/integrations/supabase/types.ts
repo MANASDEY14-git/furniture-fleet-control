@@ -1464,6 +1464,7 @@ export type Database = {
           quantity: number
           store_id: string | null
           supplier_id: string | null
+          round_off: number
           total_cost: number
           unit_cost: number
         }
@@ -1474,6 +1475,7 @@ export type Database = {
           invoice_number?: string | null
           material_id?: string | null
           quantity: number
+          round_off?: number
           store_id?: string | null
           supplier_id?: string | null
           total_cost: number
@@ -1486,6 +1488,7 @@ export type Database = {
           invoice_number?: string | null
           material_id?: string | null
           quantity?: number
+          round_off?: number
           store_id?: string | null
           supplier_id?: string | null
           total_cost?: number

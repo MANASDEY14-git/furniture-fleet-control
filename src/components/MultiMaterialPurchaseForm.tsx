@@ -59,6 +59,7 @@ export default function MultiMaterialPurchaseForm({
     paymentMethod: 'cash' as 'cash' | 'upi' | 'bank_transfer' | 'cheque',
     bankAccountId: ''
   });
+  const [roundOff, setRoundOff] = useState('');
 
   const [items, setItems] = useState<MaterialPurchaseItem[]>([
     createEmptyItem(defaultMaterialId)
@@ -100,8 +101,17 @@ export default function MultiMaterialPurchaseForm({
     }));
   };
 
-  const getTotalAmount = () => {
+  const getItemsSubtotal = () => {
     return items.reduce((sum, item) => sum + item.totalCost, 0);
+  };
+
+  const getRoundOff = () => {
+    const parsed = parseFloat(roundOff);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  const getTotalAmount = () => {
+    return getItemsSubtotal() + getRoundOff();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,6 +131,7 @@ export default function MultiMaterialPurchaseForm({
       invoiceDate: formData.invoiceDate,
       supplierId: formData.supplierId || undefined,
       storeId: formData.storeId || undefined,
+      round_off: getRoundOff(),
       items: validItems.map(item => ({
         material_id: item.materialId,
         materialName: item.materialName,
@@ -143,6 +154,7 @@ export default function MultiMaterialPurchaseForm({
       paymentMethod: 'cash',
       bankAccountId: ''
     });
+    setRoundOff('');
     setItems([createEmptyItem(defaultMaterialId)]);
   };
 
@@ -182,6 +194,9 @@ export default function MultiMaterialPurchaseForm({
               onAddItem={addItem}
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
+              itemsSubtotal={getItemsSubtotal()}
+              roundOff={roundOff}
+              onRoundOffChange={setRoundOff}
               getTotalAmount={getTotalAmount}
             />
 

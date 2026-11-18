@@ -57,6 +57,7 @@ export default function MaterialPurchasesTab({ material }: MaterialPurchasesTabP
                 <TableHead className="text-xs">Supplier</TableHead>
                 <TableHead className="text-xs text-right">Qty</TableHead>
                 <TableHead className="text-xs text-right">Unit Cost</TableHead>
+                <TableHead className="text-xs text-right">Round Off</TableHead>
                 <TableHead className="text-xs text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -78,8 +79,11 @@ export default function MaterialPurchasesTab({ material }: MaterialPurchasesTabP
                   <TableCell className="py-2 text-right">
                     {formatCurrency(purchase.unit_cost)}
                   </TableCell>
+                  <TableCell className="py-2 text-right">
+                    {Number(purchase.round_off) ? formatCurrency(Number(purchase.round_off)) : '-'}
+                  </TableCell>
                   <TableCell className="py-2 text-right font-medium">
-                    {formatCurrency(purchase.total_cost)}
+                    {formatCurrency(purchase.total_cost + Number(purchase.round_off || 0))}
                   </TableCell>
                 </TableRow>
               ))}
