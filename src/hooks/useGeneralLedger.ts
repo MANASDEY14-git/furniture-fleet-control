@@ -75,7 +75,7 @@ export const useChartOfAccounts = () => {
   return useQuery({
     queryKey: ['chart-of-accounts'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('chart_of_accounts')
         .select('*')
         .order('code', { ascending: true });
@@ -90,7 +90,7 @@ export const useTrialBalance = () => {
   return useQuery({
     queryKey: ['trial-balance'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('view_trial_balance')
         .select('*')
         .order('code', { ascending: true });
@@ -110,7 +110,7 @@ export const useJournalEntries = () => {
   return useQuery({
     queryKey: ['journal-entries'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('journal_entries')
         .select(`
           *,
@@ -139,7 +139,7 @@ export const usePostJournalEntry = () => {
 
   return useMutation({
     mutationFn: async (params: PostJournalEntryParams) => {
-      const { data, error } = await supabase.rpc('post_journal_entry_atomic', {
+      const { data, error } = await (supabase as any).rpc('post_journal_entry_atomic', {
         p_voucher_type: params.voucher_type,
         p_entry_date: params.entry_date,
         p_narration: params.narration || null,

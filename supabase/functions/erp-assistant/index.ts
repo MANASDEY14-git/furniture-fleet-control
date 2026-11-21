@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { streamText, tool, stepCountIs } from "npm:ai@5";
 import { createOpenAI } from "npm:@ai-sdk/openai@2";
-import { z } from "npm:zod@3.25.76";
+import { z } from "npm:zod@3.23.8";
 import { createLovableAiGatewayRunIdFetch } from "../_shared/run-id.ts";
 import {
   FACT_LABELS, getCashPosition, getDeliveries, getFollowups, getPayables,

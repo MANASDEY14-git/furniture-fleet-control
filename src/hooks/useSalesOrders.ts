@@ -214,7 +214,7 @@ export const useModifySalesOrderLine = () => {
 
   return useMutation({
     mutationFn: async (params: ModifySalesOrderLineParams) => {
-      const { data, error } = await supabase.rpc('modify_sales_order_line', {
+      const { data, error } = await (supabase as any).rpc('modify_sales_order_line', {
         p_order_id: params.orderId,
         p_action: params.action,
         p_order_line_id: params.orderLineId || null,

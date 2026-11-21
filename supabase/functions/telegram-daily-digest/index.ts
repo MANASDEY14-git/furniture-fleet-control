@@ -1,10 +1,11 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 import { authorizeAgentRequest, corsHeaders, denied } from "../_shared/agentAuth.ts";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 
 type Mode = "morning" | "evening";
+type DigestSupabaseClient = SupabaseClient<any, "public", any>;
 
 /* ------------------------------------------------------------------ utils */
 
@@ -63,7 +64,7 @@ interface DayFacts {
 }
 
 async function getDayFacts(
-  db: ReturnType<typeof createClient>,
+  db: DigestSupabaseClient,
   storeId: string,
   day: string,
 ): Promise<DayFacts> {
@@ -173,7 +174,7 @@ interface Standing {
 }
 
 async function getStanding(
-  db: ReturnType<typeof createClient>,
+  db: DigestSupabaseClient,
   storeId: string,
   today: string,
   tz: string,
@@ -203,7 +204,7 @@ async function getStanding(
     .sort((a: any, b: any) => num(b.balance_due) - num(a.balance_due));
   const topDebtor = debtors.length
     ? {
-        name: debtors[0].customer_name || "Unnamed customer",
+        name: String(debtors[0].customer_name || "Unnamed customer"),
         amount: num(debtors[0].balance_due),
       }
     : null;
@@ -594,7 +595,7 @@ async function sendTelegram(chatId: number, text: string) {
  * sales, quotes, money in/out, purchases, deliveries, stock movement.
  */
 async function hasMovement(
-  db: ReturnType<typeof createClient>,
+  db: DigestSupabaseClient,
   storeId: string,
   day: string,
   facts: DayFacts,
@@ -633,7 +634,7 @@ async function hasMovement(
 }
 
 async function recordRun(
-  db: ReturnType<typeof createClient>,
+  db: DigestSupabaseClient,
   storeId: string,
   mode: Mode,
   runDate: string,
@@ -657,7 +658,7 @@ async function recordRun(
  * so a silent stop is never invisible again.
  */
 async function watchdogNote(
-  db: ReturnType<typeof createClient>,
+  db: DigestSupabaseClient,
   storeId: string,
   tz: string,
 ): Promise<string | null> {

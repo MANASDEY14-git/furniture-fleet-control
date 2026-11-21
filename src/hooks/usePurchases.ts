@@ -114,7 +114,7 @@ export const useCancelPurchase = () => {
       const reason = typeof params === 'string' ? 'Cancelled by user' : (params.reason || 'Cancelled by user');
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('purchases')
         .update({
           status: 'cancelled',

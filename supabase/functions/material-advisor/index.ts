@@ -140,17 +140,20 @@ serve(async (req) => {
       .eq('bom_component_id', componentId)
       .eq('sales_orders.store_id', storeId);
 
+    const availableOptions = componentOptions ?? [];
+    const customizationHistory = historicalCustomizations ?? [];
+
     // Generate AI-powered recommendations
     const recommendations = await generateMaterialRecommendations(
-      componentOptions,
-      historicalCustomizations,
+      availableOptions,
+      customizationHistory,
       customerPreferences
     );
 
     return new Response(JSON.stringify({
       recommendations,
-      popular_choices: getPopularChoices(historicalCustomizations),
-      component_options: componentOptions
+      popular_choices: getPopularChoices(customizationHistory),
+      component_options: availableOptions
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

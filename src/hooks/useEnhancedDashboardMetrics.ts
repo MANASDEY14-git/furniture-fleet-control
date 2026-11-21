@@ -82,6 +82,9 @@ export const useEnhancedDashboardMetrics = (
         };
       }
 
+      // The generated API types lag the deployed soft-delete column.
+      const dashboardDb = supabase as any;
+
       const { startDate, endDate } = getDateRange(dateFilter, customDateRange, {
         start: selectedYear.start_date,
         end: selectedYear.end_date,
@@ -103,7 +106,7 @@ export const useEnhancedDashboardMetrics = (
       }
       
       // Get sales data for the period from sales_orders
-      const { data: salesOrdersData, error: salesError } = await supabase
+      const { data: salesOrdersData, error: salesError } = await dashboardDb
         .from('sales_orders')
         .select(`
           id,
@@ -149,7 +152,7 @@ export const useEnhancedDashboardMetrics = (
       const profitMarginPercentage = totalSales > 0 ? ((totalProfit / totalSales) * 100) : 0;
       
       // Get all sales for total calculations from sales_orders (scoped to the financial year)
-      const { data: allSalesOrdersData, error: allSalesError } = await supabase
+      const { data: allSalesOrdersData, error: allSalesError } = await dashboardDb
         .from('sales_orders')
         .select(`
           id,
@@ -290,7 +293,7 @@ export const useEnhancedDashboardMetrics = (
       }
       
       // Calculate top selling items from sales_order_items
-      const itemSales = allCountableOrders?.reduce((acc, order) => {
+      const itemSales = (allCountableOrders as any[]).reduce<Record<string, TopSellingItem>>((acc, order) => {
         order.sales_order_items?.forEach(item => {
           if ((item as any).is_removed) return;
           const key = item.item_name || 'Unknown Item';
@@ -301,7 +304,7 @@ export const useEnhancedDashboardMetrics = (
           acc[key].revenue += Number(item.total_price || 0);
         });
         return acc;
-      }, {} as Record<string, { name: string; quantity: number; revenue: number }>) || {};
+      }, {});
       
       const topSellingItems = Object.values(itemSales)
         .sort((a, b) => b.quantity - a.quantity)

@@ -39,6 +39,7 @@ export interface Purchase {
   invoice_number?: string;
   quantity: number;
   total_cost: number;
+  round_off?: number;
   date: string;
   created_at?: string;
 }

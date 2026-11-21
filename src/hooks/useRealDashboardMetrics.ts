@@ -59,7 +59,7 @@ export const useRealDashboardMetrics = (storeId?: string) => {
       
       let salesOrderItemsData: any[] = [];
       if (saleIds.length > 0) {
-        const { data: itemsResult, error: itemsResultError } = await supabase
+        const { data: itemsResult, error: itemsResultError } = await (supabase as any)
           .from('sales_order_items')
           .select('item_name, quantity, order_id, is_removed');
           
