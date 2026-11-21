@@ -90,6 +90,7 @@ function App() {
                       <Route path="/collections" element={<Navigate to="/work?tab=collections" replace />} />
                       <Route path="/dispatch-board" element={<Navigate to="/work?tab=dispatch" replace />} />
                       <Route path="/delivery-calendar" element={<Navigate to="/work?tab=delivery" replace />} />
+                      <Route path="/general-ledger" element={<Navigate to="/finance?tab=general-ledger" replace />} />
                       <Route path="/payments" element={<Navigate to="/finance?tab=payments" replace />} />
                       <Route path="/bank-book" element={<Navigate to="/finance?tab=bank-book" replace />} />
                       <Route path="/help" element={<Navigate to="/settings?tab=help" replace />} />

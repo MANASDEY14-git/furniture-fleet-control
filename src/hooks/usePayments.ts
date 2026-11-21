@@ -109,32 +109,53 @@ export const useCreatePayment = () => {
   });
 };
 
-export const useDeletePayment = () => {
+export interface CancelPaymentParams {
+  id: string;
+  reason?: string;
+}
+
+export const useCancelPayment = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (params: string | CancelPaymentParams) => {
+      const id = typeof params === 'string' ? params : params.id;
+      const reason = typeof params === 'string' ? 'Cancelled by user' : (params.reason || 'Cancelled by user');
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from('payments')
-        .delete()
+        .update({
+          payment_status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: user?.id,
+          cancellation_reason: reason,
+        })
         .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['sale-payment-status'] });
       toast({
-        title: "Success",
-        description: "Transaction deleted successfully",
+        title: "Cancelled",
+        description: "Transaction has been cancelled and reversed in accordance with statutory audit rules.",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to delete transaction: ${error.message}`,
+        description: `Failed to cancel transaction: ${error.message}`,
         variant: "destructive",
       });
     },
   });
 };
+
+export const useDeletePayment = useCancelPayment;

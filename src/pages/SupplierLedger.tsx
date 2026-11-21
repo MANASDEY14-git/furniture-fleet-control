@@ -183,7 +183,7 @@ export default function SupplierLedger({
     };
   }, [refetchLedgerEntries, refetchBalances]);
 
-  // Calculate opening balance for selected supplier/store
+  // Calculate opening balance for selected supplier/store (Standard Accounting: Supplier Credit = Payable)
   const openingBalance = useMemo(() => {
     if (selectedSupplier === 'all') return 0;
     
@@ -193,7 +193,7 @@ export default function SupplierLedger({
     );
     
     if (!ob) return 0;
-    return ob.balance_type === 'debit' ? ob.opening_balance : -ob.opening_balance;
+    return ob.balance_type === 'credit' ? ob.opening_balance : -ob.opening_balance;
   }, [openingBalances, selectedSupplier, selectedStore]);
 
   // Filter and sort entries chronologically (oldest first for proper running balance)
@@ -229,12 +229,12 @@ export default function SupplierLedger({
     );
   }, [ledgerEntries, searchTerm, dateFilter, customDateRange]);
 
-  // Calculate running balance starting from opening balance
+  // Calculate running balance: Supplier is a Creditor (Cr = Purchases/Due, Dr = Payments)
   const getRunningBalance = (index: number) => {
     let balance = openingBalance;
     for (let i = 0; i <= index; i++) {
       const entry = filteredEntries[i];
-      balance += (entry.debit_amount || 0) - (entry.credit_amount || 0);
+      balance += (entry.credit_amount || 0) - (entry.debit_amount || 0);
     }
     return balance;
   };
@@ -243,7 +243,7 @@ export default function SupplierLedger({
   const periodTotals = useMemo(() => {
     const totalDebit = filteredEntries.reduce((sum, e) => sum + (e.debit_amount || 0), 0);
     const totalCredit = filteredEntries.reduce((sum, e) => sum + (e.credit_amount || 0), 0);
-    const closingBalance = openingBalance + totalDebit - totalCredit;
+    const closingBalance = openingBalance + totalCredit - totalDebit;
     
     return { totalDebit, totalCredit, closingBalance };
   }, [filteredEntries, openingBalance]);
@@ -375,7 +375,7 @@ export default function SupplierLedger({
               <p className="text-xs md:text-sm text-blue-200 mb-1">Opening Balance</p>
               <p className={`text-lg md:text-2xl font-bold ${openingBalance >= 0 ? 'text-red-400' : 'text-green-400'}`}>
                 ₹{Math.abs(openingBalance).toLocaleString('en-IN')}
-                <span className="text-xs ml-1">{openingBalance >= 0 ? 'Dr' : 'Cr'}</span>
+                <span className="text-xs ml-1">{openingBalance >= 0 ? 'Cr' : 'Dr'}</span>
               </p>
             </div>
           </CardContent>
@@ -383,9 +383,9 @@ export default function SupplierLedger({
         <Card className="futuristic-card">
           <CardContent className="p-4 md:pt-6">
             <div className="text-center">
-              <p className="text-xs md:text-sm text-blue-200 mb-1">Purchases (Dr)</p>
+              <p className="text-xs md:text-sm text-blue-200 mb-1">Purchases (Cr)</p>
               <p className="text-lg md:text-2xl font-bold text-red-400">
-                ₹{periodTotals.totalDebit.toLocaleString('en-IN')}
+                ₹{periodTotals.totalCredit.toLocaleString('en-IN')}
               </p>
             </div>
           </CardContent>
@@ -393,9 +393,9 @@ export default function SupplierLedger({
         <Card className="futuristic-card">
           <CardContent className="p-4 md:pt-6">
             <div className="text-center">
-              <p className="text-xs md:text-sm text-blue-200 mb-1">Payments (Cr)</p>
+              <p className="text-xs md:text-sm text-blue-200 mb-1">Payments (Dr)</p>
               <p className="text-lg md:text-2xl font-bold text-green-400">
-                ₹{periodTotals.totalCredit.toLocaleString('en-IN')}
+                ₹{periodTotals.totalDebit.toLocaleString('en-IN')}
               </p>
             </div>
           </CardContent>
@@ -406,7 +406,7 @@ export default function SupplierLedger({
               <p className="text-xs md:text-sm text-blue-200 mb-1">Closing Balance</p>
               <p className={`text-lg md:text-2xl font-bold ${periodTotals.closingBalance >= 0 ? 'text-red-400' : 'text-green-400'}`}>
                 ₹{Math.abs(periodTotals.closingBalance).toLocaleString('en-IN')}
-                <span className="text-xs ml-1">{periodTotals.closingBalance >= 0 ? 'Dr' : 'Cr'}</span>
+                <span className="text-xs ml-1">{periodTotals.closingBalance >= 0 ? 'Cr' : 'Dr'}</span>
               </p>
             </div>
           </CardContent>

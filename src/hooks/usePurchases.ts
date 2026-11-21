@@ -99,32 +99,49 @@ export const useCreatePurchase = () => {
   });
 };
 
-export const useDeletePurchase = () => {
+export interface CancelPurchaseParams {
+  id: string;
+  reason?: string;
+}
+
+export const useCancelPurchase = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (params: string | CancelPurchaseParams) => {
+      const id = typeof params === 'string' ? params : params.id;
+      const reason = typeof params === 'string' ? 'Cancelled by user' : (params.reason || 'Cancelled by user');
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from('purchases')
-        .delete()
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: user?.id,
+          cancellation_reason: reason,
+        })
         .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-ledger'] });
       toast({
-        title: "Success",
-        description: "Purchase deleted successfully",
+        title: "Cancelled",
+        description: "Purchase has been cancelled in accordance with statutory audit rules.",
       });
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: `Failed to delete purchase: ${error.message}`,
+        description: `Failed to cancel purchase: ${error.message}`,
         variant: "destructive",
       });
     },
   });
 };
+
+export const useDeletePurchase = useCancelPurchase;

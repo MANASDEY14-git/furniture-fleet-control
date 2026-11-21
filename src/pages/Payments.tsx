@@ -157,12 +157,13 @@ export default function Payments({
     return filteredPayments.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredPayments, currentPage]);
 
-  // Dynamic summary statistics computed directly from filtered payments
+  // Dynamic summary statistics computed directly from filtered payments (excluding cancelled)
   const summary = useMemo(() => {
-    const receipts = filteredPayments
+    const activePayments = filteredPayments.filter(p => p.payment_status !== 'cancelled');
+    const receipts = activePayments
       .filter(p => p.type === 'Receipt')
       .reduce((sum, p) => sum + (p.amount || 0), 0);
-    const vendorPayments = filteredPayments
+    const vendorPayments = activePayments
       .filter(p => p.type === 'Payment')
       .reduce((sum, p) => sum + (p.amount || 0), 0);
 
@@ -185,7 +186,7 @@ export default function Payments({
 
   // Handlers
   const handleDeletePayment = async (id: string) => {
-    if (confirm('Are you sure you want to delete this transaction record?')) {
+    if (confirm('Are you sure you want to cancel this transaction record? In accordance with statutory audit rules (MCA Rule 3(1)), this transaction will be recorded as cancelled and reversed rather than permanently deleted.')) {
       await deletePayment.mutateAsync(id);
     }
   };
@@ -356,8 +357,10 @@ export default function Payments({
           {isMobile ? (
             // Mobile Card View
             <div className="space-y-4">
-              {paginatedPayments.map((payment) => (
-                <Card key={payment.id} className="bg-slate-800/50 border-blue-500/30">
+              {paginatedPayments.map((payment) => {
+                const isCancelled = payment.payment_status === 'cancelled';
+                return (
+                <Card key={payment.id} className={`bg-slate-800/50 border-blue-500/30 ${isCancelled ? 'opacity-60 border-red-500/30' : ''}`}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-2">
@@ -365,9 +368,13 @@ export default function Payments({
                           {payment.type === 'Receipt' ? <Receipt className="w-3 h-3 mr-1" /> : <CreditCard className="w-3 h-3 mr-1" />}
                           {payment.type}
                         </Badge>
-                        <Badge variant="secondary" className="bg-lime-500 text-primary-foreground">Completed</Badge>
+                        {isCancelled ? (
+                          <Badge variant="destructive" className="bg-red-900/80 text-red-200">Cancelled</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-lime-500 text-primary-foreground">Completed</Badge>
+                        )}
                       </div>
-                      <div className={`text-lg font-semibold ${payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400'}`}>
+                      <div className={`text-lg font-semibold ${isCancelled ? 'line-through text-slate-400' : (payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400')}`}>
                         {payment.type === 'Receipt' ? '+' : '-'}{formatCurrency(payment.amount)}
                       </div>
                     </div>
@@ -388,20 +395,20 @@ export default function Payments({
                       )}
                     </div>
                     <div className="mt-4 flex justify-between items-center pt-3 border-t border-blue-500/20">
-                      {!readOnly && (
+                      {!readOnly && !isCancelled && (
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                           onClick={() => handleDeletePayment(payment.id)}
                         >
-                          <Trash2 className="w-4 h-4 mr-1" /> Delete
+                          <Trash2 className="w-4 h-4 mr-1" /> Cancel
                         </Button>
                       )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20"
+                        className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20 ml-auto"
                         onClick={() => setSelectedPayment(payment)}
                       >
                         <Eye className="w-4 h-4 mr-1" /> Details
@@ -409,7 +416,8 @@ export default function Payments({
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              );
+              })}
             </div>
           ) : (
             // Desktop Table View
@@ -419,6 +427,7 @@ export default function Payments({
                   <TableRow className="border-blue-500/30">
                     <TableHead className="text-blue-200">Date</TableHead>
                     <TableHead className="text-blue-200">Type</TableHead>
+                    <TableHead className="text-blue-200">Status</TableHead>
                     <TableHead className="text-blue-200">Store</TableHead>
                     <TableHead className="text-blue-200">Description</TableHead>
                     <TableHead className="text-right text-blue-200">Amount</TableHead>
@@ -426,8 +435,10 @@ export default function Payments({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedPayments.map((payment) => (
-                    <TableRow key={payment.id} className="border-blue-500/20">
+                  {paginatedPayments.map((payment) => {
+                    const isCancelled = payment.payment_status === 'cancelled';
+                    return (
+                    <TableRow key={payment.id} className={`border-blue-500/20 ${isCancelled ? 'opacity-60 bg-red-950/10' : ''}`}>
                       <TableCell className="text-blue-200">{new Date(payment.date).toLocaleDateString('en-GB')}</TableCell>
                       <TableCell>
                         <Badge variant={payment.type === 'Receipt' ? 'default' : 'destructive'}>
@@ -435,9 +446,16 @@ export default function Payments({
                           {payment.type}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        {isCancelled ? (
+                          <Badge variant="destructive" className="bg-red-900/80 text-red-200 text-xs">Cancelled</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-lime-500/20 text-lime-300 border-lime-500/40 text-xs">Completed</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-blue-200">{getStoreName(payment.store_id)}</TableCell>
                       <TableCell className="text-blue-200">{payment.description || '-'}</TableCell>
-                      <TableCell className={`text-right font-semibold ${payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400'}`}>
+                      <TableCell className={`text-right font-semibold ${isCancelled ? 'line-through text-slate-400' : (payment.type === 'Receipt' ? 'text-green-400' : 'text-red-400')}`}>
                         {payment.type === 'Receipt' ? '+' : '-'}{formatCurrency(payment.amount)}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
@@ -449,19 +467,21 @@ export default function Payments({
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        {!readOnly && (
+                        {!readOnly && !isCancelled && (
                           <Button
                             variant="ghost"
                             size="sm"
                             className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                             onClick={() => handleDeletePayment(payment.id)}
+                            title="Cancel Transaction"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         )}
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

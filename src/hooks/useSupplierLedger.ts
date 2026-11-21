@@ -175,14 +175,17 @@ export const useSupplierBalances = (storeId?: string) => {
         }
       });
 
-      // Calculate final balance for each entry
-      // Balance = Opening (Dr/Cr) + Purchases (Dr) - Payments (Cr)
-      // Positive = Due, Negative = Advance
+      // Calculate final balance for each entry (Standard Double-Entry Personal Account rules)
+      // Supplier is a Sundry Creditor (Liability):
+      // Credit = Purchases (Payable increases)
+      // Debit = Payments (Payable decreases)
+      // Balance Due = Opening (Cr/Dr) + Purchases (Cr) - Payments (Dr)
+      // Positive = Payable Due, Negative = Advance Paid
       balanceMap.forEach((balance) => {
-        const openingValue = balance.opening_balance_type === 'debit' 
+        const openingValue = balance.opening_balance_type === 'credit' 
           ? balance.opening_balance 
           : -balance.opening_balance;
-        balance.balance = openingValue + balance.total_debit - balance.total_credit;
+        balance.balance = openingValue + balance.total_credit - balance.total_debit;
       });
 
       return Array.from(balanceMap.values());

@@ -3,9 +3,15 @@ import { HubPage, TabOption } from '@/components/layout/HubPage';
 
 const Payments = React.lazy(() => import('../Payments'));
 const BankBook = React.lazy(() => import('../BankBook'));
+const GeneralLedger = React.lazy(() => import('../GeneralLedger'));
 const Reports = React.lazy(() => import('../Reports'));
 
 const tabs: TabOption[] = [
+  {
+    id: 'general-ledger',
+    label: 'Double-Entry GL & Day Book',
+    component: GeneralLedger,
+  },
   {
     id: 'payments',
     label: 'Expenses & Payments',
