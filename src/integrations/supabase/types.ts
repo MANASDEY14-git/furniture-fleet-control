@@ -2543,6 +2543,7 @@ export type Database = {
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
+          customer_phone_2: string | null
           date: string
           delivered_at: string | null
           delivery_date: string | null
@@ -2575,6 +2576,7 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_phone_2?: string | null
           date: string
           delivered_at?: string | null
           delivery_date?: string | null
@@ -2607,6 +2609,7 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_phone_2?: string | null
           date?: string
           delivered_at?: string | null
           delivery_date?: string | null
@@ -4016,6 +4019,31 @@ export type Database = {
             }
             Returns: string
           }
+      create_sales_order_with_secondary_phone: {
+        Args: {
+          _advance_bank_account_id?: string
+          _advance_paid?: number
+          _advance_payment_method?: string
+          _customer_address?: string
+          _customer_id?: string
+          _customer_name?: string
+          _customer_phone?: string
+          _customer_phone_2?: string
+          _customizations?: Json
+          _date?: string
+          _delivery_date?: string
+          _delivery_status?: string
+          _description?: string
+          _document_type?: string
+          _items?: Json
+          _order_number: string
+          _salesperson_name?: string
+          _store_id: string
+          _supplier_id?: string
+          _total_amount?: number
+        }
+        Returns: string
+      }
       create_stock_transfer_draft: {
         Args: {
           _destination_store_id: string
@@ -4337,6 +4365,7 @@ export type Database = {
           customer_address: string
           customer_name: string
           customer_phone: string
+          customer_phone_2: string
           date: string
           delivered_at: string
           delivery_date: string
