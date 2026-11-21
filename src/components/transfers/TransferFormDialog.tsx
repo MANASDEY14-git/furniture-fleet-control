@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useItems } from '@/hooks/useItems';
-import { useCreateStockTransfer } from '@/hooks/useStockTransfers';
+import { useCreateStockTransfer, useDispatchStockTransfer } from '@/hooks/useStockTransfers';
 import { useStoreContext } from '@/contexts/StoreContext';
 import { formatCurrency } from '@/utils/currencyUtils';
 
@@ -34,6 +34,8 @@ export function TransferFormDialog() {
   const [lines, setLines] = useState<DraftLine[]>([emptyLine()]);
   const { data: items = [] } = useItems(sourceStoreId || undefined);
   const createTransfer = useCreateStockTransfer();
+  const dispatchTransfer = useDispatchStockTransfer();
+  const isPending = createTransfer.isPending || dispatchTransfer.isPending;
 
   const availableItems = useMemo(
     () => items.filter((item) => item.store_id === sourceStoreId && Number(item.quantity_available) > 0),
@@ -68,9 +70,9 @@ export function TransferFormDialog() {
     return item && quantity > 0 && Number.isInteger(quantity) && quantity <= Number(item.quantity_available) && Number(line.price) > 0;
   });
 
-  const submit = async () => {
+  const submit = async (andDispatch = false) => {
     if (!canSubmit) return;
-    await createTransfer.mutateAsync({
+    const transferId = await createTransfer.mutateAsync({
       sourceStoreId,
       destinationStoreId,
       reason: reason.trim(),
@@ -86,6 +88,9 @@ export function TransferFormDialog() {
         condition_note: line.note,
       })),
     });
+    if (andDispatch && transferId) {
+      await dispatchTransfer.mutateAsync(transferId);
+    }
     setOpen(false);
     reset();
   };
@@ -142,7 +147,24 @@ export function TransferFormDialog() {
         <div className="space-y-2"><Label>Batch notes</Label><Textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Handling instructions or internal notes" /></div>
         <DialogFooter className="items-center justify-between sm:justify-between">
           <p className="text-sm font-semibold">Batch value {formatCurrency(total)}</p>
-          <Button onClick={submit} disabled={!canSubmit || createTransfer.isPending}>{createTransfer.isPending ? 'Saving…' : 'Save draft'}</Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => submit(false)}
+              disabled={!canSubmit || isPending}
+            >
+              {createTransfer.isPending && !dispatchTransfer.isPending ? 'Saving…' : 'Save draft'}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => submit(true)}
+              disabled={!canSubmit || isPending}
+            >
+              <Send className="mr-1 h-3.5 w-3.5" />
+              {dispatchTransfer.isPending ? 'Dispatching…' : 'Dispatch immediately'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

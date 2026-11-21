@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCancelStockTransfer, useDispatchStockTransfer, useStockTransfers, StockTransfer } from '@/hooks/useStockTransfers';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { formatCurrency } from '@/utils/currencyUtils';
+import StoreSelector from '@/components/StoreSelector';
 import { TransferFormDialog } from '@/components/transfers/TransferFormDialog';
 import { ReceiveTransferDialog } from '@/components/transfers/ReceiveTransferDialog';
 import { TransferDocument } from '@/components/transfers/TransferDocument';
@@ -24,7 +25,7 @@ const statusLabels: Record<string, string> = {
 
 export default function StockTransfers() {
   const [queue, setQueue] = useState<Queue>('drafts');
-  const { activeStoreId, accessibleStores } = useStoreContext();
+  const { activeStoreId, setActiveStore, accessibleStores, canViewAllStores, isLoading: storesLoading } = useStoreContext();
   const { user } = useAuth();
   const { data: role } = useCurrentUserRole();
   const { data: transfers = [], isLoading } = useStockTransfers(activeStoreId);
@@ -47,8 +48,27 @@ export default function StockTransfers() {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div><h2 className="text-xl font-semibold">Godown transfers</h2><p className="text-sm text-muted-foreground">Batch stock movement with dispatch and independent receipt control.</p></div>
-        {canManage && <div className="flex gap-2"><TransferSettingsDialog /><TransferFormDialog /></div>}
+        <div>
+          <h2 className="text-xl font-semibold">Godown transfers</h2>
+          <p className="text-sm text-muted-foreground">Batch stock movement with dispatch and independent receipt control.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {canViewAllStores && (
+            <StoreSelector
+              value={activeStoreId}
+              onValueChange={setActiveStore}
+              stores={accessibleStores}
+              placeholder="All outlets"
+              isLoading={storesLoading}
+            />
+          )}
+          {canManage && (
+            <>
+              <TransferSettingsDialog />
+              <TransferFormDialog />
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -79,9 +99,17 @@ export default function StockTransfers() {
                 <TableCell><Badge variant={transfer.status === 'received_with_discrepancy' ? 'destructive' : transfer.status === 'received' ? 'default' : 'secondary'}>{statusLabels[transfer.status] || transfer.status}</Badge></TableCell>
                 <TableCell><div className="flex justify-end gap-2">
                   {transfer.challan_number && <TransferDocument transfer={transfer} sourceName={names[transfer.source_store_id] || 'Source godown'} destinationName={names[transfer.destination_store_id] || 'Destination godown'} />}
-                  {queue === 'dispatch' && canManage && <Button size="sm" onClick={() => dispatch.mutate(transfer.id)} disabled={dispatch.isPending}><Send /> Dispatch</Button>}
+                  {transfer.status === 'draft' && canManage && (
+                    <Button size="sm" onClick={() => dispatch.mutate(transfer.id)} disabled={dispatch.isPending}>
+                      <Send className="mr-1 h-3.5 w-3.5" /> Dispatch
+                    </Button>
+                  )}
                   {queue === 'receive' && receiveAllowed(transfer) && <ReceiveTransferDialog transfer={transfer} />}
-                  {transfer.status === 'draft' && canManage && <Button variant="ghost" size="icon" aria-label="Cancel transfer" onClick={() => cancel.mutate({ transferId: transfer.id, reason: 'Cancelled by manager' })} disabled={cancel.isPending}><Ban /></Button>}
+                  {transfer.status === 'draft' && canManage && (
+                    <Button variant="ghost" size="icon" aria-label="Cancel transfer" onClick={() => cancel.mutate({ transferId: transfer.id, reason: 'Cancelled by manager' })} disabled={cancel.isPending}>
+                      <Ban />
+                    </Button>
+                  )}
                 </div></TableCell>
               </TableRow>
             ))}
