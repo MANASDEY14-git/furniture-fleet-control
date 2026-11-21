@@ -4037,6 +4037,7 @@ export type Database = {
           _document_type?: string
           _items?: Json
           _order_number: string
+          _round_off?: number
           _salesperson_name?: string
           _store_id: string
           _supplier_id?: string

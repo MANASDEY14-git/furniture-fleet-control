@@ -110,6 +110,7 @@ export interface CreateSalesOrderData {
   customer_id?: string | null;
   customer_name?: string | null;
   customer_phone?: string | null;
+  customer_phone_2?: string | null;
   customer_address?: string | null;
   delivery_date?: string | null;
   advance_paid?: number;
