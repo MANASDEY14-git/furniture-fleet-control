@@ -38,7 +38,7 @@ export const walkthroughIntro = {
   title: "Ram's walkthrough",
   tagline: 'A furniture store, end to end',
   body:
-    'Ram owns a furniture showroom. Part of his catalogue he buys finished from suppliers, and part he builds in his own workshop from raw materials, labour and outside services. This guide follows him through the whole system in the order he actually meets it — from his first login to closing the financial year.',
+    'Ram owns a furniture showroom. Part of his catalogue he buys finished from suppliers, and part he builds in his own workshop from raw materials, labour and outside services. This guide follows him through the whole system in the order he actually meets it — from his first login to closing the financial year with double-entry accounting and statutory audit compliance.',
 };
 
 export const walkthroughSections: WalkthroughSection[] = [
@@ -151,18 +151,18 @@ export const walkthroughSections: WalkthroughSection[] = [
   {
     id: 'purchasing',
     chapter: 6,
-    title: 'Restocking — Purchasing',
-    subtitle: 'Suppliers, invoices and what Ram still owes',
-    want: 'Two dining sets sold. Ram needs to buy replacements and keep his supplier accounts straight.',
+    title: 'Restocking — Purchasing & Supplier Accounts',
+    subtitle: 'Suppliers, invoices, and standard double-entry payables',
+    want: 'Two dining sets sold. Ram needs to buy replacements and keep his supplier accounts straight according to standard accounting rules.',
     steps: [
       'Purchase Orders records a purchase, multiple items on one invoice, with invoice number and date.',
       'Suppliers holds the supplier master with contact person, GSTIN and per-store access, plus a purchase history for each supplier.',
       'The same item can be bought from an alternative supplier when the usual one cannot deliver.',
-      'Supplier Ledger shows dues per supplier, including opening balances carried in from before the system went live.',
+      'Supplier Ledger shows dues per supplier following Golden Rules of Accounting: purchases are Credits (Cr) that increase liability, and payments are Debits (Dr) that settle it.',
     ],
     behind: [
-      'Saving a purchase increases item stock, refreshes the item cost price, and raises a credit in the supplier ledger.',
-      'Paying a supplier posts the debit and reduces the outstanding balance automatically.',
+      'Saving a purchase increases item stock, refreshes the item cost price, and raises a Credit (payable) in the supplier ledger (Credit the Giver).',
+      'Paying a supplier posts a Debit (settlement) to the supplier account and reduces the outstanding balance automatically (Debit the Receiver).',
       'Opening balances are tagged distinctly so Ram can tell legacy dues from dues raised in the system.',
     ],
     gotcha:
@@ -171,26 +171,50 @@ export const walkthroughSections: WalkthroughSection[] = [
   {
     id: 'money',
     chapter: 7,
-    title: 'Money in, money out — Payments & Bank Book',
-    subtitle: 'Cash, UPI, cheque, card, transfer',
-    want: 'The customer pays the balance by UPI and a supplier is paid by cheque. Both must land in the right account.',
+    title: 'Money in, money out — Payments & Cancellations',
+    subtitle: 'Cash, UPI, cheque, bank transfer, and statutory cancellation',
+    want: 'The customer pays the balance by UPI and a supplier is paid by cheque. Both must land in the right account, and mistakes must be cancelled cleanly without breaking audit rules.',
     steps: [
       'From the Sales page action menu on an order, choose Record Payment. Enter the amount and pick the method: cash, UPI, bank transfer, cheque, debit or credit card, wallet.',
       'For non-cash methods, fill the extra fields that appear — bank account, reference number, UPI ID, card last four, or cheque number and date.',
       'Payments lists all receipts and payments; Bank Book holds each bank account per store with its running balance and transactions.',
+      'If a payment was recorded in error, click Cancel Transaction on the row. Never delete: the system cancels the record, flags it with a red Cancelled badge, and reverses the bank balance automatically.',
       'Each customer’s profile carries an Overview, Orders, Ledger and Addresses tab with the running balance.',
     ],
     behind: [
       'Every receipt updates the order’s collected amount and balance due, and posts to the customer ledger.',
       'Payments tied to a bank account move that account’s balance and appear in bank transactions.',
+      'Statutory Audit Immutability (MCA Rule 3(1)): Hard-deletes are permanently blocked on financial records. Cancelling a transaction sets payment_status="cancelled", stamps the user and timestamp, and restores the linked bank balance.',
       'Bank charges and cleared dates are tracked separately, so cheques in transit are not counted as cleared money.',
     ],
     gotcha:
-      'Pick the bank account for non-cash payments. Without it the money is recorded against the order but never reaches a bank balance.',
+      'Never try to erase a payment. Under corporate audit standards, transactions can only be cancelled and reversed, ensuring complete audit trail integrity.',
+  },
+  {
+    id: 'general-ledger',
+    chapter: 8,
+    title: 'The books balance — Double-Entry GL & Trial Balance',
+    subtitle: 'Chart of Accounts, Day Book vouchers, and real-time balancing',
+    want: 'Ram and his accountant need to verify that every debit has a matching credit and generate Tally-compliant financial statements.',
+    steps: [
+      'Go to Finance Hub → Double-Entry GL & Day Book (or visit /general-ledger directly).',
+      'The Trial Balance tab displays all accounts across Assets, Liabilities, Equity, Revenue, and Expenses with total debits, total credits, and net balances.',
+      'Look at the Double-Entry Status card at the top — it verifies in real time that Total Debits equal Total Credits (₹0.00 difference).',
+      'Switch to the Day Book tab to view sequential audit vouchers (Contra, Payment, Receipt, Journal, Sales, Purchase) with line-by-line debit/credit accounts.',
+      'Click "+ New Journal Voucher" to record non-cash adjustments, year-end depreciation, or cash-to-bank Contra transfers. The form validates that Debits equal Credits before allowing posting.',
+      'Use the Chart of Accounts Tree tab to explore the 4-tier hierarchy organized into standard Tally ERP groups.',
+    ],
+    behind: [
+      'Dual-Write Sync Engine: When Ram enters normal sales and payments, background database triggers automatically post balanced double-entry journal vouchers behind the scenes.',
+      'Database-Enforced Equality: An atomic transaction function strictly enforces the Luca Pacioli rule: SUM(Debit) = SUM(Credit) with zero variance allowed.',
+      'Physical Cash Accounting: Cash payments and receipts are now formally tracked under account 1210 (Cash-in-Hand), allowing physical cash drawer reconciliation.',
+    ],
+    gotcha:
+      'A manual journal voucher cannot be posted unless total debits exactly equal total credits. The system rejects unbalanced vouchers at the database level.',
   },
   {
     id: 'delivery',
-    chapter: 8,
+    chapter: 9,
     title: 'Delivery day — Delivery Calendar',
     subtitle: 'Loading the truck without a WhatsApp scroll',
     want: 'Ram wants to see everything promised this week and close it off as it goes out.',
@@ -209,7 +233,7 @@ export const walkthroughSections: WalkthroughSection[] = [
   },
   {
     id: 'intelligence',
-    chapter: 9,
+    chapter: 10,
     title: 'Ram asks questions — Intelligence & AI',
     subtitle: 'Who sells, what sits, and what to do about it',
     want: 'Ram wants answers, not more tables: who is performing, what is dead stock, what should he reorder.',
@@ -229,7 +253,7 @@ export const walkthroughSections: WalkthroughSection[] = [
   },
   {
     id: 'command-center',
-    chapter: 10,
+    chapter: 11,
     title: 'Watching the shop — Command Center',
     subtitle: 'One inbox for operational risk',
     want: 'Ram wants problems to come to him instead of being discovered next month.',
@@ -248,43 +272,43 @@ export const walkthroughSections: WalkthroughSection[] = [
   },
   {
     id: 'settings',
-    chapter: 11,
-    title: 'Housekeeping — Settings & Reports',
-    subtitle: 'Masters, users, logs and year-end',
-    want: 'Once a month Ram tidies up the system and looks at the bigger picture.',
+    chapter: 12,
+    title: 'Housekeeping — Settings, Audit Trail & Year-End',
+    subtitle: 'Masters, users, statutory audit log, and year-end close',
+    want: 'Once a month Ram tidies up the system, inspects the statutory audit trail, and looks at the bigger picture.',
     steps: [
       'Settings → Store Registry: stores, bank accounts, item categories, labour categories, users, roles and per-store access.',
       'Settings → Agents & Briefs: which department agents are on, briefing time and timezone, and the briefing log.',
       'Settings → Telegram Bot: generate a link code and pair a chat so alerts and orders reach Ram’s phone.',
-      'Settings → System Logs: raw system events for troubleshooting.',
+      'Settings → System Logs & Audit Trail: inspect the statutory MCA Rule 3(1) audit log covering all 15 financial and sub-ledger tables with user attribution.',
       'Reports: sales trend, top-selling items, total sales, purchases, net profit, stock value, plus the Data Audit Trail and Security Audit Log.',
       'Financial Years: close the current year and roll over. Closing balances become next year’s opening balances.',
     ],
     behind: [
       'Only admins and managers can change shared masters such as categories and labour rates.',
-      'Every sensitive change is written to an audit trail with who, what and when.',
+      'MCA Rule 3(1) & Rule 11(g) Compliance: The audit_trails table is permanently tamper-proofed with database triggers preventing any edit or deletion. All financial tables record who, what, when, and before/after states.',
       'A closed year becomes read-only and shows a banner, so history cannot drift.',
     ],
     gotcha:
-      'Close the year only once the last invoice and payment of that year is entered. Reopening is deliberately hard.',
+      'Audit trail entries are immutable by law. Once written to audit_trails, they cannot be edited or removed by any user or administrator.',
   },
 ];
 
 export const roleRows: RoleRow[] = [
   {
     role: 'Admin',
-    canDo: 'Everything: stores, users, roles, masters, year-end close, Command Center.',
-    onScreen: 'Full sidebar including Command Center and all Settings tabs.',
+    canDo: 'Everything: stores, users, roles, masters, year-end close, Command Center, General Ledger, Audit Trails.',
+    onScreen: 'Full sidebar including Command Center, Double-Entry GL, and all Settings tabs.',
   },
   {
     role: 'Manager',
     canDo: 'Day-to-day operations plus shared masters such as categories and labour rates.',
-    onScreen: 'Command Center and financial pages visible; user administration limited.',
+    onScreen: 'Command Center, Finance Hub, and operational pages visible; user administration limited.',
   },
   {
     role: 'Accountant',
-    canDo: 'Payments, bank book, ledgers, reports. Not stock masters.',
-    onScreen: 'Finance and reporting pages; masters are read-only.',
+    canDo: 'General Ledger, journal vouchers, Trial Balance, payments, bank book, supplier/customer ledgers, reports.',
+    onScreen: 'Double-Entry GL & Day Book, Payments, Bank Book, and Reporting pages; stock masters are read-only.',
   },
   {
     role: 'Sales representative',
@@ -312,6 +336,7 @@ export const rhythmGroups: RhythmGroup[] = [
     cadence: 'Every week',
     items: [
       'Review the salesperson leaderboard.',
+      'Check the Trial Balance in Finance Hub to ensure books are balanced (Dr = Cr).',
       'Act on low-stock alerts and raise purchases.',
       'Reconcile bank accounts in Bank Book.',
       'Chase outstanding customer balances.',
@@ -320,19 +345,20 @@ export const rhythmGroups: RhythmGroup[] = [
   {
     cadence: 'Every month',
     items: [
+      'Review Day Book vouchers and verify Cash-in-Hand against physical cash drawer.',
       'Review Inventory Intelligence for aging and dead stock.',
-      'Reconcile supplier ledgers against invoices.',
+      'Reconcile supplier ledgers against invoices (Purchases as Cr, Payments as Dr).',
       'Recheck BOM costs against current material prices.',
-      'Scan the audit trail for unexpected changes.',
+      'Scan the statutory audit trail for unexpected mutations or cancellations.',
     ],
   },
   {
     cadence: 'Year-end (April)',
     items: [
       'Enter the last invoices and payments of the year.',
-      'Verify item and supplier balances.',
+      'Verify item and supplier balances against Trial Balance closing figures.',
       'Close the financial year and roll balances over.',
-      'Confirm the new year opens with correct opening stock.',
+      'Confirm the new year opens with correct opening stock and ledger balances.',
     ],
   },
 ];
