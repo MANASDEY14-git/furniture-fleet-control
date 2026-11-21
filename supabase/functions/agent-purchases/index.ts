@@ -23,23 +23,50 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    let canReadPayables = auth.internal;
+    if (!auth.internal) {
+      if (!auth.userId) {
+        return new Response(JSON.stringify({ error: "Authentication required" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: financialRoles, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", auth.userId)
+        .in("role", ["admin", "manager", "accountant"])
+        .limit(1);
+
+      if (roleError) {
+        console.error("purchases role verification failed:", roleError);
+        return new Response(JSON.stringify({ error: "Unable to verify finance access" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      canReadPayables = Boolean(financialRoles?.length);
+    }
+
     // Shared business facts RPCs (field names match the database functions).
     const [payablesRes, stockRes] = await Promise.all([
-      supabase.rpc("ai_get_payables", { _store_id: store_id }),
+      canReadPayables ? supabase.rpc("ai_get_payables", { _store_id: store_id }) : Promise.resolve(null),
       supabase.rpc("ai_get_stock_status", { _store_id: store_id }),
     ]);
 
     for (const [name, res] of [["payables", payablesRes], ["stock", stockRes]] as const) {
+      if (!res) continue;
       if (res.error) {
         console.error(`purchases facts (${name}) error:`, res.error);
         throw new Error(`Failed to load ${name} facts: ${res.error.message}`);
       }
     }
 
-    const payables = payablesRes.data;
+    const payables = payablesRes?.data ?? null;
     const stock = stockRes.data;
     const urgentItems = (stock.urgent_reorders || []) as any[];
-    const suppliersOwed = ((payables.suppliers_we_owe || []) as any[]).filter((s: any) => Number(s.amount_owed) > 0);
+    const suppliersOwed = ((payables?.suppliers_we_owe || []) as any[]).filter((s: any) => Number(s.amount_owed) > 0);
 
     const suggestedProcurementValue = urgentItems.reduce(
       (sum: number, r: any) => sum + (Number(r.suggested_order_cost) || 0),
@@ -58,12 +85,16 @@ Deno.serve(async (req) => {
       .map(([sName, val]) => `${sName}: ₹${Math.round(val).toLocaleString("en-IN")}`)
       .join(", ");
 
-    const factsSummary = `Store: ${stock.store_name}
-As of: ${new Date().toISOString()} (all figures verified)
-Supplier Payables (supplier ledger: purchases minus payments):
+    const payableFacts = payables
+      ? `Supplier Payables (supplier ledger: purchases minus payments):
 - Total Owed to Suppliers: ₹${Number(payables.total_payable_to_suppliers || 0).toLocaleString("en-IN")} across ${suppliersOwed.length} supplier(s)
 ${suppliersOwed.slice(0, 5).map((s: any) => `  - ${s.supplier_name}: ₹${Number(s.amount_owed).toLocaleString("en-IN")}`).join("\n") || "  Nothing owed"}
-- Advances paid to suppliers: ₹${Number(payables.total_advances_paid_to_suppliers || 0).toLocaleString("en-IN")}
+- Advances paid to suppliers: ₹${Number(payables.total_advances_paid_to_suppliers || 0).toLocaleString("en-IN")}`
+      : "Supplier payables: unavailable for this account; do not estimate or disclose balances.";
+
+    const factsSummary = `Store: ${stock.store_name}
+As of: ${new Date().toISOString()} (all figures verified)
+${payableFacts}
 Factual Replenishment Requirements (reorder engine, last 365 days of real sales):
 - Urgent Items Requiring Reorder: ${urgentItems.length} items
 - Estimated Procurement Order Value: ₹${Math.round(suggestedProcurementValue).toLocaleString("en-IN")}
@@ -75,8 +106,8 @@ ${urgentItems.slice(0, 5).map((r: any) => `  - ${r.item_name}: ${r.current_stock
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const systemPrompt = question
-      ? `You are the Purchases Agent for a furniture ERP. Answer the user's specific purchasing/supplier question using ONLY the provided verified facts. Always state the store name. Quote only factual amounts and allocations. Do not invent sales velocities. Use the Rupee symbol (₹).`
-      : `You are the Purchases Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing analyzing supplier payables and imminent replenishment requirements. Quote ONLY the factual numbers provided below. Use the Rupee symbol (₹).`;
+      ? `You are the Purchases Agent for a furniture ERP. Answer the user's specific purchasing/supplier question using ONLY the provided verified facts. Always state the store name. Quote only factual amounts and allocations. Do not invent sales velocities. ${canReadPayables ? "" : "If asked about supplier balances, say this account cannot access them."} Use the Rupee symbol (₹).`
+      : `You are the Purchases Agent for a furniture ERP. Write a highly professional 2-3 sentence executive briefing analyzing ${canReadPayables ? "supplier payables and " : ""}imminent replenishment requirements. Quote ONLY the factual numbers provided below. Use the Rupee symbol (₹).`;
 
     const userPrompt = question
       ? `User Question: "${question}"\n\nVerified Facts:\n${factsSummary}`

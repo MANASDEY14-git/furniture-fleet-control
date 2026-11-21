@@ -788,7 +788,6 @@ Deno.serve(async (req) => {
           // "deliveries lined up" means tomorrow's deliveries.
           const standing = await getStanding(db, storeId, tomorrow, tz);
           const prompt = eveningFacts(storeName, tz, facts, tomorrow, standing);
-          console.log(`[digest] evening facts for ${storeId}:\n${prompt}`);
           const composed = lovableKey ? await composeEvening(prompt, lovableKey) : null;
           text = composed || fallbackEvening(storeName, tz, facts, standing);
 

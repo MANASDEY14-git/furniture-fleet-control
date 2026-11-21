@@ -23,6 +23,37 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    if (!auth.internal) {
+      if (!auth.userId) {
+        return new Response(JSON.stringify({ error: "Authentication required" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: financialRoles, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", auth.userId)
+        .in("role", ["admin", "manager", "accountant"])
+        .limit(1);
+
+      if (roleError) {
+        console.error("finance role verification failed:", roleError);
+        return new Response(JSON.stringify({ error: "Unable to verify finance access" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!financialRoles?.length) {
+        return new Response(JSON.stringify({ error: "Finance role required" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Shared business facts RPCs (field names match the database functions).
     const [cashRes, duesRes, payablesRes] = await Promise.all([
       supabase.rpc("ai_get_cash_position", { _store_id: store_id }),
