@@ -75,6 +75,7 @@ export default function EnhancedSalesOrderForm({
     customerId: null as string | null,
     customerName: '',
     customerPhone: '',
+    customerPhone2: '',
     customerAddress: '',
     deliveryDate: '',
     advancePaid: 0,
@@ -264,6 +265,7 @@ export default function EnhancedSalesOrderForm({
         customer_id: formData.customerId || null,
         customer_name: formData.customerName || null,
         customer_phone: formData.customerPhone || null,
+        customer_phone_2: formData.customerPhone2 || null,
         customer_address: formData.customerAddress || null,
         delivery_date: formData.deliveryDate || null,
         advance_paid: documentType === 'quote' ? 0 : formData.advancePaid,
@@ -303,6 +305,7 @@ export default function EnhancedSalesOrderForm({
       customerId: null,
       customerName: '',
       customerPhone: '',
+      customerPhone2: '',
       customerAddress: '',
       deliveryDate: '',
       advancePaid: 0,
@@ -333,6 +336,7 @@ export default function EnhancedSalesOrderForm({
         customerId: customer.id,
         customerName: customer.name,
         customerPhone: customer.phone || '',
+        customerPhone2: prev.customerId && prev.customerId !== customer.id ? '' : prev.customerPhone2,
         customerAddress: customer.address || '',
       }));
     } else {
@@ -341,12 +345,13 @@ export default function EnhancedSalesOrderForm({
         customerId: null,
         customerName: '',
         customerPhone: '',
+        customerPhone2: '',
         customerAddress: '',
       }));
     }
   };
 
-  const handleCustomerFieldChange = (field: 'customerName' | 'customerPhone' | 'customerAddress', value: string) => {
+  const handleCustomerFieldChange = (field: 'customerName' | 'customerPhone' | 'customerPhone2' | 'customerAddress', value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -464,6 +469,7 @@ export default function EnhancedSalesOrderForm({
                     selectedCustomerId={formData.customerId}
                     customerName={formData.customerName}
                     customerPhone={formData.customerPhone}
+                    customerPhone2={formData.customerPhone2}
                     customerAddress={formData.customerAddress}
                     onCustomerSelect={handleCustomerSelect}
                     onFieldChange={handleCustomerFieldChange}
@@ -817,6 +823,7 @@ export default function EnhancedSalesOrderForm({
                     selectedCustomerId={formData.customerId}
                     customerName={formData.customerName}
                     customerPhone={formData.customerPhone}
+                    customerPhone2={formData.customerPhone2}
                     customerAddress={formData.customerAddress}
                     onCustomerSelect={handleCustomerSelect}
                     onFieldChange={handleCustomerFieldChange}

@@ -54,13 +54,14 @@ export const useCreateSalesOrder = () => {
       }));
 
       // Use the secure RPC function that handles everything atomically
-      const { data: orderId, error } = await supabase.rpc('create_sales_order_secure', {
+      const { data: orderId, error } = await supabase.rpc('create_sales_order_with_secondary_phone', {
         _order_number: data.order_number,
         _store_id: data.store_id,
         _supplier_id: data.supplier_id || null,
         _date: data.date,
         _customer_name: data.customer_name || null,
         _customer_phone: data.customer_phone || null,
+        _customer_phone_2: data.customer_phone_2 || null,
         _customer_address: data.customer_address || null,
         _delivery_date: data.delivery_date || null,
         _delivery_status: data.delivery_status,

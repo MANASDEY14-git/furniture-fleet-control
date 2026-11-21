@@ -13,9 +13,10 @@ interface CustomerSelectorProps {
   selectedCustomerId: string | null;
   customerName: string;
   customerPhone: string;
+  customerPhone2: string;
   customerAddress: string;
   onCustomerSelect: (customer: Customer | null) => void;
-  onFieldChange: (field: 'customerName' | 'customerPhone' | 'customerAddress', value: string) => void;
+  onFieldChange: (field: 'customerName' | 'customerPhone' | 'customerPhone2' | 'customerAddress', value: string) => void;
   className?: string;
   inputClassName?: string;
   labelClassName?: string;
@@ -26,6 +27,7 @@ export default function CustomerSelector({
   selectedCustomerId,
   customerName,
   customerPhone,
+  customerPhone2,
   customerAddress,
   onCustomerSelect,
   onFieldChange,
@@ -153,15 +155,26 @@ export default function CustomerSelector({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label className={labelClassName}>Phone</Label>
-        <Input
-          value={customerPhone}
-          onChange={e => onFieldChange('customerPhone', e.target.value)}
-          placeholder="Phone number"
-          className={inputClassName}
-          disabled={!!selectedCustomerId}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className={labelClassName}>Phone</Label>
+          <Input
+            value={customerPhone}
+            onChange={e => onFieldChange('customerPhone', e.target.value)}
+            placeholder="Phone number"
+            className={inputClassName}
+            disabled={!!selectedCustomerId}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className={labelClassName}>Additional Phone</Label>
+          <Input
+            value={customerPhone2}
+            onChange={e => onFieldChange('customerPhone2', e.target.value)}
+            placeholder="Additional phone number"
+            className={inputClassName}
+          />
+        </div>
       </div>
 
       <div className="space-y-2">

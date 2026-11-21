@@ -65,6 +65,7 @@ export interface SalesOrder {
   total_amount: number;
   customer_name?: string | null;
   customer_phone?: string | null;
+  customer_phone_2?: string | null;
   customer_address?: string | null;
   delivery_date?: string | null;
   advance_paid?: number;

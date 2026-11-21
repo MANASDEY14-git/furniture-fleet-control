@@ -35,6 +35,7 @@ export interface SecureSalesOrder {
   advance_paid: number | null;
   customer_name: string | null;
   customer_phone: string | null;
+  customer_phone_2: string | null;
   customer_address: string | null;
   description: string | null;
   status: string | null;
@@ -85,6 +86,7 @@ export const useSingleSalesOrder = (orderId: string | null) => {
         advance_paid: row.advance_paid,
         customer_name: row.customer_name,
         customer_phone: row.customer_phone,
+        customer_phone_2: row.customer_phone_2,
         customer_address: row.customer_address,
         description: row.description,
         status: row.status,

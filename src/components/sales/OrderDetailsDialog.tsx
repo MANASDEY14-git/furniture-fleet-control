@@ -276,6 +276,12 @@ export default function OrderDetailsDialog({
                 <p className="text-xs text-muted-foreground font-medium">Phone</p>
                 <p className="text-foreground">{canAccessPII && viewingOrder.customer_phone && viewingOrder.customer_phone !== '***REDACTED***' ? viewingOrder.customer_phone : (viewingOrder.customer_phone === '***REDACTED***' ? '***REDACTED***' : 'N/A')}</p>
               </div>
+              {canAccessPII && order?.customer_phone_2 && (
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">Additional Phone</p>
+                  <p className="text-foreground">{order.customer_phone_2}</p>
+                </div>
+              )}
               <div>
                 <p className="text-xs text-muted-foreground font-medium">Store</p>
                 <p className="text-foreground">{getStoreName(viewingOrder.store_id)}</p>
@@ -304,6 +310,7 @@ export default function OrderDetailsDialog({
           <div>
             <p className="text-foreground"><strong>Customer:</strong> {canAccessPII && viewingOrder.customer_name && viewingOrder.customer_name !== '***REDACTED***' ? viewingOrder.customer_name : (viewingOrder.customer_name === '***REDACTED***' ? '***REDACTED***' : 'Walk-in')}</p>
             <p className="text-foreground"><strong>Phone:</strong> {canAccessPII && viewingOrder.customer_phone && viewingOrder.customer_phone !== '***REDACTED***' ? viewingOrder.customer_phone : (viewingOrder.customer_phone === '***REDACTED***' ? '***REDACTED***' : 'N/A')}</p>
+            {canAccessPII && order?.customer_phone_2 && <p className="text-foreground"><strong>Additional Phone:</strong> {order.customer_phone_2}</p>}
             <p className="text-foreground"><strong>Sales Person:</strong> <span className="text-purple-600 font-semibold">{order.salesperson_name || viewingOrder.salesperson_name || 'N/A'}</span></p>
             <p className="text-foreground"><strong>Store:</strong> {getStoreName(viewingOrder.store_id)}</p>
           </div>

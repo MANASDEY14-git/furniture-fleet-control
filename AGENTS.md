@@ -1,0 +1,1 @@
+Order-specific secondary customer phone numbers are stored as snapshots on sales_orders, separate from the customer master, so contact changes do not rewrite historical order records.

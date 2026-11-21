@@ -1,0 +1,3 @@
+ALTER FUNCTION public.create_sales_order_with_secondary_phone(text, uuid, uuid, text, text, text, text, text, text, numeric, text, numeric, jsonb, jsonb, uuid, text, text, text, uuid, text) SECURITY INVOKER;
+REVOKE ALL ON FUNCTION public.create_sales_order_with_secondary_phone(text, uuid, uuid, text, text, text, text, text, text, numeric, text, numeric, jsonb, jsonb, uuid, text, text, text, uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_sales_order_with_secondary_phone(text, uuid, uuid, text, text, text, text, text, text, numeric, text, numeric, jsonb, jsonb, uuid, text, text, text, uuid, text) TO authenticated, service_role;
