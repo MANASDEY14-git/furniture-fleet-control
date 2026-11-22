@@ -38,7 +38,11 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // 10 MB
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallbackDenylist: [/^\/assets/],
       }
     })
   ].filter(Boolean),
