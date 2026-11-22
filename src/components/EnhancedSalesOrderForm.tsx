@@ -243,6 +243,10 @@ export default function EnhancedSalesOrderForm({
       alert('Please enter an order number');
       return;
     }
+    if (documentType !== 'quote' && formData.advancePaid > 0 && formData.advancePaymentMethod !== 'cash' && !formData.advanceBankAccountId) {
+      alert(`Please select a bank account for the ${formData.advancePaymentMethod.replace('_', ' ').toUpperCase()} advance payment.`);
+      return;
+    }
     const supplierId = isWalkInCustomer ? null : formData.supplierId;
     try {
       // Build customizations array from all items
@@ -651,13 +655,20 @@ export default function EnhancedSalesOrderForm({
 
                       {showBankAccountSelector && (
                         <div className="space-y-2">
-                          <Label className="text-sm font-medium">Bank Account</Label>
+                          <Label className="text-sm font-medium flex items-center gap-1">
+                            Bank Account <span className="text-destructive">*</span>
+                          </Label>
                           <BankAccountSelector
                             value={formData.advanceBankAccountId}
                             onValueChange={(value) => setFormData({...formData, advanceBankAccountId: value})}
                             storeId={formData.storeId}
                             disabled={!formData.storeId}
                           />
+                          {!formData.storeId ? (
+                            <p className="text-xs text-amber-500">Please select a store above to view bank accounts.</p>
+                          ) : !formData.advanceBankAccountId ? (
+                            <p className="text-xs text-destructive">Bank account selection is mandatory for {formData.advancePaymentMethod.replace('_', ' ').toUpperCase()}.</p>
+                          ) : null}
                         </div>
                       )}
                     </>
@@ -1020,13 +1031,20 @@ export default function EnhancedSalesOrderForm({
 
                       {showBankAccountSelector && (
                         <div className="space-y-2">
-                          <Label>Bank Account</Label>
+                          <Label className="flex items-center gap-1">
+                            Bank Account <span className="text-destructive">*</span>
+                          </Label>
                           <BankAccountSelector
                             value={formData.advanceBankAccountId}
                             onValueChange={(value) => setFormData({...formData, advanceBankAccountId: value})}
                             storeId={formData.storeId}
                             disabled={!formData.storeId}
                           />
+                          {!formData.storeId ? (
+                            <p className="text-xs text-amber-500">Please select a store above to view bank accounts.</p>
+                          ) : !formData.advanceBankAccountId ? (
+                            <p className="text-xs text-destructive">Bank account selection is mandatory for {formData.advancePaymentMethod.replace('_', ' ').toUpperCase()}.</p>
+                          ) : null}
                         </div>
                       )}
                     </>

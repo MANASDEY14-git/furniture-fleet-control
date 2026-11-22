@@ -62,7 +62,11 @@ export default function PaymentEntryForm({ open, onOpenChange }: PaymentEntryFor
     if (formData.description) paymentData.description = formData.description;
     if (formData.notes) paymentData.notes = formData.notes;
     if (formData.payment_method !== 'cash') {
-      if (formData.bank_account_id) paymentData.bank_account_id = formData.bank_account_id;
+      if (!formData.bank_account_id) {
+        alert(`Please select a bank account for the ${formData.payment_method.replace('_', ' ').toUpperCase()} transaction.`);
+        return;
+      }
+      paymentData.bank_account_id = formData.bank_account_id;
       if (formData.bank_charges) paymentData.bank_charges = Number(formData.bank_charges);
       if (formData.transaction_reference) paymentData.transaction_reference = formData.transaction_reference;
     }
@@ -101,8 +105,15 @@ export default function PaymentEntryForm({ open, onOpenChange }: PaymentEntryFor
       <div className="space-y-4 p-4 bg-muted rounded-lg">
         <h3 className="text-sm font-semibold text-foreground">Payment Details</h3>
         <div>
-          <Label>Bank Account</Label>
+          <Label className="flex items-center gap-1">
+            Bank Account <span className="text-destructive">*</span>
+          </Label>
           <BankAccountSelector value={formData.bank_account_id} onValueChange={(value) => setFormData({ ...formData, bank_account_id: value })} storeId={formData.store_id} />
+          {!formData.store_id ? (
+            <p className="text-xs text-amber-500 mt-1">Please select a store above to view bank accounts.</p>
+          ) : !formData.bank_account_id ? (
+            <p className="text-xs text-destructive mt-1">Bank account is mandatory for {formData.payment_method.replace('_', ' ').toUpperCase()}.</p>
+          ) : null}
         </div>
         {method === 'upi' && (
           <>

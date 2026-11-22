@@ -45,6 +45,15 @@ export default function QuickPaymentDialog({ supplier, trigger }: QuickPaymentDi
       return;
     }
 
+    if (paymentMethod !== 'cash' && !bankAccountId) {
+      toast({
+        title: "Validation Error",
+        description: `Please select a bank account for ${paymentMethod.replace('_', ' ').toUpperCase()} payment.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await createPayment.mutateAsync({
         amount: parseFloat(amount),
@@ -54,7 +63,7 @@ export default function QuickPaymentDialog({ supplier, trigger }: QuickPaymentDi
         date: format(date, 'yyyy-MM-dd'),
         description: description || `Payment to ${supplier.name}`,
         payment_method: paymentMethod,
-        bank_account_id: paymentMethod !== 'cash' && bankAccountId ? bankAccountId : undefined,
+        bank_account_id: bankAccountId,
       });
 
       toast({
@@ -182,13 +191,20 @@ export default function QuickPaymentDialog({ supplier, trigger }: QuickPaymentDi
 
           {showBankAccountSelector && (
             <div className="space-y-2">
-              <Label className="text-blue-200">Bank Account</Label>
+              <Label className="text-blue-200 flex items-center gap-1">
+                Bank Account <span className="text-destructive">*</span>
+              </Label>
               <BankAccountSelector
                 value={bankAccountId}
                 onValueChange={setBankAccountId}
                 storeId={storeId}
                 disabled={!storeId}
               />
+              {!storeId ? (
+                <p className="text-xs text-amber-400">Please select a store to view bank accounts.</p>
+              ) : !bankAccountId ? (
+                <p className="text-xs text-red-400">Bank account is mandatory for {paymentMethod.replace('_', ' ').toUpperCase()}.</p>
+              ) : null}
             </div>
           )}
 

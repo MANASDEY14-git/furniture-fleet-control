@@ -276,14 +276,16 @@ export default function PaymentRecordDialog({
       {isNonCash && (
         <>
           <div className="space-y-2">
-            <label className="text-foreground font-semibold text-sm">Bank Account</label>
+            <label className="text-foreground font-semibold text-sm flex items-center gap-1">
+              Bank Account <span className="text-destructive">*</span>
+            </label>
             <BankAccountSelector
               value={bankAccountId}
               onValueChange={setBankAccountId}
               storeId={recordingPayment.store_id}
             />
             {!bankAccountId && (
-              <p className="text-xs text-muted-foreground">Required for non-cash payments so amount hits the right account.</p>
+              <p className="text-xs text-destructive">Bank account is mandatory for non-cash payments so amount hits the right account.</p>
             )}
           </div>
 
