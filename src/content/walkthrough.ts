@@ -213,8 +213,29 @@ export const walkthroughSections: WalkthroughSection[] = [
       'A manual journal voucher cannot be posted unless total debits exactly equal total credits. The system rejects unbalanced vouchers at the database level.',
   },
   {
-    id: 'delivery',
+    id: 'gst-compliance',
     chapter: 9,
+    title: 'Statutory GST & Invoicing — Rule 46 & GSTR Returns',
+    subtitle: 'Place of Supply, HSN 9403, Tax Invoices, and GSTR-1 / 3B filing',
+    want: 'Ram and his chartered accountant need GST-compliant Rule 46 tax invoices with CGST/SGST/IGST breakdown and automated GSTR return data.',
+    steps: [
+      'From any order in Sales Orders or Order Details, click "GST Tax Invoice" to view and print the statutory Rule 46 tax invoice.',
+      'The Tax Invoice includes all 12 statutory elements: consecutive FY invoice number (e.g. BF/26-27/0001), HSN/SAC summary, reverse charge declaration, and amount in words.',
+      'In Finance Hub → GST Compliance & Returns, view live GSTR-1 summaries: Table 4 (B2B registered buyers), Table 7 (B2CS retail consumers), and Table 12 (HSN-wise breakdown).',
+      'View GSTR-3B monthly outward supply liability broken down by tax period, ready for monthly filing on the GST portal.',
+      'Use the GSTIN Validator tab to instantly verify customer/supplier 15-character GST numbers and extract PAN and state codes.',
+    ],
+    behind: [
+      'Place of Supply Engine: Intra-state sales (West Bengal to West Bengal) automatically split tax into 50% CGST + 50% SGST. Inter-state sales automatically compute 100% IGST.',
+      'Statutory Rule 46 Sequencing: Invoice numbers are guaranteed consecutive per financial year per store and strictly adhere to the 16-character statutory ceiling.',
+      'Furniture HSN Standard: Default furniture items map to Chapter 94 (HSN 9403), properly grouped for GSTR-1 Table 12 filings.',
+    ],
+    gotcha:
+      'Check the customer’s delivery state: if goods are shipped outside West Bengal, the system automatically triggers IGST instead of CGST/SGST based on statutory Place of Supply rules.',
+  },
+  {
+    id: 'delivery',
+    chapter: 10,
     title: 'Delivery day — Delivery Calendar',
     subtitle: 'Loading the truck without a WhatsApp scroll',
     want: 'Ram wants to see everything promised this week and close it off as it goes out.',
@@ -233,7 +254,7 @@ export const walkthroughSections: WalkthroughSection[] = [
   },
   {
     id: 'intelligence',
-    chapter: 10,
+    chapter: 11,
     title: 'Ram asks questions — Intelligence & AI',
     subtitle: 'Who sells, what sits, and what to do about it',
     want: 'Ram wants answers, not more tables: who is performing, what is dead stock, what should he reorder.',
@@ -253,7 +274,7 @@ export const walkthroughSections: WalkthroughSection[] = [
   },
   {
     id: 'command-center',
-    chapter: 11,
+    chapter: 12,
     title: 'Watching the shop — Command Center',
     subtitle: 'One inbox for operational risk',
     want: 'Ram wants problems to come to him instead of being discovered next month.',
@@ -272,7 +293,7 @@ export const walkthroughSections: WalkthroughSection[] = [
   },
   {
     id: 'settings',
-    chapter: 12,
+    chapter: 13,
     title: 'Housekeeping — Settings, Audit Trail & Year-End',
     subtitle: 'Masters, users, statutory audit log, and year-end close',
     want: 'Once a month Ram tidies up the system, inspects the statutory audit trail, and looks at the bigger picture.',
@@ -307,8 +328,8 @@ export const roleRows: RoleRow[] = [
   },
   {
     role: 'Accountant',
-    canDo: 'General Ledger, journal vouchers, Trial Balance, payments, bank book, supplier/customer ledgers, reports.',
-    onScreen: 'Double-Entry GL & Day Book, Payments, Bank Book, and Reporting pages; stock masters are read-only.',
+    canDo: 'General Ledger, journal vouchers, Trial Balance, GST Compliance & Rule 46 Tax Invoicing, payments, bank book, supplier/customer ledgers, reports.',
+    onScreen: 'Double-Entry GL & Day Book, GST Compliance, Payments, Bank Book, and Reporting pages; stock masters are read-only.',
   },
   {
     role: 'Sales representative',

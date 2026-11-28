@@ -21,8 +21,9 @@ import StatusBadge from '@/components/StatusBadge';
 import ProductionTab from '@/components/sales/ProductionTab';
 import { formatCurrency } from '@/utils/currencyUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { AlertTriangle, Plus, Trash2, History, Lock, User, Clock, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, History, Lock, User, Clock, ShieldAlert, FileText } from 'lucide-react';
 import { useOrderBOMSnapshots } from '@/hooks/useOrderProductionData';
+import GSTTaxInvoiceDialog from '@/components/sales/GSTTaxInvoiceDialog';
 
 interface OrderDetailsDialogProps {
   viewingOrder: any;
@@ -597,9 +598,19 @@ export default function OrderDetailsDialog({
       {isMobile ? (
         <Drawer open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
           <DrawerContent className="max-h-[90vh]">
-            <DrawerHeader>
-              <DrawerTitle className="text-foreground">Order Details</DrawerTitle>
-              <DrawerDescription>{viewingOrder.order_number}</DrawerDescription>
+            <DrawerHeader className="flex items-center justify-between">
+              <div>
+                <DrawerTitle className="text-foreground">Order Details</DrawerTitle>
+                <DrawerDescription>{viewingOrder.order_number}</DrawerDescription>
+              </div>
+              <GSTTaxInvoiceDialog
+                order={{ ...order, ...viewingOrder }}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-1 text-xs">
+                    <FileText className="w-3.5 h-3.5" /> Invoice
+                  </Button>
+                }
+              />
             </DrawerHeader>
             <div className="p-4 overflow-y-auto">
               {tabbedContent}
@@ -609,9 +620,19 @@ export default function OrderDetailsDialog({
       ) : (
         <Dialog open={!!viewingOrder} onOpenChange={() => setViewingOrder(null)}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">Order Details - {viewingOrder.order_number}</DialogTitle>
-              <DialogDescription>Detailed information about the selected order.</DialogDescription>
+            <DialogHeader className="flex flex-row items-center justify-between pr-8">
+              <div>
+                <DialogTitle className="text-foreground">Order Details - {viewingOrder.order_number}</DialogTitle>
+                <DialogDescription>Detailed information about the selected order.</DialogDescription>
+              </div>
+              <GSTTaxInvoiceDialog
+                order={{ ...order, ...viewingOrder }}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-1.5 border-primary/40 hover:bg-primary/10 text-primary">
+                    <FileText className="w-4 h-4" /> GST Tax Invoice
+                  </Button>
+                }
+              />
             </DialogHeader>
             {tabbedContent}
           </DialogContent>

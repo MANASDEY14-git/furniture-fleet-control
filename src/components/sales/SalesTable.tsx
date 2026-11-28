@@ -1,4 +1,5 @@
-import { Eye, Receipt, ChevronDown, ChevronUp, ArrowRightLeft, Send, CheckCircle2, XCircle, User } from 'lucide-react';
+import { Eye, Receipt, ChevronDown, ChevronUp, ArrowRightLeft, Send, CheckCircle2, XCircle, User, FileText } from 'lucide-react';
+import GSTTaxInvoiceDialog from '@/components/sales/GSTTaxInvoiceDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -273,6 +274,15 @@ function MobileOrderCard({
                       <Receipt className="w-4 h-4 mr-2" />
                       {order.balance_due !== undefined && order.balance_due <= 0 ? 'Paid' : 'Payment'}
                     </Button>
+                    <GSTTaxInvoiceDialog
+                      order={order}
+                      trigger={
+                        <Button variant="outline" size="sm" className="flex-1 text-primary border-primary/30">
+                          <FileText className="w-4 h-4 mr-1.5" />
+                          Invoice
+                        </Button>
+                      }
+                    />
                   </>
                 )}
               </div>
@@ -544,6 +554,22 @@ export default function SalesTable({
                         >
                           <Receipt className="w-4 h-4" />
                         </Button>
+                      )}
+
+                      {documentType === 'order' && (
+                        <GSTTaxInvoiceDialog
+                          order={order}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground hover:text-primary"
+                              title="View & Print GST Tax Invoice"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       )}
                     </div>
                   </TableCell>
