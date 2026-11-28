@@ -7,6 +7,13 @@ export interface Store {
   id: string;
   name: string;
   location: string;
+  email?: string | null;
+  gstin?: string | null;
+  invoice_prefix?: string | null;
+  legal_name?: string | null;
+  pan?: string | null;
+  phone?: string | null;
+  state_code?: string | null;
   created_at?: string;
   updated_at?: string;
 }
