@@ -721,10 +721,14 @@ export type Database = {
           credit_limit: number
           email: string | null
           gst_number: string | null
+          gst_type: string | null
           id: string
+          legal_name: string | null
           name: string
           notes: string | null
+          pan: string | null
           phone: string | null
+          state_code: string | null
           store_id: string
           updated_at: string
         }
@@ -734,10 +738,14 @@ export type Database = {
           credit_limit?: number
           email?: string | null
           gst_number?: string | null
+          gst_type?: string | null
           id?: string
+          legal_name?: string | null
           name: string
           notes?: string | null
+          pan?: string | null
           phone?: string | null
+          state_code?: string | null
           store_id: string
           updated_at?: string
         }
@@ -747,14 +755,25 @@ export type Database = {
           credit_limit?: number
           email?: string | null
           gst_number?: string | null
+          gst_type?: string | null
           id?: string
+          legal_name?: string | null
           name?: string
           notes?: string | null
+          pan?: string | null
           phone?: string | null
+          state_code?: string | null
           store_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "customers_state_code_fkey"
+            columns: ["state_code"]
+            isOneToOne: false
+            referencedRelation: "gst_states"
+            referencedColumns: ["code"]
+          },
           {
             foreignKeyName: "customers_store_id_fkey"
             columns: ["store_id"]
@@ -1154,6 +1173,27 @@ export type Database = {
         }
         Relationships: []
       }
+      gst_states: {
+        Row: {
+          code: string
+          created_at: string | null
+          is_union_territory: boolean | null
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          is_union_territory?: boolean | null
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          is_union_territory?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       inventory_snapshots: {
         Row: {
           age_days_avg: number | null
@@ -1213,6 +1253,38 @@ export type Database = {
           },
           {
             foreignKeyName: "inventory_snapshots_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_sequences: {
+        Row: {
+          financial_year: string
+          id: string
+          last_sequence: number
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          financial_year: string
+          id?: string
+          last_sequence?: number
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          financial_year?: string
+          id?: string
+          last_sequence?: number
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_sequences_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -1324,9 +1396,12 @@ export type Database = {
           category_id: string | null
           cost_price: number
           created_at: string | null
+          gst_rate: number | null
+          hsn_code: string | null
           id: string
           image_url: string | null
           is_discontinued: boolean
+          is_tax_inclusive: boolean | null
           last_restocked_date: string | null
           name: string
           quantity_available: number
@@ -1342,9 +1417,12 @@ export type Database = {
           category_id?: string | null
           cost_price: number
           created_at?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
           image_url?: string | null
           is_discontinued?: boolean
+          is_tax_inclusive?: boolean | null
           last_restocked_date?: string | null
           name: string
           quantity_available?: number
@@ -1360,9 +1438,12 @@ export type Database = {
           category_id?: string | null
           cost_price?: number
           created_at?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
           image_url?: string | null
           is_discontinued?: boolean
+          is_tax_inclusive?: boolean | null
           last_restocked_date?: string | null
           name?: string
           quantity_available?: number
@@ -1736,6 +1817,8 @@ export type Database = {
           cost_price: number
           costing_method: string
           created_at: string | null
+          gst_rate: number | null
+          hsn_code: string | null
           id: string
           name: string
           quantity_available: number | null
@@ -1749,6 +1832,8 @@ export type Database = {
           cost_price?: number
           costing_method?: string
           created_at?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
           name: string
           quantity_available?: number | null
@@ -1762,6 +1847,8 @@ export type Database = {
           cost_price?: number
           costing_method?: string
           created_at?: string | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
           name?: string
           quantity_available?: number | null
@@ -1954,6 +2041,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "order_followups_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "view_gstr1_b2b"
+            referencedColumns: ["order_id"]
+          },
+          {
             foreignKeyName: "order_followups_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
@@ -2084,6 +2178,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales_orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "view_gstr1_b2b"
+            referencedColumns: ["order_id"]
           },
           {
             foreignKeyName: "payments_store_id_fkey"
@@ -2327,6 +2428,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_sales_customizations_sale_id"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "view_gstr1_b2b"
+            referencedColumns: ["order_id"]
+          },
+          {
             foreignKeyName: "fk_sales_customizations_selected_material_id"
             columns: ["selected_material_id"]
             isOneToOne: false
@@ -2382,9 +2490,15 @@ export type Database = {
       }
       sales_order_items: {
         Row: {
+          cgst_amount: number | null
+          cgst_rate: number | null
           created_at: string
           discount: number | null
+          gst_rate: number | null
+          hsn_code: string | null
           id: string
+          igst_amount: number | null
+          igst_rate: number | null
           is_removed: boolean
           item_id: string | null
           item_name: string
@@ -2393,16 +2507,25 @@ export type Database = {
           removal_reason: string | null
           removed_at: string | null
           removed_by: string | null
+          sgst_amount: number | null
+          sgst_rate: number | null
           stock_deducted: boolean | null
           supplier_id: string | null
+          taxable_amount: number | null
           total_price: number
           unit_price: number
           variant_id: string | null
         }
         Insert: {
+          cgst_amount?: number | null
+          cgst_rate?: number | null
           created_at?: string
           discount?: number | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
           is_removed?: boolean
           item_id?: string | null
           item_name: string
@@ -2411,16 +2534,25 @@ export type Database = {
           removal_reason?: string | null
           removed_at?: string | null
           removed_by?: string | null
+          sgst_amount?: number | null
+          sgst_rate?: number | null
           stock_deducted?: boolean | null
           supplier_id?: string | null
+          taxable_amount?: number | null
           total_price: number
           unit_price: number
           variant_id?: string | null
         }
         Update: {
+          cgst_amount?: number | null
+          cgst_rate?: number | null
           created_at?: string
           discount?: number | null
+          gst_rate?: number | null
+          hsn_code?: string | null
           id?: string
+          igst_amount?: number | null
+          igst_rate?: number | null
           is_removed?: boolean
           item_id?: string | null
           item_name?: string
@@ -2429,8 +2561,11 @@ export type Database = {
           removal_reason?: string | null
           removed_at?: string | null
           removed_by?: string | null
+          sgst_amount?: number | null
+          sgst_rate?: number | null
           stock_deducted?: boolean | null
           supplier_id?: string | null
+          taxable_amount?: number | null
           total_price?: number
           unit_price?: number
           variant_id?: string | null
@@ -2463,6 +2598,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sales_orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "view_gstr1_b2b"
+            referencedColumns: ["order_id"]
           },
           {
             foreignKeyName: "sales_order_items_supplier_id_fkey"
@@ -2538,6 +2680,7 @@ export type Database = {
           bom_processed: boolean | null
           cancellation_reason: string | null
           cancelled_at: string | null
+          cgst_amount: number | null
           created_at: string
           customer_address: string | null
           customer_id: string | null
@@ -2552,16 +2695,24 @@ export type Database = {
           description: string | null
           document_type: string | null
           id: string
+          igst_amount: number | null
+          invoice_date: string | null
+          invoice_number: string | null
+          is_reverse_charge: boolean | null
           order_number: string
           order_sequence: number
+          place_of_supply_state_code: string | null
           quote_status: string | null
           round_off: number
           salesperson_name: string | null
+          sgst_amount: number | null
           status: string | null
           stock_deducted: boolean | null
           store_id: string | null
           supplier_id: string | null
+          taxable_amount: number | null
           total_amount: number
+          total_tax_amount: number | null
           updated_at: string
           workflow_state: string | null
         }
@@ -2571,6 +2722,7 @@ export type Database = {
           bom_processed?: boolean | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          cgst_amount?: number | null
           created_at?: string
           customer_address?: string | null
           customer_id?: string | null
@@ -2585,16 +2737,24 @@ export type Database = {
           description?: string | null
           document_type?: string | null
           id?: string
+          igst_amount?: number | null
+          invoice_date?: string | null
+          invoice_number?: string | null
+          is_reverse_charge?: boolean | null
           order_number: string
           order_sequence?: number
+          place_of_supply_state_code?: string | null
           quote_status?: string | null
           round_off?: number
           salesperson_name?: string | null
+          sgst_amount?: number | null
           status?: string | null
           stock_deducted?: boolean | null
           store_id?: string | null
           supplier_id?: string | null
+          taxable_amount?: number | null
           total_amount?: number
+          total_tax_amount?: number | null
           updated_at?: string
           workflow_state?: string | null
         }
@@ -2604,6 +2764,7 @@ export type Database = {
           bom_processed?: boolean | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          cgst_amount?: number | null
           created_at?: string
           customer_address?: string | null
           customer_id?: string | null
@@ -2618,16 +2779,24 @@ export type Database = {
           description?: string | null
           document_type?: string | null
           id?: string
+          igst_amount?: number | null
+          invoice_date?: string | null
+          invoice_number?: string | null
+          is_reverse_charge?: boolean | null
           order_number?: string
           order_sequence?: number
+          place_of_supply_state_code?: string | null
           quote_status?: string | null
           round_off?: number
           salesperson_name?: string | null
+          sgst_amount?: number | null
           status?: string | null
           stock_deducted?: boolean | null
           store_id?: string | null
           supplier_id?: string | null
+          taxable_amount?: number | null
           total_amount?: number
+          total_tax_amount?: number | null
           updated_at?: string
           workflow_state?: string | null
         }
@@ -2645,6 +2814,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_place_of_supply_state_code_fkey"
+            columns: ["place_of_supply_state_code"]
+            isOneToOne: false
+            referencedRelation: "gst_states"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "sales_orders_store_id_fkey"
@@ -3248,26 +3424,55 @@ export type Database = {
       stores: {
         Row: {
           created_at: string | null
+          email: string | null
+          gstin: string | null
           id: string
+          invoice_prefix: string | null
+          legal_name: string | null
           location: string
           name: string
+          pan: string | null
+          phone: string | null
+          state_code: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          email?: string | null
+          gstin?: string | null
           id?: string
+          invoice_prefix?: string | null
+          legal_name?: string | null
           location: string
           name: string
+          pan?: string | null
+          phone?: string | null
+          state_code?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          email?: string | null
+          gstin?: string | null
           id?: string
+          invoice_prefix?: string | null
+          legal_name?: string | null
           location?: string
           name?: string
+          pan?: string | null
+          phone?: string | null
+          state_code?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stores_state_code_fkey"
+            columns: ["state_code"]
+            isOneToOne: false
+            referencedRelation: "gst_states"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       supplier_ledger: {
         Row: {
@@ -3432,10 +3637,15 @@ export type Database = {
           contact_person: string | null
           created_at: string
           email: string | null
+          gst_type: string | null
           gstin: string | null
           id: string
+          is_rcm_applicable: boolean | null
+          legal_name: string | null
           name: string
+          pan: string | null
           phone: string | null
+          state_code: string | null
           updated_at: string
         }
         Insert: {
@@ -3443,10 +3653,15 @@ export type Database = {
           contact_person?: string | null
           created_at?: string
           email?: string | null
+          gst_type?: string | null
           gstin?: string | null
           id?: string
+          is_rcm_applicable?: boolean | null
+          legal_name?: string | null
           name: string
+          pan?: string | null
           phone?: string | null
+          state_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -3454,13 +3669,26 @@ export type Database = {
           contact_person?: string | null
           created_at?: string
           email?: string | null
+          gst_type?: string | null
           gstin?: string | null
           id?: string
+          is_rcm_applicable?: boolean | null
+          legal_name?: string | null
           name?: string
+          pan?: string | null
           phone?: string | null
+          state_code?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_state_code_fkey"
+            columns: ["state_code"]
+            isOneToOne: false
+            referencedRelation: "gst_states"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       system_events: {
         Row: {
@@ -3899,6 +4127,77 @@ export type Database = {
         }
         Relationships: []
       }
+      view_gstr1_b2b: {
+        Row: {
+          cgst_amount: number | null
+          igst_amount: number | null
+          invoice_date: string | null
+          invoice_number: string | null
+          invoice_type: string | null
+          invoice_value: number | null
+          order_id: string | null
+          pos_state_code: string | null
+          pos_state_name: string | null
+          recipient_gstin: string | null
+          recipient_name: string | null
+          reverse_charge: string | null
+          sgst_amount: number | null
+          store_name: string | null
+          supplier_gstin: string | null
+          taxable_amount: number | null
+          total_tax_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_place_of_supply_state_code_fkey"
+            columns: ["pos_state_code"]
+            isOneToOne: false
+            referencedRelation: "gst_states"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      view_gstr1_b2cs: {
+        Row: {
+          invoice_count: number | null
+          pos_state_code: string | null
+          pos_state_name: string | null
+          rate: number | null
+          total_cgst: number | null
+          total_igst: number | null
+          total_sgst: number | null
+          total_taxable_value: number | null
+          type: string | null
+        }
+        Relationships: []
+      }
+      view_gstr1_hsn_summary: {
+        Row: {
+          central_tax_amount: number | null
+          description: string | null
+          hsn_code: string | null
+          integrated_tax_amount: number | null
+          state_tax_amount: number | null
+          taxable_value: number | null
+          total_quantity: number | null
+          total_tax_amount: number | null
+          total_value: number | null
+          uqc: string | null
+        }
+        Relationships: []
+      }
+      view_gstr3b_outward_supplies: {
+        Row: {
+          nature_of_supplies: string | null
+          tax_period: string | null
+          total_cess: number | null
+          total_cgst: number | null
+          total_igst: number | null
+          total_sgst: number | null
+          total_taxable_value: number | null
+        }
+        Relationships: []
+      }
       view_trial_balance: {
         Row: {
           account_id: string | null
@@ -3938,6 +4237,7 @@ export type Database = {
         Args: { p_date: string }
         Returns: Json
       }
+      calculate_order_taxes: { Args: { p_order_id: string }; Returns: Json }
       can_access_customer_pii: { Args: { _user_id?: string }; Returns: boolean }
       cancel_sales_order: {
         Args: {
@@ -3969,56 +4269,31 @@ export type Database = {
         }
         Returns: string
       }
-      create_sales_order_secure:
-        | {
-            Args: {
-              _advance_bank_account_id?: string
-              _advance_paid?: number
-              _advance_payment_method?: string
-              _customer_address?: string
-              _customer_id?: string
-              _customer_name?: string
-              _customer_phone?: string
-              _customizations?: Json
-              _date?: string
-              _delivery_date?: string
-              _delivery_status?: string
-              _description?: string
-              _document_type?: string
-              _items?: Json
-              _order_number: string
-              _salesperson_name?: string
-              _store_id: string
-              _supplier_id?: string
-              _total_amount?: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _advance_bank_account_id?: string
-              _advance_paid?: number
-              _advance_payment_method?: string
-              _customer_address?: string
-              _customer_id?: string
-              _customer_name?: string
-              _customer_phone?: string
-              _customizations?: Json
-              _date?: string
-              _delivery_date?: string
-              _delivery_status?: string
-              _description?: string
-              _document_type?: string
-              _items?: Json
-              _order_number: string
-              _round_off?: number
-              _salesperson_name?: string
-              _store_id: string
-              _supplier_id?: string
-              _total_amount?: number
-            }
-            Returns: string
-          }
+      create_sales_order_secure: {
+        Args: {
+          _advance_bank_account_id?: string
+          _advance_paid?: number
+          _advance_payment_method?: string
+          _customer_address?: string
+          _customer_id?: string
+          _customer_name?: string
+          _customer_phone?: string
+          _customizations?: Json
+          _date?: string
+          _delivery_date?: string
+          _delivery_status?: string
+          _description?: string
+          _document_type?: string
+          _items?: Json
+          _order_number: string
+          _round_off?: number
+          _salesperson_name?: string
+          _store_id: string
+          _supplier_id?: string
+          _total_amount?: number
+        }
+        Returns: string
+      }
       create_sales_order_with_secondary_phone: {
         Args: {
           _advance_bank_account_id?: string
@@ -4088,6 +4363,10 @@ export type Database = {
         Returns: string
       }
       generate_ai_insights: { Args: never; Returns: number }
+      generate_gst_invoice_number: {
+        Args: { p_date?: string; p_store_id: string }
+        Returns: string
+      }
       get_active_financial_year: {
         Args: never
         Returns: {
